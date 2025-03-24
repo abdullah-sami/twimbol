@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Twimbol{% endblock %}
+
+
+{% block content %}
+
+
+    <div class="reels">
+
+
+
+        <div class="reel">
+
+            {% for post in posts %}
+            {% if post.post_type == "youtube_reel" %}
+            {% if post.reels_data %}
+            {% if forloop.counter <= reel_range %}
+            <a href="{% url 'reel' post.reels_data.reel_id %}">
+                <div class="reel_item">
+                    <img src="{{ post.reels_data.thumbnail_url }}" alt="">
+                </div>
+            </a>
+            {% endif %}
+            {% endif %}
+            {% endif %}
+
+            {% endfor %}
+
+            
+        </div>
+    </div>
+
+
+
+    <div class="posts">
+        {% for post in posts %}
+            {% if post.post_type == "youtube_video" %}
+            {% if post.video_data %}
+
+            <div class="post">
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="post_header">
+                        <div class="post_avatar">
+                            <img src="{{post.video_data.thumbnail_url}}" alt="">
+                        </div>
+                        <div class="post_detailes">
+                            <img src="{{post.video_data.channel_image_url}}" alt="">
+                            <h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                    <div class="post_stats">
+                        <span class="post_stat_item">
+                            <p href="javascript:void(0)">👁️</p>
+                            {{post.video_data.view_count}}
+                        </span>
+                        <span class="post_stat_item">
+                            <p href="javascript:void(0)">👍🏻</p>
+                            {{post.video_data.like_count}}
+                        </span>                
+                        <span class="post_stat_item">
+                            <a href="javascript:void(0)">:</a>
+                        </span>
+                    </div>
+                </a>
+            </div>
+            
+            
+            
+            <div class="post_divider">
+                <hr>
+            </div>
+            {% endif %}
+            {% endif %}
+        {% endfor %}
+       
+    </div>
+
+
+
+{% endblock %}

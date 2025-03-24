@@ -1,0 +1,45 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Home{% endblock %}</title>
+        
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {%block style%}{%endblock%}
+    
+    
+    
+</head>
+<body>
+    
+    <header>
+        <div class="logo">
+            <img src="{% static 'img/logo.png' %}" alt="">
+        </div>
+        <menu class="header_menu">
+            <a href="javascript:void(0)" class="search_btn">🔍</a>
+            <a href="{% url 'messages' %}">💬</a>
+            <a href="javascript:void(0)" class="menu_btn">☰</a>
+        </menu>
+    </header>
+    
+    <menu>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'videos' %}">Videos</a>
+        <a href="{% url 'create_action' 'dashboard' %}">Create</a>
+        <a href="{% url 'events' %}">Events</a>
+    </menu>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    
+    {% block script %}{% endblock %}
+    
+</body>
+</html>
