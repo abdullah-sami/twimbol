@@ -1,0 +1,27 @@
+{% extends 'base.html' %} 
+{% block title %}User{% endblock %} 
+
+
+
+{% block content %}
+
+
+
+<h1>Hello, {{user|title}}!</h1>
+
+
+<form action="" method="post">
+    {% csrf_token %}
+    {{form.as_p}}
+    <input type="submit" value="Update">
+</form>
+
+
+
+{% endblock %} 
+
+
+{% block script %}
+
+
+{% endblock %}

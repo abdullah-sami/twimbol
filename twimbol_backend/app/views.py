@@ -3,15 +3,17 @@ from django.http import HttpResponse
 from .utils.youtube_api import get_video_data
 from .models import *
 from .forms import *
-import re
+
 
 def home(request):
 
 
     posts = Post.objects.all().order_by('-id')
-
+    reels = Youtube_Reels_Data.objects.all().order_by('-created_at')
+    
     context = { 
         "posts": posts,
+        "reels": reels,
         "reel_range": 5
 
     }
@@ -19,6 +21,16 @@ def home(request):
     return render(request, 'home.html', context)
     
     
+
+def post(request, post_id):
+    
+    post = Post.objects.get(id=post_id)
+
+    context = {
+        'post': post
+    }
+
+    return render(request, 'post.html', context)
 
 
 
@@ -68,106 +80,6 @@ def reel(request, reel_id):
 
 
     return render(request, 'video.html', context)
-
-
-
-
-
-
-def create(request, create_action):
-
-    form = None
-
-    if create_action == 'video':
-    
-        if request.method == 'POST':
-            form = Youtube_Video_Id_Title_Form(request.POST)
-            if form.is_valid():
-                form.save()   
-            
-
-                latest_video = Youtube_Video_Id_Title.objects.latest('id')
-                video_data = get_video_data(latest_video.video_id)
-
-                if video_data:
-                    Post.objects.create(post_type='youtube_video', post_title=video_data['title'])
-                    Youtube_Video_Data.objects.create(
-                        post=Post.objects.latest('id'),
-                        video_id=video_data['video_id'],
-                        video_title=video_data['title'],
-                        thumbnail_url=video_data['thumbnail_url'],
-                        channel_title=video_data['channel_title'],
-                        channel_image_url=video_data['channel_image_url'],
-                        view_count=video_data['view_count'],
-                        like_count=video_data['like_count']
-                    )
-
-
-
-        
-                return redirect('home')  
-        else:
-            form = Youtube_Video_Id_Title_Form() 
-
-    elif create_action == 'reel':
-
-        if request.method == 'POST':
-            form = Youtube_Reel_Id_Form(request.POST)
-
-            if form.is_valid():
-                form.save()   
-
-                
-                latest_reel = Youtube_Reels_Id.objects.latest('id')
-                print(latest_reel)
-                reel_data = get_video_data(latest_reel.reel_id)
-
-
-                if reel_data:
-                    Post.objects.create(post_type='youtube_reel', post_title=reel_data['title'], )
-                    Youtube_Reels_Data.objects.create(
-                        post=Post.objects.latest('id'),
-                        reel_id=reel_data['video_id'],
-                        reel_title=reel_data['title'],
-                        thumbnail_url=reel_data['thumbnail_url'],
-                        channel_title=reel_data['channel_title'],
-                        channel_image_url=reel_data['channel_image_url'],
-                        view_count=reel_data['view_count'],
-                        like_count=reel_data['like_count']
-                    )
-            
-                return redirect('home')
-
-        else:
-            form = Youtube_Reel_Id_Form()
-
-
-    elif create_action == 'post':
-        pass
-
-
-
-    
-    
-    context = {
-        "create_action": create_action
-
-    }
-
-    if form:
-        context['form'] = form
-
-
-    
-
-
-
-
-    
-
-
-
-    return render(request, 'create.html', context)
 
 
 

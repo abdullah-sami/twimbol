@@ -1,0 +1,33 @@
+{% extends 'base.html' %} 
+{% block title %}User{% endblock %} 
+
+
+
+{% block content %}
+
+
+<form action="" method="post">
+
+{%csrf_token%}
+
+{{form.as_p}}
+
+{% if message == 'login' %}
+    <input type="submit" value="Login">
+    New here? <a href="{% url 'register' %}">Register</a>
+    {% else %}
+    <input type="submit" value="Register">
+    Already registered? <a href="{% url 'login' %}">Login</a>
+{% endif %}
+
+</form>
+
+
+
+{% endblock %} 
+
+
+{% block script %}
+
+
+{% endblock %}
