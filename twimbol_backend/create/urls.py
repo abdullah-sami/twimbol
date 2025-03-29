@@ -8,7 +8,12 @@ from . import views
 urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('post/', views.post, name='post'),
-    path('video/', views.video, name='video'),
+    path('post/<int:post_id>', views.post_edit, name='post_create_edit'),
+    
+    path('video', views.video, name='video'),
+    path('video/link', views.video_link, name='video_link'),
+    path('video/upload', views.video_upload, name='video_upload'),
+    
     path('reel/', views.reel, name='reel'),
     path('manage-contents/', views.manage_contents, name='manage-contents'),
     path('settings/', views.settings, name='settings'),

@@ -1,20 +1,20 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .utils.youtube_api import get_video_data
+from .utils.youtube_api import get_video_data, get_video_stats
 from .models import *
 from .forms import *
 
 
 def home(request):
-
-
+    
+    
     posts = Post.objects.all().order_by('-id')
     reels = Youtube_Reels_Data.objects.all().order_by('-created_at')
     
     context = { 
         "posts": posts,
         "reels": reels,
-        "reel_range": 5
+        "reel_range": 5,
 
     }
 
@@ -36,11 +36,32 @@ def post(request, post_id):
 
 
 def videos(request):
+    posts = Post.objects.all().order_by('-created_at')
+    stats = []  
 
-    posts = Post.objects.all().order_by('-id')
+    for post in posts:
+        # Access the related video_data using the related_name
+        video_data = getattr(post, 'video_data', None)
+        if video_data:
+            stats.append(video_data)
+
+        
+
+
+
+    for stat in stats:
+        x = get_video_stats(stat)
+        if x:
+            Youtube_Video_Data.objects.filter(video_id=stat.video_id).update(
+                view_count=x.get('view_count', 0),
+                like_count=x.get('like_count', 0)
+            )
+
+    
+    
 
     context = { 
-        "posts": posts
+        'posts': posts,
 
     }
 
@@ -52,9 +73,20 @@ def video(request, video_id):
     video = Youtube_Video_Data.objects.get(video_id=video_id)
     post = Post.objects.get(video_data__video_id=video_id)
 
+    stats = get_video_data(video_id)
+
+    # Update the video data in the database
+    if stats:
+        Youtube_Video_Data.objects.filter(video_id=video_id).update(
+            view_count=stats.get('view_count', 0),
+            like_count=stats.get('like_count', 0)
+        )
+
     context = {
         "video": video,
-        "post": post
+        "post": post,
+        "views": stats.get("view_count", "0"),
+        "likes": stats.get("like_count", "0"),
     }
 
     print(post.post_type)
@@ -69,13 +101,15 @@ def reel(request, reel_id):
     post = Post.objects.get(reels_data__reel_id=reel_id)
 
     reels = Youtube_Reels_Data.objects.all().order_by('-created_at')
+    
+    stats = get_video_data(reel_id)
 
     context = {
         "first_reel": first_reel,
         "post": post,
         "reels": reels,
-        "reel_view": first_reel.view_count,
-        "reel_like": first_reel.like_count
+        "views": stats.get("view_count", "0"),
+        "likes": stats.get("like_count", "0"),
     }
 
 

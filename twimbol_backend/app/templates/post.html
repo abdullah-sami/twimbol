@@ -7,8 +7,14 @@
 
 
 <div class="post_content">
-    <img src="{{post.post_banner.url}}" alt="" class="post_img">
+    {% if post.post_banner %}
+    <img src="{{post.post_banner.url}}" alt="" class="banner_img" style="max-width: 20vw;display: inline-block;">
+    {% else%}
+    <img src="{% static 'img/posts/post2.jpeg' %}" alt="" class="banner_img" style="max-width: 20vw;display: inline-block;">
+    {% endif %}
+
     <h1>{{post.post_title}}</h1>
+    <p>Post by: <a href="{%url 'profile' post.created_by%}">{{post.created_by.profile.first_name}} {{post.created_by.profile.last_name}}</a></p>
     <p>{{post.created_at}}</p>
 
     <p>{{post.post_description}}</p>

@@ -20,6 +20,27 @@ width="560" height="315"
 src="https://www.youtube.com/embed/{{video.video_id}}"
 title="{{video.video_id}}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
 </iframe>
+<p style="color: white;">Views: {{views}}</p>
+<p style="color: white;">Likes: {{likes}}</p>
+<pre id="video_decription"></pre>
+<pre id="video_description" style="color: white;">{{video.video_description}}</pre>
+
+{% elif post.post_type == "youtube_video_upload" %}
+
+<iframe 
+width="560" height="315" 
+src="https://www.youtube.com/embed/{{video.video_id}}"
+title="{{video.video_id}}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+</iframe>
+
+<p style="color: white;">Views: {{views}}</p>
+<p style="color: white;">Likes: {{likes}}</p>
+<pre id="video_description" style="color: white;">{{video.video_description}}</pre>
+
+
+
+
+
 
 
 {% elif post.post_type == "youtube_reel" %}
@@ -50,22 +71,23 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
             class="youtube_player"
             >
         </iframe>
-
-
+        <pre id="video_description" style="color: white;">{{reel.reel_description}}</pre>
+        
+        
         <div class="interaction_bar">
           <span>
 
-              <button onclick="reactToVideo('{{ reeld }}')" class="reaction-btn " >❤️ </button> <p>{{reel_like}}</p>
+              <button onclick="reactToVideo('{{ reacted }}')" class="reaction-btn " >❤️ </button>  <p style="color: white;">Likes: {{likes}}</p>
          </span>
          <span>
-         <button class="views-btn">👁️ </button> <p>{{reel_view}}</p>
-     </span>
+         <button class="views-btn">👁️ </button> <p style="color: white;">Views: {{views}}</p>
+        </span>
          <span>
-         <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
+           <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
      </span>
      
         </div>
-     
+        
        <div id="comment-box-{{ reel }}" class="comment-box" style="display: none;">
          <textarea id="comment-input-{{ video.video_id }}" placeholder="Write a comment..."></textarea>
          <button onclick="submitComment('{{ video.video_id }}')">Post</button>
@@ -73,14 +95,14 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
 
     </div>
   {% endwith %}
-
+  
   {% for reel_itm in reels %}
     {% with reel=reel_itm %}
       {% if reel != first_reel %}
 
-  
+      
         <div class="reel-player"  id="{{reel}}" data-video-id="{{reel}}">
-        <iframe 
+          <iframe 
             src="https://www.youtube.com/embed/{{ reel }}?autoplay=0&loop=1&controls=0&modestbranding=1&rel=0&enablejsapi=1" id="reel-{{reel}}"
             title="{{ reel.reel_title }}"
             frameborder="0"
@@ -88,7 +110,8 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
             allowfullscreen
             class="youtube_player"
             >
-        </iframe>
+          </iframe>
+          <pre id="video_description" style="color: white;">{{reel.reel_description}}</pre>
 
 
         <div class="interaction_bar">

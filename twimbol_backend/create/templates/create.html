@@ -1,5 +1,7 @@
 {% extends 'base.html' %} 
 {% block title %}Twimbol{% endblock %} 
+{% load static %}
+{% block style %}<link rel="stylesheet" href="{%static 'css/creator.css' %}">{% endblock %}
 {% block content %}
 
     <menu type="toolbar">
@@ -38,6 +40,55 @@
 
     <h1>{{create_action}}</h1>
 
+    {% if post.post_type == 'post' %}{% endif %}
+
+
+    {% if create_action == 'dashboard' %}
+
+    {% if upload_message %} <p>{{upload_message}}</p> {%endif%}
+
+
+    {% for post in posts %}
+    {% if post.post_type == 'post' %}
+
+    {% if post.post_banner %}
+    <a href="{% url 'post_create_edit' %}">
+    <div class="post_creator_dashboard">
+        <img src="{{ post.post_banner.url }}" alt="">
+        <p>{{post.post_title|slice:"30"}}</p>
+        
+    </div></a>
+
+    {% endif %}
+    
+    {% endif %}
+    
+
+    {%endfor%}
+
+
+    {% endif %}
+
+
+
+
+
+
+
+    {% if create_action == 'video' %}
+    <a href="{% url 'video_link' %}"><button>Upload from link</button></a>
+    <a href="{% url 'video_upload' %}"><button>Upload from device</button></a>
+    {% endif %}
+
+
+
+    {% if user.is_authenticated == False %}
+    You're not logged in
+    <br><a href="{% url 'login' %}">Login</a>
+
+    {% endif %}
+
+
     {% if form %}
     <form action="" method="post" id="form-controls"  enctype="multipart/form-data">
         {% csrf_token %} 
@@ -52,6 +103,147 @@
     </form>
 
     {% endif %} 
+
+
+    {% if video_upload %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Title"><br>
+        <input type="text" name="description" placeholder="Description"><br>
+        <input type="file" name="video" id="videoFile" accept="video/*"><br>
+        <button type="submit" id="video_upload_btn" disabled>Upload</button>
+      </form>
+      
+      
+      <video id="submitted_video" style="display: none;"></video>
+      
+      <script>
+      let objectUrl = null;
+      
+      document.getElementById("videoFile").addEventListener("change", function(event) {
+          const file = event.target.files[0];
+          if (file) {
+              // Revoke old object URL if it exists
+              if (objectUrl) {
+                  URL.revokeObjectURL(objectUrl);
+              }
+      
+              objectUrl = URL.createObjectURL(file);
+              const video = document.getElementById("submitted_video");
+              video.src = objectUrl;
+      
+              video.addEventListener("canplaythrough", function handleCanPlay() {
+                  const duration = video.duration;
+                  
+                  const uploadButton = document.getElementById("video_upload_btn");
+
+                  if (duration){
+                    if (duration > 0 && duration < 60) {
+                        uploadButton.removeAttribute("disabled");
+                        } else {
+                            uploadButton.setAttribute("disabled", "true");
+                            alert("Can't upload videos longer than 60 seconds");
+                    }
+                }
+
+      
+                  URL.revokeObjectURL(objectUrl); // Clean up memory
+                  video.removeEventListener("canplaythrough", handleCanPlay); // Prevent duplicate triggers
+              });
+      
+              video.load(); // Force the video to load metadata
+          }
+      });
+      </script>
+      
+
+      
+    {% endif %}
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    {% if reel_upload %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Title"><br>
+        <input type="text" name="description" placeholder="Description"><br>
+        <input type="file" name="video" id="videoFile" accept="video/*"><br>
+        <button type="submit" id="video_upload_btn" disabled>Upload</button>
+      </form>
+      <p class="upload_warning" id="upload_warning"></p>
+      
+      
+      <video id="submitted_video" style="display: none;"></video>
+      
+      <script>
+      let objectUrl_reel = null;
+      
+      document.getElementById("videoFile").addEventListener("change", function(event) {
+          const file = event.target.files[0];
+          if (file) {
+              // Revoke old object URL if it exists
+              if (objectUrl_reel) {
+                  URL.revokeObjectURL(objectUrl_reel);
+              }
+      
+              objectUrl_reel = URL.createObjectURL(file);
+              const video = document.getElementById("submitted_video");
+              video.src = objectUrl_reel;
+      
+              video.addEventListener("canplaythrough", function handleCanPlay() {
+                  const duration = video.duration;
+                  
+                  const uploadButton = document.getElementById("video_upload_btn");
+
+                  if (duration){
+                    if (duration > 0 && duration < 30) {
+                        uploadButton.removeAttribute("disabled");
+                        document.getElementById('upload_warning').innerText = ("");
+                        document.getElementById('upload_warning').style.color = 'green';
+                        } else {
+                            uploadButton.setAttribute("disabled", "true");
+                            document.getElementById('upload_warning').innerText = ("Can't upload reels longer than 30 seconds");
+                            document.getElementById('upload_warning').style.color = 'red';
+                    }
+                }
+
+      
+                  URL.revokeObjectURL(objectUrl_reel); // Clean up memory
+                  video.removeEventListener("canplaythrough", handleCanPlay); // Prevent duplicate triggers
+              });
+      
+              video.load(); // Force the video to load metadata
+          }
+      });
+      </script>
+      
+
+      
+    {% endif %}
+
+
+
+
+
+
+
 
 
 {% endblock %} 

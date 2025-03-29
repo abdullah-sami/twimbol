@@ -1,8 +1,37 @@
 from django.shortcuts import render, redirect
 from .models import *
+from app.models import *
 from .forms import *
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+
+
+
+def profile(request, profile_user_name):
+
+    user = request.user
+    profile = UserProfile.objects.get(user__username=profile_user_name)
+
+    posts = Post.objects.filter(created_by=profile.user).order_by('-created_at')
+
+    if request.method == 'GET':
+        q = request.GET.get('q')
+        
+        posts = posts.filter(post_type=q)
+
+    if user == profile.user:
+        return redirect('user_manager')
+    
+
+    context = {
+        'profile': profile,
+        'user': user,
+        'posts': posts
+        }
+
+    return render(request, 'profile.html', context)
+
+
 
 def user_manager(request):
 
@@ -82,7 +111,7 @@ def login_view(request):
         if login_form.is_valid():
             user = login_form.get_user()
             login(request, user)
-            return redirect('user_manager')
+            return redirect('home')
     else:
         login_form = AuthenticationForm()
 

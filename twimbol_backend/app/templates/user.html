@@ -8,7 +8,11 @@
 
 
 <h1>Hello, {{user|title}}!</h1>
+{% if profile.user_type == 'creator' %}
 
+<a href="{% url 'dashboard' %}">Go to creator dashboard</a>
+
+{% endif %}
 
 <form action="" method="post">
     {% csrf_token %}

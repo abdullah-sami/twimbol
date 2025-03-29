@@ -12,3 +12,6 @@ class UserProfile(models.Model):
     user_type = models.CharField(max_length=50, default='regular')
     user_status = models.CharField(max_length=50, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.username
