@@ -1,9 +1,12 @@
 from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from .forms import *
 from app.models import *
+from user.models import CreatorApplication
 from app.utils.youtube_api import get_video_data, upload_to_youtube, get_youtube_credentials
 from django.contrib.auth.decorators import login_required
+from user.decorators import admin_required, creator_required, visitor_required
 
 import tempfile
 
@@ -11,6 +14,12 @@ import tempfile
 @login_required
 def dashboard(request):
     user = request.user
+
+    if not user.groups.filter(name='admin').exists() and not user.groups.filter(name='creator').exists():
+        if CreatorApplication.objects.filter(user=user, application_status=0).exists():
+            creator_application_msg = "Already applied for creator"
+        
+        return render(request, 'create.html', context={"create_action": "Not Allowed", "user": user, "creator_application_message": creator_application_msg if 'creator_application_msg' in locals() else None})
 
     upload_message = ''
 
@@ -39,7 +48,7 @@ def dashboard(request):
     return render(request, 'create.html', context)
 
 
-@login_required
+@creator_required
 def post(request):
     form = PostForm()
 
@@ -64,7 +73,7 @@ def post(request):
     return render(request, 'create.html', context)
 
 
-@login_required
+@creator_required
 def post_edit(request, post_id):
     message = ''
     try:
@@ -121,12 +130,12 @@ def post_edit(request, post_id):
 
 
 
-@login_required
+@creator_required
 def video(request):
     return render(request, 'create.html', context={"create_action": "video"})
 
 
-@login_required
+@creator_required
 def video_link(request):
     user = request.user
     if request.method == 'POST':
@@ -173,7 +182,7 @@ def video_link(request):
 
     
 
-@login_required
+@creator_required
 def video_upload(request):
 
     user = request.user
@@ -229,7 +238,7 @@ def video_upload(request):
 
 
 
-@login_required
+@creator_required
 def reel(request):
     user = request.user
     
@@ -321,7 +330,7 @@ def reel(request):
 
 
 
-@login_required
+@creator_required
 def manage_contents(request):
     user = request.user
 
@@ -353,7 +362,7 @@ def manage_contents(request):
 
 
 
-@login_required
+@creator_required
 def delete_post(request, post_id):
 
     post = get_object_or_404(Post, id=post_id, created_by=request.user)
@@ -384,3 +393,22 @@ def settings(request):
 
 
 
+@visitor_required
+def apply_for_creator(request):
+    user = request.user
+
+    if request.method == 'POST':
+        CreatorApplication.objects.create(user=user)
+        return redirect(reverse('dashboard')+'?upload_message=creator_application_submitted')
+    
+    if CreatorApplication.objects.filter(user=user).exists():
+        return redirect(reverse('dashboard')+'?upload_message=creator_application_already_submitted')
+    
+
+
+
+    context={
+        "create_action": "apply-for-creator",
+    }
+
+    return render(request, 'apply.html', context)

@@ -20,5 +20,6 @@ urlpatterns = [
     path('manage-contents/delete/<int:post_id>', views.delete_post, name='manage-contents-delete'),
     
     path('settings/', views.settings, name='settings'),
+    path('apply-for-creator/', views.apply_for_creator, name='apply-for-creator'),
 
 ] 

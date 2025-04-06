@@ -4,6 +4,7 @@
 {% block style %}<link rel="stylesheet" href="{%static 'css/creator.css' %}">{% endblock %}
 {% block content %}
 
+{% if create_action != "Not Allowed" %}
     <menu type="toolbar">
     <li>
         <a href="{% url 'dashboard' %}"
@@ -37,10 +38,28 @@
     </li>
     </menu> 
 
+{% endif %}
+
+
 
     <h1>{{create_action}}</h1>
 
-    {% if post.post_type == 'post' %}{% endif %}
+    {% if create_action == "Not Allowed" %}
+
+    <p style="color: red;">You have to be a creator to access dashboard</p>
+
+    {% if creator_application_message == None %}
+
+    <a href="{% url 'apply-for-creator' %}">Become a Creator</a>
+    
+    {% else %}
+    {{creator_application_message}}
+    
+    {% endif %}
+
+    {% endif %}
+
+    
 
 
     {% if create_action == 'dashboard' %}

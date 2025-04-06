@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .user-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    margin: 20px;
+}
+
+.user-card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 300px;
+    text-align: left;
+    font-family: Arial, sans-serif;
+}
+
+.user-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.user-card p {
+    margin: 5px 0;
+    font-size: 1rem;
+    color: #555;
+}
+
+.user-card p strong {
+    color: #000;
+}
+    </style>
+</head>
+<body>
+    
+    
+    <h1>Administration</h1>
+    <nav>
+        <ul>
+            <li><a href="{% url 'administration' %}">Home</a></li>
+            <li><a href="{% url 'admin_creators' %}">Creators</a></li>
+            <li><a href="{% url 'admin_users' %}">Users</a></li>
+            <li><a href="{% url 'admin_admins' %}">Admins</a></li>
+            <li><a href="{% url 'admin_banned' %}">Banned Users</a></li>
+        </ul>
+        
+        
+
+
+        {% if new_applications %}
+        <h2>New Applications</h2>
+        <div class="user-cards">
+            {% for application in new_applications %}
+                <div class="user-card">
+                    <h3>{{ application.user.profile.first_name }} {{ application.user.profile.last_name }}</h3>
+                    <p><strong>Username:</strong> {{ application.user.username }}</p>
+                    <p><strong>User Type:</strong>{% for group in application.user.groups.all %}
+                        {{ group.name }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}</p>
+                    <p><strong>Email:</strong> {{ application.user.email }}</p>
+                    <p><strong>Phone:</strong> {{ application.user.profile.user_phone }}</p>
+                    <p><strong>Address:</strong> {{ application.user.profile.user_address }}</p>
+        
+                    <form action="" method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="applicant_username" value="{{ application.user.username }}">
+                        <button type="submit" name="creator_application" value=1>Accept Application</button>
+                        <button type="submit" name="creator_application" value=0>Reject Application</button>
+                    </form>
+        
+                </div>
+            {% endfor %}
+        </div>
+        
+        {% endif %}
+        
+        
+        
+        {% if page == "home" %}
+        <h2>Home</h2>
+        {% elif page == "creators" %}
+        <h2>Creators</h2>
+        {% elif page == "users" %}
+        <h2>Users</h2>
+        {% elif page == "admins" %}
+        <h2>Admins</h2>
+        {% elif page == "banned" %}
+        <h2>Banned Users</h2>
+        {% else %}
+        <h2>Unknown Page</h2>
+        {% endif %}
+        
+
+        
+        
+        <div class="user-cards">
+    {% for user in users %}
+    <div class="user-card">
+        <h3>{{ user.profile.first_name }} {{ user.profile.last_name }}</h3>
+        <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>User Type:</strong>{% for group in user.groups.all %}
+                {{ group.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Phone:</strong> {{ user.profile.user_phone }}</p>
+            <p><strong>Address:</strong> {{ user.profile.user_address }}</p>
+            
+            <form action="" method="post">
+                <button>Ban User</button>
+            </form>
+
+        </div>
+    {% endfor %}
+    
+</div>
+
+
+</body>
+</html>

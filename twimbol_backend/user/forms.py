@@ -31,3 +31,17 @@ class UserProfileForm(ModelForm):
     class Meta:
         model = UserProfile
         fields = ['first_name', 'last_name', 'user_phone', 'user_address']
+
+
+
+
+class CreatorApprovalForm(ModelForm):
+    class Meta:
+        model = CreatorApplication
+        fields = ['application_status']
+
+
+class CreatorApplicationForm(ModelForm):
+    class Meta:
+        model = CreatorApplication
+        fields = ['user'] 

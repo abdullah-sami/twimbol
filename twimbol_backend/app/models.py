@@ -5,9 +5,6 @@ from django.contrib.auth.models import User
 
 
 
-
-
-
 class Post(models.Model):
     post_type = models.CharField(max_length=100)
     post_title = models.CharField(max_length=100)
@@ -15,14 +12,10 @@ class Post(models.Model):
     post_description = models.TextField(null=True)
     post_banner = models.ImageField(upload_to='img/posts/', null=True, blank=True, default='463315330_975679841271321_5666464099814645228_n.jpg')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_created_by')
-
     
 
     def __str__(self):
         return self.post_title
-
-
-
 
 
 
@@ -45,9 +38,6 @@ class Youtube_Upload(models.Model):
 
 
 
-
-
-
 class Youtube_Video_Id_Title(models.Model):
     video_id = models.CharField(max_length=100)
     video_title = models.CharField(max_length=100)
@@ -56,7 +46,6 @@ class Youtube_Video_Id_Title(models.Model):
     def __str__(self):
         return self.video_id
     
-
 
 
 
@@ -83,7 +72,6 @@ class Youtube_Video_Data(models.Model):
     def __str__(self):
         return self.video_id
     
-
 
 
 
