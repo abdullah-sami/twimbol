@@ -13,5 +13,7 @@ urlpatterns = [
 
     path('post/<str:post_id>', views.post, name='post'),
 
+    path('search/', views.search, name='search'),
+    
     
 ]

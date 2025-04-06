@@ -1,12 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from .utils.youtube_api import get_video_data, get_video_stats
+from django.db.models import Q, Case, When, IntegerField
 from .models import *
 from .forms import *
 
 
 def home(request):
-    
     
     posts = Post.objects.all().order_by('-id')
     reels = Youtube_Reels_Data.objects.all().order_by('-created_at')
@@ -23,11 +23,14 @@ def home(request):
     
 
 def post(request, post_id):
+
+    user = request.user
     
     post = Post.objects.get(id=post_id)
 
     context = {
-        'post': post
+        'post': post,
+        'user': user,
     }
 
     return render(request, 'post.html', context)
@@ -117,6 +120,35 @@ def reel(request, reel_id):
 
 
 
+
+
+def search(request):
+
+    query = request.GET.get('query', '')
+
+    if query:
+        posts = Post.objects.annotate(
+            priority=Case(
+                When(post_title__icontains=query, then=1),  # Higher priority for post_title matches
+                When(created_by__username__icontains=query, then=2),  # Lower priority for username matches
+                When(post_description__icontains=query, then=3),  # Lower priority for username matches
+                default=4, # Default priority for no match
+                output_field=IntegerField(),
+            )
+        ).filter(
+            Q(post_title__icontains=query) | Q(created_by__username__icontains=query) | Q(post_description__iexact=query)
+        ).order_by('priority', '-created_at')  # Order by priority first, then by created_at
+
+
+    else:
+        posts = []
+
+    context = {
+        'posts': posts,
+        'query': query,
+    }
+
+    return render(request, 'search.html', context)
 
 
 

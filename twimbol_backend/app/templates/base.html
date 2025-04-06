@@ -21,7 +21,7 @@
             <img src="{% static 'img/logo.png' %}" alt="">
         </div>
         <menu class="header_menu">
-            <a href="javascript:void(0)" class="search_btn">🔍</a>
+            <a href="javascript:void(0)" class="search_btn" onclick="document.querySelector('#search_form').setAttribute('style', 'display: block')">🔍</a>
             <a href="{% url 'messages' %}">💬</a>
             <a href="javascript:void(0)" class="menu_btn">
                 <span onclick="document.querySelector('#ham_menu').setAttribute('style', 'visibility: visible')">☰</span>
@@ -35,6 +35,14 @@
                     {% endif %}
             </ul></a>
         </menu>
+
+        <form action="{% url 'search' %}" method="get" id="search_form" class="search_form">
+            <a href="javascript:void(0)" class="close_search" onclick="document.querySelector('#search_form').setAttribute('style', 'display: none')">✖</a>
+            <input type="text" name="query" placeholder="Search posts..." value="{{ request.GET.query }}">
+            <button type="submit">Search</button>
+        </form>
+        
+
     </header>
     
     <menu>

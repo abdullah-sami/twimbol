@@ -1,0 +1,76 @@
+<button onclick="window.history.back()" class="history_back_btn">←</button>
+
+<br><br>
+
+<form action="" method="get">
+    <input type="text" name="query" placeholder="Search posts..." value="{{ request.GET.query }}">
+    <button type="submit">Search</button>
+</form>
+
+
+
+
+{% for post in posts %}
+
+
+{% if post.post_type == 'post' %}
+
+<a href="{% url 'post' post.id %}">
+<div class="post">
+    <img src="{{post.post_banner.url}}" alt="" width="150px">
+        <h2>{{ post.post_title }}</h2>
+        <p>{{ post.created_by }}</p>
+        <p><strong>Date:</strong> {{ post.created_at }}</p>
+    </div>
+</a>
+
+
+{% elif post.post_type == 'youtube_video' %}
+<a href="{% url 'video' post.video_data.video_id %}">
+    <div class="post_header">
+        <div class="post_avatar">
+            <img src="{{post.video_data.thumbnail_url}}" alt="">
+        </div>
+        <div class="post_detailes">
+            <img src="{{post.video_data.channel_image_url}}" alt="">
+            <h2>{{post.video_data.video_title}}</h2>
+            <p>{{post.video_data.channel_title}}</p>
+        </div>
+    </div>
+</a>
+
+
+{% elif post.post_type == 'youtube_video_upload' %}
+<a href="{% url 'video' post.video_data.video_id %}">
+    <div class="post_header">
+        <div class="post_avatar">
+            <img src="{{post.video_data.thumbnail_url}}" alt="">
+        </div>
+        <div class="post_detailes">
+            <img src="{{post.video_data.channel_image_url}}" alt="">
+            <h2>{{post.video_data.video_title}}</h2>
+            <p>{{post.video_data.channel_title}}</p>
+        </div>
+    </div>
+</a>
+
+
+{% elif post.post_type == 'youtube_reel' %}
+<a href="{% url 'reel' post.reels_data.reel_id %}">
+    <div class="reel_item">
+        <img src="{{ post.reels_data.thumbnail_url }}" alt="">
+    </div>
+</a>
+
+
+
+{% endif %}
+
+
+    {% endfor %}
+
+
+{% if posts|length == 0 %}
+    <p>No posts found.</p>
+{% endif %}
+

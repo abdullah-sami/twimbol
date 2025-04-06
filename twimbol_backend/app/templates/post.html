@@ -15,6 +15,7 @@
 
     <h1>{{post.post_title}}</h1>
     <p>Post by: <a href="{%url 'profile' post.created_by%}">{{post.created_by.profile.first_name}} {{post.created_by.profile.last_name}}</a></p>
+    {% if post.created_by == user %} <a href="{% url 'post_create_edit' post.id %}">Edit Post</a>{% endif %}
     <p>{{post.created_at}}</p>
 
     <p>{{post.post_description}}</p>

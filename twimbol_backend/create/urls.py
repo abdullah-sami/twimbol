@@ -15,8 +15,10 @@ urlpatterns = [
     path('video/upload', views.video_upload, name='video_upload'),
     
     path('reel/', views.reel, name='reel'),
+
     path('manage-contents/', views.manage_contents, name='manage-contents'),
     path('manage-contents/delete/<int:post_id>', views.delete_post, name='manage-contents-delete'),
+    
     path('settings/', views.settings, name='settings'),
 
 ] 
