@@ -8,9 +8,6 @@ from django.contrib.auth.models import User
 
 
 
-
-
-
 class Post(models.Model):
     post_type = models.CharField(max_length=100)
     post_title = models.CharField(max_length=100)

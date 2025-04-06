@@ -46,3 +46,15 @@ class PostForm(forms.ModelForm):
             super().__init__(*args, **kwargs)
             self.fields['post_description'].required = False
             self.fields['post_banner'].required = False
+
+
+
+
+
+
+
+class PostDeleteForm(forms.Form):
+    confirm = forms.BooleanField(
+        required=True,
+        label="Are you sure you want to delete this post?"
+    )

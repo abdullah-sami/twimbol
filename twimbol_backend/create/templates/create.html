@@ -47,25 +47,86 @@
 
     {% if upload_message %} <p>{{upload_message}}</p> {%endif%}
 
-
+    
+    <p>Total posts: {{posts|length}}</p>
+    {% if views %} <p>Total views:{{views}}</p> {%endif%}
+    {% if likes %} <p>Total likes:{{likes}}</p> {%endif%}
+    <h2>Recent uploads</h2>
+    <div class="post_container_creator_dashboard">
     {% for post in posts %}
+    {% if forloop.counter <= 10 %}
+    
     {% if post.post_type == 'post' %}
-
-    {% if post.post_banner %}
-    <a href="{% url 'post_create_edit' %}">
     <div class="post_creator_dashboard">
-        <img src="{{ post.post_banner.url }}" alt="">
-        <p>{{post.post_title|slice:"30"}}</p>
-        
-    </div></a>
+        <a href="{% url 'post_create_edit' post.id %}">
+            <div class="post_creator_dashboard">
+                {% if post.post_banner %}
+                <img src="{{ post.post_banner.url }}" alt="">
+                {% endif %}    
+                <p>{{post.post_title|slice:"30"}}</p>
+            
+            </div>
+        </a>
+    </div>
+
+
+    {% elif post.post_type == "youtube_video_upload" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+      
+            {% endif %}
+
+
+            {% elif post.post_type == "youtube_video" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            {% endif %}
+            {% elif post.post_type == "youtube_reel" %}
+            {% if post.reels_data %}
+
+            <div class="post_creator_dashboard">
+            <a href="{% url 'reel' post.reels_data.reel_id %}">
+                <div class="reel_item">
+                    <img src="{{ post.reels_data.thumbnail_url }}" alt="">
+                </div>
+            </a>
+            </div>
 
     {% endif %}
-    
+
+
+    {% endif %}
     {% endif %}
     
 
     {%endfor%}
 
+</div>
 
     {% endif %}
 
@@ -80,6 +141,9 @@
     <a href="{% url 'video_upload' %}"><button>Upload from device</button></a>
     {% endif %}
 
+    {% if message %}{{message}}{% endif %}
+
+
 
 
     {% if user.is_authenticated == False %}
@@ -88,7 +152,7 @@
 
     {% endif %}
 
-
+    {%if post.created_by%} <p> Created by: {{post.created_by}}</p>{%endif%}
     {% if form %}
     <form action="" method="post" id="form-controls"  enctype="multipart/form-data">
         {% csrf_token %} 
@@ -101,6 +165,7 @@
 
         <button type="submit">Save</button>
     </form>
+
 
     {% endif %} 
 
@@ -237,6 +302,127 @@
 
       
     {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {% if create_action == 'manage-contents' %}
+
+    {% if upload_message %} <p>{{upload_message}}</p> {%endif%}
+
+    
+    <p>Total posts: {{posts|length}}</p>
+    
+    
+    <div class="post_container_creator_dashboard">
+
+    {% for post in posts %}
+    {% if post.post_type == 'post' %}
+    <div class="post_creator_dashboard">
+        <a href="{% url 'post_create_edit' post.id %}">
+            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+            <div class="post_creator_dashboard">
+                {% if post.post_banner %}
+                <img src="{{ post.post_banner.url }}" alt="">
+                {% endif %}    
+                <p>{{post.post_title|slice:"30"}}</p>
+            
+            </div>
+        </a>
+    </div>
+
+
+    {% elif post.post_type == "youtube_video_upload" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">
+            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+            <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+      
+            {% endif %}
+
+
+            {% elif post.post_type == "youtube_video" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            {% endif %}
+            {% elif post.post_type == "youtube_reel" %}
+            {% if post.reels_data %}
+
+            <div class="post_creator_dashboard">
+            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+            <a href="{% url 'reel' post.reels_data.reel_id %}">
+                <div class="reel_item">
+                    <img src="{{ post.reels_data.thumbnail_url }}" alt="">
+                </div>
+            </a>
+            </div>
+
+    {% endif %}
+
+
+    {% endif %}
+    
+
+    {%endfor%}
+
+</div>
+
+    {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,14 +1,14 @@
 from django.urls import reverse
-from django.shortcuts import render
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .forms import *
 from app.models import *
 from app.utils.youtube_api import get_video_data, upload_to_youtube, get_youtube_credentials
 from django.contrib.auth.decorators import login_required
+
 import tempfile
 
 
-
+@login_required
 def dashboard(request):
     user = request.user
 
@@ -19,14 +19,22 @@ def dashboard(request):
 
 
     posts = Post.objects.all().filter(created_by=user).order_by("-created_at")
+
+    total_view_count = 0
+    total_like_count = 0
+
+    for post in posts:
+        if(getattr(post, 'video_data', None)):
+            total_view_count += getattr(post, 'video_data', None).view_count
+            total_like_count += getattr(post, 'video_data', None).like_count
          
-
-
     context={
         "create_action": "dashboard",
         "user": user,
         "upload_message": upload_message,
-        "posts": posts
+        "posts": posts,
+        "views": total_view_count,
+        "likes": total_like_count
     }
     return render(request, 'create.html', context)
 
@@ -54,8 +62,11 @@ def post(request):
     }
 
     return render(request, 'create.html', context)
+
+
 @login_required
 def post_edit(request, post_id):
+    message = ''
     try:
         # Fetch the post by ID
         post = Post.objects.get(id=post_id)
@@ -63,23 +74,44 @@ def post_edit(request, post_id):
         # Handle the case where the post does not exist
         return redirect(reverse('dashboard') + '?upload_message=post_not_found')
 
+    user = request.user
+    
+    if post.created_by == user:
+        if request.method == 'POST':
+            form = PostForm(request.POST, request.FILES)
+    
+            form.instance.created_by = user
+            
+            if form.is_valid():
+                Post.objects.filter(id=post_id).update(
+                    post_title=form.cleaned_data['post_title'],
+                    post_description=form.cleaned_data['post_description'],
+                    post_type=form.cleaned_data['post_type'])
+                if form.cleaned_data.get('post_banner'):
+                    Post.objects.filter(id=post_id).update(
+                    post_banner=form.cleaned_data['post_banner'])
+                elif post.post_banner :
+                    Post.objects.filter(id=post_id).update(
+                    post_banner=post.post_banner)
+                
 
-    if request.method == 'POST':
-        form = PostForm(request.POST, request.FILES)
-        
-        user = request.user
 
-        form.instance.created_by = user
-        
-        if form.is_valid():
-            form.save()
-            return redirect(reverse('dashboard')+'?upload_message=success')
+                message = "post edited"
+                return redirect(reverse('dashboard')+'?upload_message=success')
+            
+        else:
+            form = PostForm(instance=post)
+            message = 'edit post'
+
     else:
-        form = PostForm(instance=post)
+        message = "Cannot edit this post"
+        form = None
 
     context={
         "create_action": "post",
+        "post": post,
         "form": form,
+        "message": message
     }
 
     return render(request, 'create.html', context)
@@ -286,10 +318,63 @@ def reel(request):
 
 
 
+
+
+
 @login_required
 def manage_contents(request):
-    
-    return render(request, 'create.html', context={"create_action": "manage-contents"})
+    user = request.user
+
+    upload_message = ''
+
+    if request.method == "GET":
+        upload_message = request.GET.get("upload_message", "")
+
+
+    posts = Post.objects.all().filter(created_by=user).order_by("-created_at")
+
+    total_view_count = 0
+    total_like_count = 0
+
+    for post in posts:
+        if(getattr(post, 'video_data', None)):
+            total_view_count += getattr(post, 'video_data', None).view_count
+            total_like_count += getattr(post, 'video_data', None).like_count
+         
+    context={
+        "create_action": "manage-contents",
+        "user": user,
+        "upload_message": upload_message,
+        "posts": posts,
+        
+    }
+    return render(request, 'create.html', context)
+
+
+
+
+@login_required
+def delete_post(request, post_id):
+
+    post = get_object_or_404(Post, id=post_id, created_by=request.user)
+
+    if request.method == 'POST':
+        form = PostDeleteForm(request.POST)
+        if form.is_valid():
+            post.delete()
+            return redirect(reverse('manage-contents')+'?upload_message=post_deleted')
+    else:
+        form = PostDeleteForm()
+
+    return render(request, 'create.html', {'create_action': "delete",'form': form, 'post': post,})
+
+
+
+
+
+
+
+
 
 @login_required
 def settings(request):

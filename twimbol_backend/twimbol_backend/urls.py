@@ -10,6 +10,6 @@ urlpatterns = [
     path('user/', include('user.urls')),
 
     path('youtube/', views.youtube, name='youtube'),
-    path('oauth2callback/', views.oauth2callback, name='oauth2callback'),
+    path('authorize/callback/', views.oauth2callback, name='oauth2callback'),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
