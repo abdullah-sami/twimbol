@@ -11,9 +11,9 @@ class UserProfile(models.Model):
     user_address = models.CharField(max_length=50, null=True)
     user_type = models.CharField(max_length=50, default='regular')
 
-    user_social_fb = models.CharField(max_length=50, null=True)
-    user_social_twt = models.CharField(max_length=50, null=True)
-    user_social_yt = models.CharField(max_length=50, null=True)
+    user_social_fb = models.CharField(max_length=50, null=True, blank=True)
+    user_social_twt = models.CharField(max_length=50, null=True, blank=True)
+    user_social_yt = models.CharField(max_length=50, null=True, blank=True)
 
     user_status = models.CharField(max_length=50, default=1)
     user_banned = models.BooleanField(default=False)

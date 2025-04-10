@@ -49,8 +49,8 @@
     <nav>
         <ul>
             <li><a href="{% url 'administration' %}">Home</a></li>
-            <li><a href="{% url 'admin_creators' %}">Creators</a></li>
             <li><a href="{% url 'admin_users' %}">Users</a></li>
+            <li><a href="{% url 'admin_creators' %}">Creators</a></li>
             <li><a href="{% url 'admin_admins' %}">Admins</a></li>
             <li><a href="{% url 'admin_banned' %}">Banned Users</a></li>
         </ul>
@@ -62,6 +62,7 @@
         <h2>New Applications</h2>
         <div class="user-cards">
             {% for application in new_applications %}
+            <a href="{% url 'profile' application.user %}">
                 <div class="user-card">
                     <h3>{{ application.user.profile.first_name }} {{ application.user.profile.last_name }}</h3>
                     <p><strong>Username:</strong> {{ application.user.username }}</p>
@@ -79,7 +80,7 @@
                         <button type="submit" name="creator_application" value=0>Reject Application</button>
                     </form>
         
-                </div>
+                </div></a>
             {% endfor %}
         </div>
         
@@ -106,6 +107,7 @@
         
         <div class="user-cards">
     {% for user in users %}
+    <a href="{% url 'profile' user %}">
     <div class="user-card">
         <h3>{{ user.profile.first_name }} {{ user.profile.last_name }}</h3>
         <p><strong>Username:</strong> {{ user.username }}</p>
@@ -120,7 +122,7 @@
                 <button>Ban User</button>
             </form>
 
-        </div>
+        </div></a>
     {% endfor %}
     
 </div>

@@ -40,10 +40,19 @@ header{
 
 
 /* ************   reels  ************* */
+.reels{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1vw;
+    background-color: #ffffff; /* White background for contrast */
+    border-radius: 1vw; /* Rounded corners for a modern look */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
 
 .reel_item {
     display: inline-block;
-    margin: 0 1vw;
+    margin: 0 .5vw;
     text-align: center;
     width: 10vw; /* Slightly larger for better visibility */
     height: 15vw;
@@ -54,6 +63,7 @@ header{
     cursor: pointer;
     transition: box-shadow 0.3s ease;
     object-position: 10%;
+    scale: 0.8;
 }
 
 .reel_item:hover {
@@ -80,7 +90,8 @@ header{
 
 
 .post {
-    margin: 2vw 0;
+    width: 50vw;
+    margin: 2vw auto;
     padding: 1.5vw;
     background-color: #ffffff; /* White background for contrast */
     border-radius: 1vw; /* Rounded corners for a modern look */
@@ -93,11 +104,18 @@ header{
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow on hover */
 }
 .post_avatar img {
-    width: 40vw;
+    width: 25vw;
+    display: block;
+    object-fit: cover;
+    border: 2px solid #ccc; /* Border around avatar */
+}
+.banner_img{
+    width: 25vw;
     display: block;
     object-fit: cover;
     margin: auto;
-    border: 2px solid #ccc; /* Border around avatar */
+    border: 2px solid #ccc;
+
 }
 
 .post_header {

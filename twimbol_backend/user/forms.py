@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm, PasswordChangeForm
 from django.forms import ModelForm
 from .models import *
-
+from django.forms import TextInput
 
 
 class UserCreateForm(UserCreationForm):
@@ -30,7 +30,14 @@ class UserCreateForm(UserCreationForm):
 class UserProfileForm(ModelForm):
     class Meta:
         model = UserProfile
-        fields = ['first_name', 'last_name', 'user_phone', 'user_address']
+        fields = ['first_name', 'last_name', 'user_phone', 'user_address', 'user_social_fb', 'user_social_twt', 'user_social_yt']
+        widgets = {
+            'user_phone': TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number', 'type': 'tel'}),
+            'user_address': TextInput(attrs={'class': 'form-control', 'placeholder': 'Address', 'type': 'address'}),
+            'user_social_fb': TextInput(attrs={'class': 'form-control', 'placeholder': 'Facebook Link'}),
+            'user_social_twt': TextInput(attrs={'class': 'form-control', 'placeholder': 'Twitter Link'}),
+            'user_social_yt': TextInput(attrs={'class': 'form-control', 'placeholder': 'YouTube Link'}),
+        }
 
 
 

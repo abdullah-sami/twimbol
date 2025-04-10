@@ -38,6 +38,7 @@ def creators(request):
         # print(creator_application_action)
         if creator_application_action == '1':
             creator = User.objects.get(username=request.POST.get('applicant_username'))
+            creator.groups.remove(Group.objects.get(name='visitor'))
             creator.groups.add(Group.objects.get(name='creator'))
             creator.save()
 

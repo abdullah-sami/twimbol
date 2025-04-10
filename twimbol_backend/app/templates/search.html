@@ -3,7 +3,7 @@
 <br><br>
 
 <form action="" method="get">
-    <input type="text" name="query" placeholder="Search posts..." value="{{ request.GET.query }}">
+    <input type="text" name="query" placeholder="Search posts..." value="{{ request.GET.query }}" required minlength="3">
     <button type="submit">Search</button>
 </form>
 

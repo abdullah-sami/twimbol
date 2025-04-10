@@ -385,7 +385,7 @@ def delete_post(request, post_id):
 
 
 
-@login_required
+@creator_required
 def settings(request):
     
     return render(request, 'create.html', context={"create_action": "settings"})
@@ -393,7 +393,7 @@ def settings(request):
 
 
 
-@visitor_required
+@login_required
 def apply_for_creator(request):
     user = request.user
 

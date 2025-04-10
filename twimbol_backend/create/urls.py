@@ -19,7 +19,7 @@ urlpatterns = [
     path('manage-contents/', views.manage_contents, name='manage-contents'),
     path('manage-contents/delete/<int:post_id>', views.delete_post, name='manage-contents-delete'),
     
-    path('settings/', views.settings, name='settings'),
+    path('settings/', views.settings, name='creator_settings'),
     path('apply-for-creator/', views.apply_for_creator, name='apply-for-creator'),
 
 ] 

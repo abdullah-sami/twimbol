@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from .utils.youtube_api import get_video_data, get_video_stats
-from django.db.models import Q, Case, When, IntegerField
+from django.db.models import Q, Case, When, IntegerField, F
 from .models import *
 from .forms import *
 
@@ -28,9 +28,34 @@ def post(request, post_id):
     
     post = Post.objects.get(id=post_id)
 
+    post_comments = Post_Comment.objects.filter(post=post).order_by('-created_at')
+    post_comment_form = CommentForm(request.POST or None)
+
+    if request.method == 'POST' and 'comment_form' in request.POST:
+        if post_comment_form.is_valid():
+            comment = post_comment_form.save(commit=False)
+            comment.post = post
+            comment.created_by = user
+            comment.save()
+            return redirect('post', post_id=post.id)
+
+
+    if request.POST and 'delete_comment_form' in request.POST:
+        comment_id = request.POST.get('comment_id')
+        comment = Post_Comment.objects.get(id=comment_id)
+        print(comment)
+        if comment.created_by == user:
+            comment.delete()
+            return redirect('post', post_id=post.id)
+        
+        
+
+
     context = {
         'post': post,
         'user': user,
+        'post_comments': post_comments,
+        'comment_form': post_comment_form,
     }
 
     return render(request, 'post.html', context)
@@ -134,10 +159,14 @@ def search(request):
                 When(post_description__icontains=query, then=3),  # Lower priority for username matches
                 default=4, # Default priority for no match
                 output_field=IntegerField(),
+            ),
+            trending_score=Case(
+                When(video_data__isnull=False, then=(F('video_data__like_count') * 2 + F('video_data__view_count'))),
+                default=0,
+                output_field=IntegerField(),
             )
         ).filter(
-            Q(post_title__icontains=query) | Q(created_by__username__icontains=query) | Q(post_description__iexact=query)
-        ).order_by('priority', '-created_at')  # Order by priority first, then by created_at
+            Q(post_title__icontains=query) | Q(created_by__username__icontains=query) | Q(post_description__icontains=query)).order_by('priority', '-trending_score', '-created_at')    # Order by priority, trending_score, and created_at
 
 
     else:

@@ -4,40 +4,51 @@ from app.models import *
 from .forms import *
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from .decorators import admin_required, creator_required, visitor_required
 from django.urls import reverse
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
 
 
 
 @visitor_required
 def profile(request, profile_user_name):
-
     user = request.user
-    profile = UserProfile.objects.get(user__username=profile_user_name)
 
-    posts = Post.objects.filter(created_by=profile.user).order_by('-created_at')
+    try:
+        profile_user = User.objects.get(username=profile_user_name)
+        profile = UserProfile.objects.get(user=profile_user)
+        message = 'User Found'
+    except User.DoesNotExist:
+        profile_user = None
+        profile = None
+        message = 'No such user.'
+
+    posts = Post.objects.filter(created_by=profile_user).order_by('-created_at')
+    
 
     if request.method == 'GET':
-        q = request.GET.get('q')
+        if request.GET.get('q'):
+            q = request.GET.get('q')
         
-        posts = posts.filter(post_type=q)
+            posts = posts.filter(post_type=q)
 
-    if user == profile.user:
+    if user == profile_user:
         return redirect('user_manager')
     
 
     context = {
         'profile': profile,
         'user': user,
-        'posts': posts
+        'posts': posts,
+        'message': message,
         }
 
     return render(request, 'profile.html', context)
 
 
-@visitor_required
+@login_required
 def user_manager(request):
 
 

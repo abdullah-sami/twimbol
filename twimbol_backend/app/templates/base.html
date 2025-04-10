@@ -11,7 +11,7 @@
     
     {%block style%}{%endblock%}
     
-    
+
     
 </head>
 <body>
@@ -38,7 +38,7 @@
 
         <form action="{% url 'search' %}" method="get" id="search_form" class="search_form">
             <a href="javascript:void(0)" class="close_search" onclick="document.querySelector('#search_form').setAttribute('style', 'display: none')">✖</a>
-            <input type="text" name="query" placeholder="Search posts..." value="{{ request.GET.query }}">
+            <input type="text" name="query" placeholder="Search posts..." value="{{ request.GET.query }}" required minlength="3">
             <button type="submit">Search</button>
         </form>
         
