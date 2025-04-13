@@ -32,6 +32,7 @@ function reactToVideo(videoId) {
 
 function toggleCommentBox(videoId) {
     const box = document.getElementById(`comment-box-${videoId}`);
+
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 

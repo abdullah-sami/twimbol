@@ -22,27 +22,65 @@
 </div>
 
 
-<div class=""><h2>Comments</h2>
-<form action="" method="post">
-    {% csrf_token %}
-    {{ comment_form.as_p }}
-    <input type="submit" value="Send" name="comment_form">
-</form>
-{% for comment in post_comments %}
-<div class="comment" style="display: block;">
-
-    <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>: 
-{{ comment.comment }}</pre>
-    <p>{{ comment.created_at }}</p>
 
 
-    {% if comment.created_by == user %}
-    <form action="" method="post" style="display: inline;">
+
+
+{% if user.profile.user_banned %}
+        <p style="color: red;">You are banned for violating community guidelines.</p>
+    {% else %}
+
+
+
+<div class="post_like_section">
+    <h3>Likes: </h3>{{post_stat_like.post_stat_likes}}
+    {% if user.is_authenticated %}
+    <form action="" method="post">
         {% csrf_token %}
-        <input type="hidden" name="comment_id" value="{{ comment.id }}">
-        <input type="submit" value="Delete" name="delete_comment_form">
+        {{ post_stat_like.post_stat_like_form.as_p }}
+            <input type="submit" value="❣️">
     </form>
-            {% endif %}
+    {% else %}
+    <h4>Login to like <a href="{% url 'login' %}">Login</a></h4>
+    {% endif %}
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="post_comments_section">
+    <h2>Comments</h2>
+
+        {% if user.is_authenticated %}
+        <form action="" method="post">
+            {% csrf_token %}
+            {{ comment_form.as_p }}
+            <input type="submit" value="Send" name="comment_form">
+        </form>
+        {% else %}
+        <h4>Login to post comments <a href="{% url 'login' %}">Login</a></h4>
+        {% endif %}
+        {% for comment in post_comments %}
+        <div class="comment" style="display: block;">
+
+            <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>: 
+        {{ comment.comment }}</pre>
+            <p>{{ comment.created_at }}</p>
+
+
+            {% if comment.created_by == user %}
+            <form action="" method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                <input type="submit" value="Delete" name="delete_comment_form">
+            </form>
+                    {% endif %}
 
 
         </div>
@@ -50,6 +88,10 @@
         <p>No comments yet.</p>
     {% endfor %}
 
+</div>
+
+
+{% endif %}
 
 
 {% endblock %}

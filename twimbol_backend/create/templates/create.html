@@ -54,22 +54,54 @@
     
     {% else %}
     {{creator_application_message}}
-    
+    {% endif %}
     {% endif %}
 
-    {% endif %}
 
-    
+
+
+
+    {% if user.profile.user_banned %}
+        <p style="color: red;">You are banned for violating community guidelines.</p>
+    {% else %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     {% if create_action == 'dashboard' %}
+    
 
     {% if upload_message %} <p>{{upload_message}}</p> {%endif%}
 
     
     <p>Total posts: {{posts|length}}</p>
-    {% if views %} <p>Total views:{{views}}</p> {%endif%}
-    {% if likes %} <p>Total likes:{{likes}}</p> {%endif%}
+    <p>Total likes: {{total_like_count}}</p>
+    <p>Recent Comments</p>
+    <div class="recent_comment_box">
+        {% for post in posts %}
+        {% for comment in post.post_comments.all %}
+        <div class="comment" style="display: block;">
+            <a href="{% url 'post' post.id %}"><h2>{{ post.post_title }}</h2></a>
+            <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>:  {{ comment.comment }}</pre>
+            <p>{{ comment.created_at }}</p>
+        </div>
+        {%endfor%}
+        {%endfor%}
+    </div>
+
     <h2>Recent uploads</h2>
     <div class="post_container_creator_dashboard">
     {% for post in posts %}
@@ -77,13 +109,15 @@
     
     {% if post.post_type == 'post' %}
     <div class="post_creator_dashboard">
+        likes: {{post.post_likes.count}}
         <a href="{% url 'post_create_edit' post.id %}">
             <div class="post_creator_dashboard">
                 {% if post.post_banner %}
                 <img src="{{ post.post_banner.url }}" alt="">
                 {% endif %}    
                 <p>{{post.post_title|slice:"30"}}</p>
-            
+                
+                
             </div>
         </a>
     </div>
@@ -92,7 +126,7 @@
     {% elif post.post_type == "youtube_video_upload" %}
             {% if post.video_data %}
 
-            <div class="post_creator_dashboard">
+            <div class="post_creator_dashboard">likes: {{post.post_likes.count}}
                 <a href="{% url 'video' post.video_data.video_id %}">
                     <div class="">
                         <div class="">
@@ -111,7 +145,7 @@
             {% elif post.post_type == "youtube_video" %}
             {% if post.video_data %}
 
-            <div class="post_creator_dashboard">
+            <div class="post_creator_dashboard">likes: {{post.post_likes.count}}
                 <a href="{% url 'video' post.video_data.video_id %}">
                     <div class="">
                         <div class="">
@@ -128,7 +162,7 @@
             {% elif post.post_type == "youtube_reel" %}
             {% if post.reels_data %}
 
-            <div class="post_creator_dashboard">
+            <div class="post_creator_dashboard">likes: {{post.post_likes.count}}
             <a href="{% url 'reel' post.reels_data.reel_id %}">
                 <div class="reel_item">
                     <img src="{{ post.reels_data.thumbnail_url }}" alt="">
@@ -178,7 +212,7 @@
         
         {{form.as_p}}
         
-        <script>function getYouTubeVideoID(url) {        const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;        const match = url.match(regex);        return match ? match[1] : null; } document.getElementById("form-controls").addEventListener("submit", function (e) {        const input = document.getElementById("yt-form-control-video-id");        const videoId = getYouTubeVideoID(input.value);   if (videoId) {            input.value = videoId;        } else {            e.preventDefault();            alert("Please enter a valid YouTube URL.");        }    });</script>
+        <script>function getYouTubeVideoID(url) {const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/; const match = url.match(regex); return match ? match[1] : null; } document.getElementById("form-controls").addEventListener("submit", function (e) { const input = document.getElementById("yt-form-control-video-id");        const videoId = getYouTubeVideoID(input.value);   if (videoId) {            input.value = videoId;        } else {            e.preventDefault();            alert("Please enter a valid YouTube URL.");        }    });</script>
 
         
 
@@ -421,14 +455,17 @@
 
 
     {% endif %}
-    
 
+
+    
+    
     {%endfor%}
 
 </div>
 
-    {% endif %}
+{% endif %}
 
+{% endif %}
 
 
 

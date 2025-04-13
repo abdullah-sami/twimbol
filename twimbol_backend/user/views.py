@@ -37,6 +37,8 @@ def profile(request, profile_user_name):
     if user == profile_user:
         return redirect('user_manager')
     
+    if request.user.groups.filter(name='admin').exists():
+        user.is_admin = True
 
     context = {
         'profile': profile,
@@ -58,9 +60,16 @@ def user_manager(request):
 
     if(user.profile):
         if request.method == 'POST':
-            user_profile_form = UserProfileForm(request.POST, instance=profile)
+            user_profile_form = UserProfileForm(request.POST, request.FILES, instance=profile)
             if user_profile_form.is_valid():
                 user_profile_form.save()
+                if request.FILES.get('profile_pic'):
+                    uploaded_file = request.FILES.get('profile_pic')
+                    uploaded_file.name = f'img/profile_pics/{uploaded_file.name}'
+
+                    profile.profile_pic = uploaded_file
+                
+
                 return redirect('user_manager')
         else:
             user_profile_form = UserProfileForm(instance=profile)
@@ -69,12 +78,21 @@ def user_manager(request):
             user=User.objects.get(username=user.username),
         )
 
+    if request.method == 'POST' and 'delete_profile' in request.POST:
+        user.delete()
+        return redirect('login')
+    
+
+    liked_posts = Post_Stat_like.objects.filter(created_by=user).order_by('-created_at')
+
+
 
     context = {
         'message': 'Logged in',
         'user': user,
         'form': user_profile_form,
-        'profile': profile
+        'profile': profile,
+        'liked_posts': liked_posts,
         }
 
 

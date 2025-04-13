@@ -28,22 +28,20 @@ def dashboard(request):
 
 
     posts = Post.objects.all().filter(created_by=user).order_by("-created_at")
+    
 
-    total_view_count = 0
     total_like_count = 0
-
     for post in posts:
-        if(getattr(post, 'video_data', None)):
-            total_view_count += getattr(post, 'video_data', None).view_count
-            total_like_count += getattr(post, 'video_data', None).like_count
+        total_like_count += Post_Stat_like.objects.filter(post=post).count()
+
+
          
     context={
         "create_action": "dashboard",
         "user": user,
         "upload_message": upload_message,
         "posts": posts,
-        "views": total_view_count,
-        "likes": total_like_count
+        "total_like_count": total_like_count,
     }
     return render(request, 'create.html', context)
 

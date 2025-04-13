@@ -64,6 +64,7 @@
             {% for application in new_applications %}
             <a href="{% url 'profile' application.user %}">
                 <div class="user-card">
+                    <img src="{{application.user.profile.profile_pic.url}}" alt="" style="width: 100px; height: 100px;">
                     <h3>{{ application.user.profile.first_name }} {{ application.user.profile.last_name }}</h3>
                     <p><strong>Username:</strong> {{ application.user.username }}</p>
                     <p><strong>User Type:</strong>{% for group in application.user.groups.all %}
@@ -109,6 +110,8 @@
     {% for user in users %}
     <a href="{% url 'profile' user %}">
     <div class="user-card">
+        <img src="{{user.profile.profile_pic.url}}" alt="" style="width: 100px; height: 100px;">
+
         <h3>{{ user.profile.first_name }} {{ user.profile.last_name }}</h3>
         <p><strong>Username:</strong> {{ user.username }}</p>
             <p><strong>User Type:</strong>{% for group in user.groups.all %}
@@ -117,9 +120,25 @@
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Phone:</strong> {{ user.profile.user_phone }}</p>
             <p><strong>Address:</strong> {{ user.profile.user_address }}</p>
+
+
+
             
-            <form action="" method="post">
-                <button>Ban User</button>
+            {% if page != 'banned' %}
+            {% if user.profile.user_banned %}
+            This {{page|slice:-1}}  is banned
+            {% endif %}
+            {% endif %}
+            
+            <form action="{% url 'admin_banned' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="ban_username" value="{{ user }}">
+                {% if user.profile.user_banned %}
+                    <button type="submit" name="unban_user">Unban User</button>
+                {% else %}
+                    <button type="submit" name="ban_user">Ban User</button>
+                {% endif %}
+
             </form>
 
         </div></a>

@@ -53,7 +53,7 @@
                         </span>
                         <span class="post_stat_item">
                             <p href="javascript:void(0)">👍🏻</p>
-                            {{post.video_data.like_count}}
+                            {{ post.post_likes.count|add:post.video_data.like_count }}
                         </span>                
                         <span class="post_stat_item">
                             <a href="javascript:void(0)">:</a>
@@ -94,7 +94,7 @@
                         </span>
                         <span class="post_stat_item">
                             <p href="javascript:void(0)">👍🏻</p>
-                            {{post.video_data.like_count}}
+                            {{ post.post_likes.count|add:post.video_data.like_count }}
                         </span>                
                         <span class="post_stat_item">
                             <a href="javascript:void(0)">:</a>
@@ -126,6 +126,7 @@
                     <p>{{post.post_title}}</p>
                     <p>{{post.post_description|slice:":100" }}... Read more</p>
                     <p>{{post.created_by.profile.first_name}} {{ post.created_by.profile.last_name}}</p>
+                    <p>{{ post.post_likes.count }} likes</p>
                     <p>{{post.created_at}}</p>
                 </a>
             </div>

@@ -91,10 +91,23 @@ def admins(request):
     
     return render(request, 'admin.html', context)
 
+
+@admin_required
 def banned(request):
     banned = User.objects.filter(profile__user_banned=True).order_by('username')
 
 
+    if request.method == 'POST' and 'ban_user' in request.POST:
+        user = User.objects.get(username=request.POST.get('ban_username'))
+        user.profile.user_banned = True
+        user.profile.save()
+        return redirect('admin_banned')
+
+    elif request.method == 'POST' and 'unban_user' in request.POST:
+        user = User.objects.get(username=request.POST.get('ban_username'))
+        user.profile.user_banned = False
+        user.profile.save()
+        return redirect('admin_banned')
     
     context = {
         'page': 'banned',

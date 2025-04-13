@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 {% block title %}Twimbol{% endblock %}
 
 
@@ -31,7 +32,7 @@
                         </span>
                         <span class="post_stat_item">
                             <p href="javascript:void(0)">👍🏻</p>
-                            {{post.video_data.like_count}}
+                            {{ post.post_likes.count|add:post.video_data.like_count }}
                           
                         </span>                
                         <span class="post_stat_item">
@@ -74,7 +75,7 @@
                         </span>
                         <span class="post_stat_item">
                             <p href="javascript:void(0)">👍🏻</p>
-                            {{post.video_data.like_count}}
+                            {{ post.post_likes.count|add:post.video_data.like_count }}
                         </span>                
                         <span class="post_stat_item">
                             <a href="javascript:void(0)">:</a>

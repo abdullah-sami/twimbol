@@ -10,6 +10,15 @@
 
 
 
+{% for creator in creators %}
+<a href="{% url 'profile' creator %}">
+    <div class="creator_card">
+        <img src="{{creator.profile.profile_pic.url}}" alt="" width="50px">
+        <p>{{ creator.profile.first_name }} {{ creator.profile.last_name }}</p>
+    </div>
+</a>
+{% endfor %}
+
 {% for post in posts %}
 
 

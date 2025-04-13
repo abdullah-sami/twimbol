@@ -33,6 +33,23 @@ class Post_Comment(models.Model):
 
 
 
+
+
+
+class Post_Stat_like(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_likes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='like_created_by', blank=True)
+
+    def __str__(self):
+        return str(self.created_by) + " to " + str(self.post)
+
+
+
+
+
+
+
 class Youtube_Upload(models.Model):
     post = models.OneToOneField(
         Post, 

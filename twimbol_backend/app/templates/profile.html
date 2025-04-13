@@ -12,6 +12,7 @@
 {% if profile %}
     <div class="profile-section">
         <div class="profile-header">
+            <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="profile-picture" style="width: 150px; height: 150px;">
             <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
             <p><strong>Email:</strong> {{ profile.user.email }}</p>
             <p><strong>Phone:</strong> {{ profile.user_phone }}</p>
@@ -31,6 +32,20 @@
                 {% endif %}
             </ul>
         </div>
+
+        {% if user.is_admin == True %}
+        <form action="{% url 'admin_banned' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="ban_username" value="{{ profile.user }}">
+            {% if profile.user_banned %}
+                <button type="submit" name="unban_user">Unban User</button>
+            {% else %}
+                <button type="submit" name="ban_user">Ban User</button>
+            {% endif %}
+
+        </form>
+        {% endif %}
+
     </div>
 
 

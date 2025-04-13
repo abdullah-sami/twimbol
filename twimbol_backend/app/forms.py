@@ -17,4 +17,17 @@ class CommentForm(ModelForm):
             'comment': '',
         }
 
-    
+
+
+
+
+class PostStatLikeForm(ModelForm):
+    class Meta:
+        model = Post_Stat_like
+        fields = ['created_by']
+        widgets = {
+            'created_by': forms.HiddenInput(),
+        }
+        labels = {
+            'created_by': '',
+        }

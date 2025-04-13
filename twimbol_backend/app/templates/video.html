@@ -1,12 +1,20 @@
-
 {% extends 'base.html' %}
 
 
-{% block title %}{{video.video_title}}{% endblock %}  
+{% block title %}{{video.video_title}}{% endblock %}
 {%load static%}
 {%block style%}
-    <link rel="stylesheet" href="{% static 'css/video.css' %}">
-    {% endblock %}
+<link rel="stylesheet" href="{% static 'css/video.css' %}">
+<style>
+  * {
+    color: white;
+  }
+
+  input[type="submit"] {
+    color: black;
+  }
+</style>
+{% endblock %}
 {% block content %}
 
 
@@ -15,38 +23,160 @@
 
 {% if post.post_type == "youtube_video" %}
 
-<iframe 
-width="560" height="315" 
-src="https://www.youtube.com/embed/{{video.video_id}}"
-title="{{video.video_id}}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
-</iframe>
-<p style="color: white;">Views: {{views}}</p>
-<p style="color: white;">Likes: {{likes}}</p>
-<pre id="video_decription"></pre>
-<pre id="video_description" style="color: white;">{{video.video_description}}</pre>
-
-{% elif post.post_type == "youtube_video_upload" %}
-
-<iframe 
-width="560" height="315" 
-src="https://www.youtube.com/embed/{{video.video_id}}"
-title="{{video.video_id}}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/{{video.video_id}}" title="{{video.video_id}}"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
 </iframe>
 
-<p style="color: white;">Views: {{views}}</p>
-<p style="color: white;">Likes: {{likes}}</p>
+
+<div class="post_like_section">
+  <p style="color: white;">Views: {{views}}</p>
+  <p>Likes: {{ post.post_likes.count|add:post.video_data.like_count }}</p>
+
+
+
+  {% if user.is_authenticated %}
+  {% if user.profile.user_banned %}
+  <p style="color: red;">You are banned for violating community guidelines.</p>
+  {% else %}
+  <form action="" method="post">
+    {% csrf_token %}
+    {{ post_stat_like.post_stat_like_form.as_p }}
+    <input type="submit" value="❣️">
+  </form>
+  {% endif %}
+  {% else %}
+  <h4>Login to like <a href="{% url 'login' %}">Login</a></h4>
+  {% endif %}
+</div>
+
+
+
+
 <pre id="video_description" style="color: white;">{{video.video_description}}</pre>
 
 
 
+<div class="comment_section" id="">
+  <h2>Comments</h2>
+  {% if user.profile.user_banned %}
+  <p style="color: red;">You are banned for violating community guidelines.</p>
+  {% else %}
+  <form action="" method="post">
+    {% csrf_token %}
+    {{ comment_form.as_p }}
+    <input type="submit" value="Send" name="comment_form">
+  </form>
+  {% endif %}
+  {% for comment in post_comments %}
+  <div class="comment" style="display: block;">
+
+    <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>: 
+  {{ comment.comment }}</pre>
+    <p>{{ comment.created_at }}</p>
+
+
+    {% if comment.created_by == user %}
+    <form action="" method="post" style="display: inline;">
+      {% csrf_token %}
+      <input type="hidden" name="comment_id" value="{{ comment.id }}">
+      <input type="submit" value="Delete" name="delete_comment_form">
+    </form>
+    {% endif %}
+
+
+  </div>
+  {% empty %}
+  <p>No comments yet.</p>
+  {% endfor %}
 
 
 
 
-{% elif post.post_type == "youtube_reel" %}
+  {% elif post.post_type == "youtube_video_upload" %}
+
+  <iframe width="560" height="315" src="https://www.youtube.com/embed/{{video.video_id}}" title="{{video.video_id}}"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+  </iframe>
+
+  <div class="post_like_section">
+    <p style="color: white;">Views: {{views}}</p>
+    <p>Likes: {{post_stat_like.post_stat_likes}}</p>
+
+    {% if user.is_authenticated %}
+    {% if user.profile.user_banned %}
+    <p style="color: red;">You are banned for violating community guidelines.</p>
+    {% else %}
+    <form action="" method="post">
+      {% csrf_token %}
+      {{ post_stat_like.post_stat_like_form.as_p }}
+      <input type="submit" value="❣️">
+    </form>
+    {% endif %}
+    {% else %}
+    <h4>Login to like <a href="{% url 'login' %}">Login</a></h4>
+    {% endif %}
+  </div>
 
 
-<!-- <iframe 
+
+  <pre id="video_description" style="color: white;">{{video.video_description}}</pre>
+
+
+
+
+
+
+
+  <div class="comment_section" id="">
+    <h2>Comments</h2>
+    {% if user.profile.user_banned %}
+    <p style="color: red;">You are banned for violating community guidelines.</p>
+    {% else %}
+    <form action="" method="post">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <input type="submit" value="Send" name="comment_form">
+    </form>
+    {% endif %}
+
+    {% for comment in post_comments %}
+    <div class="comment" style="display: block;">
+
+      <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>: 
+  {{ comment.comment }}</pre>
+      <p>{{ comment.created_at }}</p>
+
+
+      {% if comment.created_by == user %}
+      <form action="" method="post" style="display: inline;">
+        {% csrf_token %}
+        <input type="hidden" name="comment_id" value="{{ comment.id }}">
+        <input type="submit" value="Delete" name="delete_comment_form">
+      </form>
+      {% endif %}
+
+
+    </div>
+    {% empty %}
+    <p>No comments yet.</p>
+    {% endfor %}
+
+
+
+
+
+
+
+
+
+    {% elif post.post_type == "youtube_reel" %}
+
+
+    <!-- <iframe 
 src="https://youtube.com/embed/iVoC373PTEU?si=v8wrEMDSVXGCcBNM?autoplay=1" 
 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
 allowfullscreen
@@ -55,113 +185,212 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
 
 
 
-<div class="reels-feed" id="reels-feed" tabindex="0">
+    <div class="reels-feed" id="reels-feed" tabindex="0">
 
-  {% with reel=first_reel %}
+      {% with reel=first_reel %}
 
-    <div class="reel-player" id="{{reel}}" data-video-id="{{reel}}">
+      <div class="reel-player" id="{{reel}}" data-video-id="{{reel}}">
 
 
-        <iframe 
-            src="https://www.youtube.com/embed/{{ reel }}?autoplay=1&loop=1&controls=0&modestbranding=1&rel=0&enablejsapi=1" id="reel-{{reel}}"
-            title="{{ reel.reel_title }}"
-            frameborder="0"
-            allow="autoplay; encrypted-media"
-            allowfullscreen
-            class="youtube_player"
-            >
+        <iframe
+          src="https://www.youtube.com/embed/{{ reel }}?autoplay=1&loop=1&controls=0&modestbranding=1&rel=0&enablejsapi=1"
+          id="reel-{{reel}}" title="{{ reel.reel_title }}" frameborder="0" allow="autoplay; encrypted-media"
+          allowfullscreen class="youtube_player">
         </iframe>
         <pre id="video_description" style="color: white;">{{reel.reel_description}}</pre>
-        
-        
+
+
         <div class="interaction_bar">
           <span>
 
-              <button onclick="reactToVideo('{{ reacted }}')" class="reaction-btn " >❤️ </button>  <p style="color: white;">Likes: {{likes}}</p>
-         </span>
-         <span>
-         <button class="views-btn">👁️ </button> <p style="color: white;">Views: {{views}}</p>
-        </span>
-         <span>
-           <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
-     </span>
-     
+
+            <div class="post_like_section">
+              <h3>Likes: </h3>{{post_stat_like.post_stat_likes}}
+              {% if user.is_authenticated %}{% if user.profile.user_banned %}
+              <p style="color: red;">You are banned for violating community guidelines.</p>
+              {% else %}
+              <form action="" method="post">
+                {% csrf_token %}
+                {{ post_stat_like.post_stat_like_form.as_p }}
+                <input type="submit" value="❣️">
+              </form>
+              {% endif %}
+              {% else %}
+              <h4>Login to like <a href="{% url 'login' %}">Login</a></h4>
+              {% endif %}
+            </div>
+          </span>
+          <span>
+            <button class="views-btn">👁️ </button>
+            <p style="color: white;">Views: {{views}}</p>
+          </span>
+          <span>
+            <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
+          </span>
+
         </div>
-        
-       <div id="comment-box-{{ reel }}" class="comment-box" style="display: none;">
-         <textarea id="comment-input-{{ video.video_id }}" placeholder="Write a comment..."></textarea>
-         <button onclick="submitComment('{{ video.video_id }}')">Post</button>
-       </div>
 
-    </div>
-  {% endwith %}
-  
-  {% for reel_itm in reels %}
-    {% with reel=reel_itm %}
-      {% if reel != first_reel %}
 
-      
-        <div class="reel-player"  id="{{reel}}" data-video-id="{{reel}}">
-          <iframe 
-            src="https://www.youtube.com/embed/{{ reel }}?autoplay=0&loop=1&controls=0&modestbranding=1&rel=0&enablejsapi=1" id="reel-{{reel}}"
-            title="{{ reel.reel_title }}"
-            frameborder="0"
-            allow="autoplay; encrypted-media"
-            allowfullscreen
-            class="youtube_player"
-            >
+
+
+        <div class="comment_section" id="comment-box-{{ reel }}">
+          <h2>Comments</h2>
+          {% if user.profile.user_banned %}
+          <p style="color: red;">You are banned for violating community guidelines.</p>
+          {% else %}
+          <form action="" method="post">
+            {% csrf_token %}
+            {{ comment_form.as_p }}
+            <input type="submit" value="Send" name="comment_form">
+          </form>
+          {% endif %}
+
+          {% for comment in post_comments %}
+          <div class="comment" style="display: block;">
+
+            <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>: 
+            {{ comment.comment }}</pre>
+            <p>{{ comment.created_at }}</p>
+
+
+            {% if comment.created_by == user %}
+            <form action="" method="post" style="display: inline;">
+              {% csrf_token %}
+              <input type="hidden" name="comment_id" value="{{ comment.id }}">
+              <input type="submit" value="Delete" name="delete_comment_form">
+            </form>
+            {% endif %}
+
+
+          </div>
+          {% empty %}
+          <p>No comments yet.</p>
+          {% endfor %}
+
+
+
+
+
+        </div>
+        {% endwith %}
+
+
+
+
+        {% for reel_itm in reels %}
+        {% with reel=reel_itm %}
+        {% if reel != first_reel %}
+
+
+        <div class="reel-player" id="{{reel}}" data-video-id="{{reel}}">
+          <iframe
+            src="https://www.youtube.com/embed/{{ reel }}?autoplay=0&loop=1&controls=0&modestbranding=1&rel=0&enablejsapi=1"
+            id="reel-{{reel}}" title="{{ reel.reel_title }}" frameborder="0" allow="autoplay; encrypted-media"
+            allowfullscreen class="youtube_player">
           </iframe>
           <pre id="video_description" style="color: white;">{{reel.reel_description}}</pre>
 
 
-        <div class="interaction_bar">
-          <span>
+          <div class="interaction_bar">
+            <span>
 
-              <button onclick="reactToVideo('{{ reel }}')" class="reaction-btn " >❤️ </button> <p>{{reel.like_count}}</p>
-          </span>
-          <span>
-          <button class="views-btn">👁️ </button> <p>{{reel.view_count}}</p>
-      </span>
-          <span>
-          <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
-      </span>
-      
-        </div>
-      
-        <div id="comment-box-{{ reel }}" class="comment-box" style="display: none;">
-          <textarea id="comment-input-{{ reel }}" placeholder="Write a comment..."></textarea>
-          <button onclick="submitComment('{{ reel }}')">Post</button>
-        </div>
-        </div>
-    
-      {% endif %}
-    {% endwith %}
-  {% endfor %}
-</div>
-
-
+              <div class="post_like_section">
+                <h3>Likes: </h3>{{reel.post.post_likes.count}}
+                {% if user.is_authenticated %}{% if user.profile.user_banned %}
+                <p style="color: red;">You are banned for violating community guidelines.</p>
+                {% else %}
+                <form action="" method="post">
+                  {% csrf_token %}
+                  {{ post_stat_like.post_stat_like_form.as_p }}
+                  <input type="submit" value="❣️">
+                </form>
+                {% endif %}
+                {% else %}
+                <h4>Login to like <a href="{% url 'login' %}">Login</a></h4>
+                {% endif %}
+              </div>
+            </span>
+            <span>
+              <button class="views-btn">👁️ </button>
+              <p style="color: white;">Views: {{views}}</p>
+            </span>
+            <span>
+              <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
+            </span>
   
+          </div>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+          <div class="comment_section" id="comment-box-{{ reel }}">
+            <h2>Comments</h2>
+            {% if user.profile.user_banned %}
+            <p style="color: red;">You are banned for violating community guidelines.</p>
+            {% else %}
+            <form action="" method="post">
+              {% csrf_token %}
+              {{ comment_form.as_p }}
+              <input type="submit" value="Send" name="comment_form">
+            </form>
+            {% endif %}
+  
+            {% for comment in post_comments %}
+            <div class="comment" style="display: block;">
+  
+              <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>: 
+              {{ comment.comment }}</pre>
+              <p>{{ comment.created_at }}</p>
+  
+  
+              {% if comment.created_by == user %}
+              <form action="" method="post" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="comment_id" value="{{ comment.id }}">
+                <input type="submit" value="Delete" name="delete_comment_form">
+              </form>
+              {% endif %}
+  
+  
+            </div>
+            {% empty %}
+            <p>No comments yet.</p>
+            {% endfor %}
+
+
+
+
+          </div>
+
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </div>
+
+
+
+
+
+        {% endif %}
+
+
+
+        {% endblock %}
 
 
 
 
 
 
+        {% block script %}
+
+        <script src="{% static 'js/video.js'%}"></script>
+        <script src="https://www.youtube.com/iframe_api"></script>
 
 
-{% endif %}
-
-{% endblock %}
-
-
-
-
-
-
-{% block script %}
-
-<script src="{% static 'js/video.js'%}"></script>
-<script src="https://www.youtube.com/iframe_api"></script>
-
-
-{% endblock %}
+        {% endblock %}
