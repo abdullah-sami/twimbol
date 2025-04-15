@@ -7,7 +7,7 @@
 
 
 
-<h1>Hello, {{user|title}}!</h1>
+<h1>Hello, {{user}}!</h1>
 {% if profile.user_type == 'creator' %}
 
 <a href="{% url 'dashboard' %}">Go to creator dashboard</a>
@@ -22,6 +22,32 @@
     
 </form>
 
+
+
+
+
+Followers: {{follow.followers.count}}
+{% for follower in follow.followers %}
+
+<div class="follower">
+<a href="{% url 'profile' follower.follower %}">
+    {{follower.follower}}
+    
+</a>
+</div>
+{% endfor %}
+
+
+Following: {{follow.following.count}}
+{% for following in follow.following %}
+
+<div class="following">
+<a href="{% url 'profile' following.following %}">
+    {{following.following}}
+    
+</a>
+</div>
+{% endfor %}
 
 
 

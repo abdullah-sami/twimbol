@@ -14,6 +14,7 @@
 
             {% for reel in reels%}
             {% if forloop.counter <= reel_range %}
+            
 
             <a href="{% url 'reel' reel.reel_id %}">
                 <div class="reel_item">
@@ -30,7 +31,7 @@
 
 
     <div class="posts">
-        {% for post in posts %}
+        {% for post in posts %}{% if post.event_post.id %}{{post.event_post.id}}{% endif %}
             {% if post.post_type == "youtube_video" %}
             {% if post.video_data %}
 

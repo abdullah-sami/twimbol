@@ -25,8 +25,6 @@ def home(request):
 
 
 
-
-
 def post(request, post_id):
 
     user = request.user
@@ -69,9 +67,7 @@ def post(request, post_id):
         
         # User has not liked the post yet, so we can add a like
         else:
-            print(2)
             if post_stat_like_form.is_valid():
-                print(3)
                 like = post_stat_like_form.save(commit=False)
                 like.post = post
                 like.created_by = user
@@ -360,9 +356,6 @@ def search(request):
 
 
 
-
-def events(request):
-    return render(request, 'events.html')
 
 
 def messages(request):

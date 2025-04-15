@@ -39,15 +39,68 @@ def profile(request, profile_user_name):
     
     if request.user.groups.filter(name='admin').exists():
         user.is_admin = True
+    
+    is_creator =  profile.user.groups.filter(name='creator').exists()
+    is_admin = profile.user.groups.filter(name='admin').exists()
+
+    
+
+    # follower check
+    if Follower.objects.filter(follower=user, following=profile_user).exists():
+        is_following = True
+    else:
+        is_following = False
+    follower_count = Follower.objects.filter(following=profile_user).count()
+    following_count = Follower.objects.filter(follower=profile_user).count()
+
 
     context = {
         'profile': profile,
         'user': user,
         'posts': posts,
         'message': message,
-        }
-
+        'is_creator': is_creator,
+        'is_admin': is_admin,
+        'follower': {
+            'is_following': is_following,
+            'follower_count': follower_count,
+            'following_count': following_count,},
+        
+    }
+    
     return render(request, 'profile.html', context)
+
+
+
+
+
+
+
+@visitor_required
+def follow(request, profile_user_name):
+    user = request.user
+    profile_user = User.objects.get(username=profile_user_name)
+
+    if user == profile_user:
+        return redirect('profile', profile_user_name=profile_user_name)
+
+
+
+    try:
+        follower = Follower.objects.get(follower=user, following=profile_user)
+        follower.delete()
+
+    except Follower.DoesNotExist:
+        Follower.objects.create(follower=user, following=profile_user)
+
+    return redirect('profile', profile_user_name=profile_user_name)
+
+
+
+
+
+
+
 
 
 @login_required
@@ -82,8 +135,13 @@ def user_manager(request):
         user.delete()
         return redirect('login')
     
-
+    # liked posts
     liked_posts = Post_Stat_like.objects.filter(created_by=user).order_by('-created_at')
+
+
+    # follower check
+    followers = Follower.objects.filter(following=user).order_by('-created_at')
+    following = Follower.objects.filter(follower=user).order_by('-created_at')
 
 
 
@@ -93,6 +151,10 @@ def user_manager(request):
         'form': user_profile_form,
         'profile': profile,
         'liked_posts': liked_posts,
+        'follow': {
+            'followers': followers,
+            'following': following,  
+        },
         }
 
 

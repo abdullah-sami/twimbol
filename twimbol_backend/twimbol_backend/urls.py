@@ -9,6 +9,7 @@ urlpatterns = [
     path('', include('app.urls')),
     path('create/', include('create.urls')),
     path('user/', include('user.urls')),
+    path('events/', include('event.urls')),
 
     path('youtube/', views.youtube, name='youtube'),
     path('authorize/callback/', views.oauth2callback, name='oauth2callback'),

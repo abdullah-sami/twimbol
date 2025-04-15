@@ -52,10 +52,12 @@
 </div>
 
 
+{%if post.event_post.all.0%}
+View event: <a href="{% url 'event_details' post.event_post.all.0.id %}">{{post.event_post.all.0.event_title}}</a>
+{%endif%}
 
 
 <pre id="video_description" style="color: white;">{{video.video_description}}</pre>
-
 
 
 <div class="comment_section" id="">
@@ -120,6 +122,13 @@
     <h4>Login to like <a href="{% url 'login' %}">Login</a></h4>
     {% endif %}
   </div>
+
+
+
+  {%if post.event_post.all.0%}
+  View event: <a href="{% url 'event_details' post.event_post.all.0.id %}">{{post.event_post.all.0.event_title}}</a>
+  {%endif%}
+  
 
 
 
@@ -228,9 +237,12 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
             <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
           </span>
 
+          {%if post.event_post.all.0%}
+          <a href="{% url 'event_details' post.event_post.all.0.id %}">{{post.event_post.all.0.event_title}}</a>
+          {%endif%}
         </div>
-
-
+        
+        
 
 
         <div class="comment_section" id="comment-box-{{ reel }}">
@@ -317,6 +329,10 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
             <span>
               <button onclick="toggleCommentBox('{{ reel }}')" class="comment-btn">💬 </button>
             </span>
+
+            {%if reel.reels_data.post.event_post.all.0%}
+          <a href="{% url 'event_details' reel.reels_data.post.event_post.all.0.id %}">{{reel.reels_data.post.event_post.all.0.event_title}}</a>
+          {%endif%}
   
           </div>
   
@@ -369,6 +385,7 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
 
           {% endif %}
           {% endwith %}
+          
           {% endfor %}
         </div>
 

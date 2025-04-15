@@ -7,7 +7,7 @@ from user.models import CreatorApplication
 from app.utils.youtube_api import get_video_data, upload_to_youtube, get_youtube_credentials
 from django.contrib.auth.decorators import login_required
 from user.decorators import admin_required, creator_required, visitor_required
-
+from event.models import *
 import tempfile
 
 
@@ -212,6 +212,12 @@ def video_upload(request):
                     view_count=video_data['view_count'],
                     like_count=video_data['like_count']
                 )
+                if request.GET.get('event'):
+                    event = get_object_or_404(Event, id=request.GET.get('event'))
+                    event.posts.add(Post.objects.latest('id'))
+                    event.participants.add(user)
+                    event.save()
+                    return redirect(reverse('event_details', args=[event.id])+'?upload_message=success')
 
             return redirect(reverse('dashboard')+'?upload_message=success')
 
@@ -267,6 +273,13 @@ def reel(request):
                     view_count=video_data['view_count'],
                     like_count=video_data['like_count']
                 )
+            
+            if request.GET.get('event'):
+                event = get_object_or_404(Event, id=request.GET.get('event'))
+                event.posts.add(Post.objects.latest('id'))
+                event.participants.add(user)
+                event.save()
+                return redirect(reverse('event_details', args=[event.id])+'?upload_message=success')
 
             return redirect(reverse('dashboard')+'?upload_message=success')
 

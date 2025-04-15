@@ -257,11 +257,11 @@
                   const uploadButton = document.getElementById("video_upload_btn");
 
                   if (duration){
-                    if (duration > 0 && duration < 60) {
+                    if (duration > 0 && duration < 120) {
                         uploadButton.removeAttribute("disabled");
                         } else {
                             uploadButton.setAttribute("disabled", "true");
-                            alert("Can't upload videos longer than 60 seconds");
+                            alert("Can't upload videos longer than 120 seconds");
                     }
                 }
 

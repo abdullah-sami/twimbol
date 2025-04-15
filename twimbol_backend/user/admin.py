@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import UserProfile, CreatorApplication
+from .models import *
 # Register your models here.
 
 admin.site.register(UserProfile)
 admin.site.register(CreatorApplication)
+admin.site.register(Follower)
