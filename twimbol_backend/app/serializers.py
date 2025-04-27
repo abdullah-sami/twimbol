@@ -7,6 +7,9 @@ from user.serializers import UserProfileSerializer, UserSerializer
 
 class PostSerializer(serializers.ModelSerializer):
     like_count = serializers.SerializerMethodField()
+    user_profile = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
     class Meta:
         model = Post
         fields = [
@@ -15,12 +18,29 @@ class PostSerializer(serializers.ModelSerializer):
             'post_title',
             'post_description',
             'like_count',
+            'post_banner',
+            'created_by',
+            'user_profile',
+            'username',
+            'comments',
         ]
 
 
     
     def get_like_count(self, obj):
         return Post_Stat_like.objects.filter(post=obj).count()
+    
+    def get_comments(self, obj):
+        comments = Post_Comment.objects.filter(post=obj).values('comment')
+        return comments
+
+    def get_user_profile(self, obj):
+        if hasattr(obj.created_by, 'profile'):
+            return UserProfileSerializer(obj.created_by.profile).data
+        return None
+    
+    def get_username(self, obj):
+        return UserSerializer(obj.created_by).data
 
 
 

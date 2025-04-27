@@ -10,7 +10,10 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 
+from rest_framework import viewsets, permissions
 
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import *
 
 @visitor_required
 def profile(request, profile_user_name):
@@ -76,6 +79,19 @@ def profile(request, profile_user_name):
 
 
 
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserProfile.objects.filter(user=user)
+
+
+
+
+
 @visitor_required
 def follow(request, profile_user_name):
     user = request.user
@@ -99,6 +115,19 @@ def follow(request, profile_user_name):
 
 
 
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        username = self.request.query_params.get('username')
+        if username:
+            queryset = queryset.filter(username=username)
+        return queryset
+    
+    
 
 
 
@@ -223,6 +252,8 @@ def login_view(request):
 
 
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 

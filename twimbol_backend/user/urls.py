@@ -1,8 +1,14 @@
-from django.urls import path
+from django.urls import path, include
+from .views import CustomTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from rest_framework import routers
+
 from . import views
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
+router = routers.DefaultRouter()
+
+router.register('profile', views.PostViewSet, basename='posts')
 
 
 
@@ -11,8 +17,10 @@ urlpatterns = [
     path('profile/<str:profile_user_name>', views.profile, name='profile'),
     path('profile/<str:profile_user_name>/follow', views.follow, name='follow'),
 
-    path('login/', TokenObtainPairView.as_view(), name='login'),
+    path('login/', CustomTokenObtainPairView.as_view(), name='login'),
 
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
+
+    path('api/', include(router.urls)),
 ]

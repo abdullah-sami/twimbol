@@ -16,6 +16,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 
+
+
+
 class PostPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
@@ -39,14 +42,14 @@ class PostViewSet(ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = PostPagination
 
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, OrderingFilter]
     filterset_fields = ['post_type']
     search_fields = ['post_title', 'post_description']
     ordering_fields = ['post_type','created_at']
 
 
     def get_queryset(self):
-        return super().get_queryset()
+        return super().get_queryset().filter(post_type="post")
 
 
     def perform_create(self, serializer):
