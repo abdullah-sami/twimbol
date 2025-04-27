@@ -79,14 +79,22 @@ def profile(request, profile_user_name):
 
 
 
-class ProfileViewSet(viewsets.ModelViewSet):
+
+class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        # Allow users to view only their own profile
         user = self.request.user
         return UserProfile.objects.filter(user=user)
+
+    def perform_update(self, serializer):
+        # Ensure the user cannot update another user's profile
+        serializer.save(user=self.request.user)
+
+
 
 
 

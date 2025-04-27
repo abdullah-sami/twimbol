@@ -8,7 +8,7 @@ from . import views
 
 router = routers.DefaultRouter()
 
-router.register('profile', views.PostViewSet, basename='posts')
+router.register('profile', views.UserProfile, basename='user_profile')
 
 
 
