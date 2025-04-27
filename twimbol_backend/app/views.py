@@ -1,16 +1,227 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .utils.youtube_api import get_video_data, get_video_stats
 from django.db.models import Q, Case, When, IntegerField, F
 from .models import *
 from .forms import *
 from django.urls import reverse
 
+from .serializers import *
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import api_view, action
+from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
+
+class PostPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'page_size': self.page_size,
+            'page': self.page.number,
+            'total_pages': self.page.paginator.num_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
+
+class PostViewSet(ModelViewSet):
+    queryset = Post.objects.all().order_by('-created_at')
+    serializer_class = PostSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = PostPagination
+
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ['post_type']
+    search_fields = ['post_title', 'post_description']
+    ordering_fields = ['post_type','created_at']
+
+
+    def get_queryset(self):
+        return super().get_queryset()
+
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+        serializer.save(post_type="post")
+
+
+
+class SearchViewSet(ModelViewSet):
+    serializer_class = PostSearchSerializer  # Specify the serializer class
+
+
+    def list(self, request):
+        query = self.request.GET.get('query', '')
+
+        if query:
+            queryset = Post.objects.annotate(
+                priority=Case(
+                    When(post_title__icontains=query, then=1),
+                    When(post_type__iexact='youtube_reel', then=2),
+                    When(created_by__username__icontains=query, then=3),
+                    When(post_description__icontains=query, then=4),
+                    default=5,
+                    output_field=IntegerField(),
+                ),
+                trending_score=Case(
+                    When(video_data__isnull=False, then=(F('video_data__like_count') * 2 + F('video_data__view_count'))),
+                    default=0,
+                    output_field=IntegerField(),
+                )
+            ).filter(
+                (Q(post_title__icontains=query) |
+                Q(created_by__username__icontains=query) |
+                Q(post_description__icontains=query) )
+                # & Q(post_type__icontains="youtube_reel") 
+            ).order_by('priority', '-trending_score', '-created_at')
+
+        else:
+            queryset = Post.objects.none()
+
+        return Response({
+            'query': query,
+            'results': self.serializer_class(queryset, many=True).data,
+        })
+
+
+
+
+
+
+
+class PostStatLikeViewSet(ModelViewSet):
+    queryset = Post_Stat_like.objects.all().order_by('-created_at')
+    serializer_class = PostStatLikeSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+
+    def get_queryset(self):
+        return super().get_queryset()
+        
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+   
+
+
+
+
+class CommentPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 30
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'page_size': self.page_size,
+            'page': self.page.number,
+            'total_pages': self.page.paginator.num_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+    
+
+
+class PostCommentViewSet(ModelViewSet):
+    queryset = Post_Comment.objects.all().order_by('-created_at')
+    serializer_class = PostCommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    pagination_class = CommentPagination
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+
+    
+    
+    
+
+
+
+
+
+
+
+
+
+class ReelsPagination(PageNumberPagination):
+    page_size = 30
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'page_size': self.page_size,
+            'page': self.page.number,
+            'total_pages': self.page.paginator.num_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
+
+
+class ReelsDataViewSet(ModelViewSet):
+    queryset = Youtube_Reels_Data.objects.all().order_by('-created_at')
+    serializer_class = YoutubeReelsDataSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]  
+    pagination_class = ReelsPagination
+
+
+
+
+
+class YtVideoDataViewSet(ModelViewSet):
+    queryset = Youtube_Video_Data.objects.all().order_by('post_id')
+    serializer_class = YoutubeVideoDataSerializer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def home(request):
     
     posts = Post.objects.all().order_by('-id')
     reels = Youtube_Reels_Data.objects.all().order_by('-created_at')
-    
     context = { 
         "posts": posts,
         "reels": reels,
@@ -20,7 +231,11 @@ def home(request):
 
     return render(request, 'home.html', context)
     
-    
+
+
+
+
+
 
 
 
@@ -95,6 +310,34 @@ def post(request, post_id):
 
 
 
+
+@api_view(['GET'])
+def post_api(request, post_id):
+    post = Post.objects.get(id=post_id)
+    post_serializer = PostSerializer(post)
+
+    post_comments = Post_Comment.objects.filter(post=post).order_by('-created_at')
+    post_comment_serializer = PostCommentSerializer(post_comments, many=True)
+
+
+    post_stat_like = Post_Stat_like.objects.filter(post=post).order_by('-created_at')
+    post_stat_like_serializer = PostStatLikeSerializer(post_stat_like, many=True)
+
+    post_stat_like_count = Post_Stat_like.objects.filter(post=post).count()
+    post_stat_like_serializer = PostStatLikeSerializer(post_stat_like, many=True)
+    post_stat_is_liked = Post_Stat_like.objects.filter(post=post, created_by=request.user).exists()
+
+
+    
+
+
+    return Response({
+        "post": post_serializer.data,
+        "post_comments": post_comment_serializer.data,
+        "post_stat_like": post_stat_like_serializer.data,
+        "post_stat_like_count": post_stat_like_count,
+        "post_stat_is_liked": post_stat_is_liked,
+    })
 
 
 
@@ -358,5 +601,23 @@ def search(request):
 
 
 
-def messages(request):
-    return render(request, 'messages.html')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

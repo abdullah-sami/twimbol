@@ -53,3 +53,12 @@ class Follower(models.Model):
 
     def __str__(self):
         return self.follower.username + ' follows ' + self.following.username
+    
+
+
+
+
+
+
+
+    

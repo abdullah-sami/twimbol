@@ -59,6 +59,15 @@ def post(request):
         
         if form.is_valid():
             form.save()
+            post = Post.objects.latest('id')
+            if form.cleaned_data.get('post_banner'):
+                uploaded_file = form.cleaned_data['post_banner']
+                if hasattr(uploaded_file, 'name'):  # Check if the uploaded file has a name attribute
+                    uploaded_file.name = f'img/posts/{uploaded_file.name}'
+                    post.post_banner = uploaded_file
+                    post.save()
+        
+                
             return redirect(reverse('dashboard')+'?upload_message=success')
     else:
         form = PostForm()
@@ -95,8 +104,11 @@ def post_edit(request, post_id):
                     post_description=form.cleaned_data['post_description'],
                     post_type=form.cleaned_data['post_type'])
                 if form.cleaned_data.get('post_banner'):
-                    Post.objects.filter(id=post_id).update(
-                    post_banner=form.cleaned_data['post_banner'])
+                    if form.cleaned_data.get('post_banner'):
+                        uploaded_file = form.cleaned_data['post_banner']
+                        uploaded_file.name = f'img/posts/{uploaded_file.name}'
+                        post.post_banner = uploaded_file
+                        post.save()
                 elif post.post_banner :
                     Post.objects.filter(id=post_id).update(
                     post_banner=post.post_banner)
