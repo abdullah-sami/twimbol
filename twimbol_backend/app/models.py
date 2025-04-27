@@ -10,7 +10,7 @@ class Post(models.Model):
     post_title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     post_description = models.TextField(null=True)
-    post_banner = models.ImageField(upload_to='img/posts/', null=True, blank=True, default='463315330_975679841271321_5666464099814645228_n.jpg')
+    post_banner = models.ImageField(upload_to='img/posts/', null=True, blank=True, default='img/posts/463315330_975679841271321_5666464099814645228_n.jpg')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_created_by')
     
 
@@ -40,30 +40,13 @@ class Post_Stat_like(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_likes')
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='like_created_by', blank=True)
-
+    
+    class Meta:
+        unique_together = ('post', 'created_by')
     def __str__(self):
         return str(self.created_by) + " to " + str(self.post)
 
 
-
-
-
-
-
-class Youtube_Upload(models.Model):
-    post = models.OneToOneField(
-        Post, 
-        on_delete=models.CASCADE,
-        primary_key=True,
-        related_name='youtube_upload'
-    )
-    video_id = models.CharField(max_length=100)
-    video_title = models.CharField(max_length=100)
-    video_description = models.TextField(null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.video_title
 
 
 
@@ -113,7 +96,11 @@ class Youtube_Reels_Id(models.Model):
     def __str__(self):
         return self.reel_id
 
+
+
+
 class Youtube_Reels_Data(models.Model):
+    
 
     post = models.OneToOneField(
         Post, 

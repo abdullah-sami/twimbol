@@ -1,8 +1,107 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{chat_user.profile.first_name}} {{chat_user.profile.last_name}}</title>
 
-{% block title %}Twimbol{% endblock %}
+    <style>
+        .chat_box {
+            width: 70%;
+            height: 400px;
+            overflow-y: scroll;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: auto;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+        .sent_msg {
+            background-color: #e1ffc7;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            float: right;
+            
+        }
+        .received_msg {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            float: left;
+        }
+        .received_msg pre{
+            color: #205fa2;
+        }
+        .msg_blob {
+            clear: both;
+        }
+
+    </style>
+</head>
+<body>
 
 
-{% block content %}
-    messages
-{% endblock %}
+
+
+
+    
+    <div class="followers">
+    {% for follow in following %}
+    {{follow}}
+    {%endfor%}
+</div>
+
+
+<div class="chats">
+    {% for chat in chats %}
+    <a href="{% url 'message_chat' chat %}">{{chat.profile.first_name}} {{chat.profile.last_name}}</a><br>
+    {%endfor%}
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% if form %}
+<a href="{% url 'message_home' %}">back</a>
+<h1>Chat with {{chat_user.profile.first_name}} {{chat_user.profile.last_name}}</h1>
+
+
+
+<form action="" method="post" enctype="multipart/form-data">
+    
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Send</button>
+    
+</form>
+
+
+<div class="chat_box">
+{% for msg in messages %}
+<div class="msg_blob">
+    <div class="{% if msg.sender == user %}sent_msg{%else%}received_msg{% endif %}">
+        <strong>{{ msg.sender }}:</strong> <pre>{{ msg.content }}</pre> <br>
+        <small>{{ msg.timestamp }}</small>
+    </div>
+</div>
+{% endfor %}
+</div>
+
+{%endif%}
+
+    
+
+
+</body>
+</html>

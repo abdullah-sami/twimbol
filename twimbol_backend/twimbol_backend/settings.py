@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-zacmm9e2l*c=smobi=%x2#8ql%-_7#kn9gjct%)4f8$qg*a^@a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*', 'https://decf-59-153-102-115.ngrok-free.app']
 
 
 # Application definition
@@ -38,11 +38,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
+    'rest_framework',
     'app',
     'create',
     'user',
     'administration',
     'event',
+    'message',
+    'notifications',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +140,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # login setttings
 LOGIN_URL = 'login'
+
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://7895-103-180-245-249.ngrok-free.app"
+]
+
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
+    )    
+}
+
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=100),
+}
