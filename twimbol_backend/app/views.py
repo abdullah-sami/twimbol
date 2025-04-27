@@ -39,14 +39,14 @@ class PostViewSet(ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = PostPagination
 
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, OrderingFilter]
     filterset_fields = ['post_type']
     search_fields = ['post_title', 'post_description']
     ordering_fields = ['post_type','created_at']
 
 
     def get_queryset(self):
-        return super().get_queryset()
+        return super().get_queryset().filter(post_type='post')
 
 
     def perform_create(self, serializer):

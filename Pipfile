@@ -72,11 +72,12 @@ whitenoise = "==6.9.0"
 pillow = "*"
 pipenv = "*"
 shell = "*"
-djangorestframework = "*"
 markdown = "*"
 django-filter = "*"
 django-extensions = "*"
+djangorestframework = "*"
 djangorestframework-simplejwt = "*"
+google-auth-oauthlib = "*"
 
 [dev-packages]
 
