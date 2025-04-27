@@ -24,7 +24,10 @@ class PostSerializer(serializers.ModelSerializer):
             'like_count',
             'post_banner',
             'created_by',
+<<<<<<< HEAD
             'created_at',
+=======
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
             'user_profile',
             'username',
             'comments',
@@ -36,16 +39,24 @@ class PostSerializer(serializers.ModelSerializer):
    
     def get_like_count(self, obj):
         return Post_Stat_like.objects.filter(post=obj).count()
+<<<<<<< HEAD
    
+=======
+    
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
     def get_comments(self, obj):
         comments = Post_Comment.objects.filter(post=obj).values('comment')
         return comments
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
     def get_user_profile(self, obj):
         if hasattr(obj.created_by, 'profile'):
             return UserProfileSerializer(obj.created_by.profile).data
         return None
+<<<<<<< HEAD
    
     def get_username(self, obj):
         return UserSerializer(obj.created_by).data
@@ -54,6 +65,11 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 
+=======
+    
+    def get_username(self, obj):
+        return UserSerializer(obj.created_by).data
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
 
 
 
