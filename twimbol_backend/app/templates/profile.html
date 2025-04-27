@@ -1,0 +1,126 @@
+{% extends 'base.html' %} 
+{% block title %}User{% endblock %} 
+{% load static %}
+
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/profile.css'    %}">
+{% endblock %}
+
+{% block content %}
+
+
+{% if profile %}
+    <div class="profile-section">
+        <div class="profile-header">
+            <img src="{{ profile.profile_pic.url }}" alt="Profile Picture" class="profile-picture" style="width: 150px; height: 150px;">
+            <h1>{{ profile.first_name }} {{ profile.last_name }}</h1>
+            <p>{{follower.follower_count}} Followers | {{follower.following_count}} Following</p>
+            
+            {% if is_creator or is_admin %}
+            <a href="{% url 'follow' profile.user %}">{%if follower.is_following %}Unfollow{% else %}Follow{% endif %}</a>
+            {% endif %}
+            <p><strong>Email:</strong> {{ profile.user.email }}</p>
+            <p><strong>Phone:</strong> {{ profile.user_phone }}</p>
+            <p><strong>Address:</strong> {{ profile.user_address }}</p>
+        </div>
+        <div class="profile-social-links">
+            <h3>Social Links</h3>
+            <ul>
+                {% if profile.user_social_fb %}
+                    <li><a href="{{ profile.user_social_fb }}" target="_blank">Facebook</a></li>
+                {% endif %}
+                {% if profile.user_social_twt %}
+                    <li><a href="{{ profile.user_social_twt }}" target="_blank">Twitter</a></li>
+                {% endif %}
+                {% if profile.user_social_yt %}
+                    <li><a href="{{ profile.user_social_yt }}" target="_blank">YouTube</a></li>
+                {% endif %}
+            </ul>
+        </div>
+
+        {% if user.is_admin == True %}
+        <form action="{% url 'admin_banned' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="ban_username" value="{{ profile.user }}">
+            {% if profile.user_banned %}
+                <button type="submit" name="unban_user">Unban User</button>
+            {% else %}
+                <button type="submit" name="ban_user">Ban User</button>
+            {% endif %}
+
+        </form>
+        {% endif %}
+
+    </div>
+
+
+
+    <div class="post-cards">
+        {% for post in posts %}
+            {% if post.post_type == "youtube_video" %}
+                {% if post.video_data %}
+                    <div class="post-card youtube-video">
+                        <a href="{% url 'video' post.video_data.video_id %}">
+                            <img src="{{ post.video_data.thumbnail_url }}" alt="Video Thumbnail" class="post-thumbnail">
+                            <div class="post-content">
+                                <h3>{{ post.video_data.video_title }}</h3>
+                                <p>Channel: {{ post.video_data.channel_title }}</p>
+                                <p>👁️ {{ post.video_data.view_count }} | 👍🏻 {{ post.video_data.like_count }}</p>
+                            </div>
+                        </a>
+                    </div>
+                {% endif %}
+            {% elif post.post_type == "youtube_video_upload" %}
+                {% if post.video_data %}
+                    <div class="post-card youtube-video">
+                        <a href="{% url 'video' post.video_data.video_id %}">
+                            <img src="{{ post.video_data.thumbnail_url }}" alt="Video Thumbnail" class="post-thumbnail">
+                            <div class="post-content">
+                                <h3>{{ post.video_data.video_title }}</h3>
+                                <p>Channel: {{ post.video_data.channel_title }}</p>
+                                <p>👁️ {{ post.video_data.view_count }} | 👍🏻 {{ post.video_data.like_count }}</p>
+                            </div>
+                        </a>
+                    </div>
+                {% endif %}
+
+            {% elif post.post_type == "post" %}
+                <div class="post-card regular-post">
+                    <a href="{% url 'post' post.id %}">
+                        <img src="{{ post.post_banner.url }}" alt="Post Banner" class="post-thumbnail">
+                        <div class="post-content">
+                            <h3>{{ post.post_title }}</h3>
+                            <p>{{ post.post_description|slice:":100" }}... <a href="{% url 'post' post.id %}">Read more</a></p>
+                            <p>By: {{ post.created_by.profile.first_name }} {{ post.created_by.profile.last_name }}</p>
+                            <p>Created: {{ post.created_at }}</p>
+                        </div>
+                    </a>
+                </div>
+
+            {% elif post.post_type == "youtube_reel" %}
+                <div class="post-card youtube-reel">
+                    <a href="{% url 'reel' post.reels_data %}">
+                        <img src="{{ post.reels_data.thumbnail_url }}" alt="Reel Thumbnail" class="post-thumbnail">
+                    </a>
+                </div>
+
+            {% else %}
+                <div class="post-card unknown-post">
+                    <p>Unknown post type.</p>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% else %}
+
+    {{message}}
+
+{% endif %}
+
+{% endblock %} 
+
+
+{% block script %}
+
+
+{% endblock %}

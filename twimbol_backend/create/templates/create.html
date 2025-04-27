@@ -1,0 +1,501 @@
+{% extends 'base.html' %} 
+{% block title %}Twimbol{% endblock %} 
+{% load static %}
+{% block style %}<link rel="stylesheet" href="{%static 'css/creator.css' %}">{% endblock %}
+{% block content %}
+
+{% if create_action != "Not Allowed" %}
+    <menu type="toolbar">
+    <li>
+        <a href="{% url 'dashboard' %}"
+        ><button id="dashboard">Dashboard</button></a
+        >
+    </li>
+    <li>
+        <a href="{% url 'post' %}"
+        ><button id="post">Add Post</button></a
+        >
+    </li>
+    <li>
+        <a href="{% url 'video' %}"
+        ><button id="video">Add Video</button></a
+        >
+    </li>
+    <li>
+        <a href="{% url 'reel' %}"
+        ><button id="reel">Add Reel</button></a
+        >
+    </li>
+    <li>
+        <a href="{% url 'manage-contents' %}"
+        ><button id="manage-conents">Manage Contents</button></a
+        >
+    </li>
+    <li>
+        <a href="{% url 'creator_settings' %}"
+        ><button id="settings">Settings</button></a
+        >
+    </li>
+    </menu> 
+
+{% endif %}
+
+
+
+    <h1>{{create_action}}</h1>
+
+    {% if create_action == "Not Allowed" %}
+
+    <p style="color: red;">You have to be a creator to access dashboard</p>
+
+    {% if creator_application_message == None %}
+
+    <a href="{% url 'apply-for-creator' %}">Become a Creator</a>
+    
+    {% else %}
+    {{creator_application_message}}
+    {% endif %}
+    {% endif %}
+
+
+
+
+
+    {% if user.profile.user_banned %}
+        <p style="color: red;">You are banned for violating community guidelines.</p>
+    {% else %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {% if create_action == 'dashboard' %}
+    
+
+    {% if upload_message %} <p>{{upload_message}}</p> {%endif%}
+
+    
+    <p>Total posts: {{posts|length}}</p>
+    <p>Total likes: {{total_like_count}}</p>
+    <p>Recent Comments</p>
+    <div class="recent_comment_box">
+        {% for post in posts %}
+        {% for comment in post.post_comments.all %}
+        <div class="comment" style="display: block;">
+            <a href="{% url 'post' post.id %}"><h2>{{ post.post_title }}</h2></a>
+            <pre><strong><a href="{% url 'profile' comment.created_by %}">{{ comment.created_by.profile.first_name }} {{ comment.created_by.profile.last_name }}</a></strong>:  {{ comment.comment }}</pre>
+            <p>{{ comment.created_at }}</p>
+        </div>
+        {%endfor%}
+        {%endfor%}
+    </div>
+
+    <h2>Recent uploads</h2>
+    <div class="post_container_creator_dashboard">
+    {% for post in posts %}
+    {% if forloop.counter <= 10 %}
+    
+    {% if post.post_type == 'post' %}
+    <div class="post_creator_dashboard">
+        likes: {{post.post_likes.count}}
+        <a href="{% url 'post_create_edit' post.id %}">
+            <div class="post_creator_dashboard">
+                {% if post.post_banner %}
+                <img src="{{ post.post_banner.url }}" alt="">
+                {% endif %}    
+                <p>{{post.post_title|slice:"30"}}</p>
+                
+                
+            </div>
+        </a>
+    </div>
+
+
+    {% elif post.post_type == "youtube_video_upload" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">likes: {{post.post_likes.count}}
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+      
+            {% endif %}
+
+
+            {% elif post.post_type == "youtube_video" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">likes: {{post.post_likes.count}}
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            {% endif %}
+            {% elif post.post_type == "youtube_reel" %}
+            {% if post.reels_data %}
+
+            <div class="post_creator_dashboard">likes: {{post.post_likes.count}}
+            <a href="{% url 'reel' post.reels_data.reel_id %}">
+                <div class="reel_item">
+                    <img src="{{ post.reels_data.thumbnail_url }}" alt="">
+                </div>
+            </a>
+            </div>
+
+    {% endif %}
+
+
+    {% endif %}
+    {% endif %}
+    
+
+    {%endfor%}
+
+</div>
+
+    {% endif %}
+
+
+
+
+
+
+
+    {% if create_action == 'video' %}
+    <a href="{% url 'video_link' %}"><button>Upload from link</button></a>
+    <a href="{% url 'video_upload' %}"><button>Upload from device</button></a>
+    {% endif %}
+
+    {% if message %}{{message}}{% endif %}
+
+
+
+
+    {% if user.is_authenticated == False %}
+    You're not logged in
+    <br><a href="{% url 'login' %}">Login</a>
+
+    {% endif %}
+
+    {%if post.created_by%} <p> Created by: {{post.created_by}}</p>{%endif%}
+    {% if form %}
+    <form action="" method="post" id="form-controls"  enctype="multipart/form-data">
+        {% csrf_token %} 
+        
+        {{form.as_p}}
+        
+        <script>function getYouTubeVideoID(url) {const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/; const match = url.match(regex); return match ? match[1] : null; } document.getElementById("form-controls").addEventListener("submit", function (e) { const input = document.getElementById("yt-form-control-video-id");        const videoId = getYouTubeVideoID(input.value);   if (videoId) {            input.value = videoId;        } else {            e.preventDefault();            alert("Please enter a valid YouTube URL.");        }    });</script>
+
+        
+
+        <button type="submit">Save</button>
+    </form>
+
+
+    {% endif %} 
+
+
+    {% if video_upload %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Title"><br>
+        <input type="text" name="description" placeholder="Description"><br>
+        <input type="file" name="video" id="videoFile" accept="video/*"><br>
+        <button type="submit" id="video_upload_btn" disabled>Upload</button>
+      </form>
+      
+      
+      <video id="submitted_video" style="display: none;"></video>
+      
+      <script>
+      let objectUrl = null;
+      
+      document.getElementById("videoFile").addEventListener("change", function(event) {
+          const file = event.target.files[0];
+          if (file) {
+              // Revoke old object URL if it exists
+              if (objectUrl) {
+                  URL.revokeObjectURL(objectUrl);
+              }
+      
+              objectUrl = URL.createObjectURL(file);
+              const video = document.getElementById("submitted_video");
+              video.src = objectUrl;
+      
+              video.addEventListener("canplaythrough", function handleCanPlay() {
+                  const duration = video.duration;
+                  
+                  const uploadButton = document.getElementById("video_upload_btn");
+
+                  if (duration){
+                    if (duration > 0 && duration < 120) {
+                        uploadButton.removeAttribute("disabled");
+                        } else {
+                            uploadButton.setAttribute("disabled", "true");
+                            alert("Can't upload videos longer than 120 seconds");
+                    }
+                }
+
+      
+                  URL.revokeObjectURL(objectUrl); // Clean up memory
+                  video.removeEventListener("canplaythrough", handleCanPlay); // Prevent duplicate triggers
+              });
+      
+              video.load(); // Force the video to load metadata
+          }
+      });
+      </script>
+      
+
+      
+    {% endif %}
+
+
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    {% if reel_upload %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Title"><br>
+        <input type="text" name="description" placeholder="Description"><br>
+        <input type="file" name="video" id="videoFile" accept="video/*"><br>
+        <button type="submit" id="video_upload_btn" disabled>Upload</button>
+      </form>
+      <p class="upload_warning" id="upload_warning"></p>
+      
+      
+      <video id="submitted_video" style="display: none;"></video>
+      
+      <script>
+      let objectUrl_reel = null;
+      
+      document.getElementById("videoFile").addEventListener("change", function(event) {
+          const file = event.target.files[0];
+          if (file) {
+              // Revoke old object URL if it exists
+              if (objectUrl_reel) {
+                  URL.revokeObjectURL(objectUrl_reel);
+              }
+      
+              objectUrl_reel = URL.createObjectURL(file);
+              const video = document.getElementById("submitted_video");
+              video.src = objectUrl_reel;
+      
+              video.addEventListener("canplaythrough", function handleCanPlay() {
+                  const duration = video.duration;
+                  
+                  const uploadButton = document.getElementById("video_upload_btn");
+
+                  if (duration){
+                    if (duration > 0 && duration < 30) {
+                        uploadButton.removeAttribute("disabled");
+                        document.getElementById('upload_warning').innerText = ("");
+                        document.getElementById('upload_warning').style.color = 'green';
+                        } else {
+                            uploadButton.setAttribute("disabled", "true");
+                            document.getElementById('upload_warning').innerText = ("Can't upload reels longer than 30 seconds");
+                            document.getElementById('upload_warning').style.color = 'red';
+                    }
+                }
+
+      
+                  URL.revokeObjectURL(objectUrl_reel); // Clean up memory
+                  video.removeEventListener("canplaythrough", handleCanPlay); // Prevent duplicate triggers
+              });
+      
+              video.load(); // Force the video to load metadata
+          }
+      });
+      </script>
+      
+
+      
+    {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    {% if create_action == 'manage-contents' %}
+
+    {% if upload_message %} <p>{{upload_message}}</p> {%endif%}
+
+    
+    <p>Total posts: {{posts|length}}</p>
+    
+    
+    <div class="post_container_creator_dashboard">
+
+    {% for post in posts %}
+    {% if post.post_type == 'post' %}
+    <div class="post_creator_dashboard">
+        <a href="{% url 'post_create_edit' post.id %}">
+            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+            <div class="post_creator_dashboard">
+                {% if post.post_banner %}
+                <img src="{{ post.post_banner.url }}" alt="">
+                {% endif %}    
+                <p>{{post.post_title|slice:"30"}}</p>
+            
+            </div>
+        </a>
+    </div>
+
+
+    {% elif post.post_type == "youtube_video_upload" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">
+            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+            <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+      
+            {% endif %}
+
+
+            {% elif post.post_type == "youtube_video" %}
+            {% if post.video_data %}
+
+            <div class="post_creator_dashboard">
+                <a href="{% url 'video' post.video_data.video_id %}">
+                    <div class="">
+                        <div class="">
+                            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+                            <img class="post_creator_dashboard_banner" src="{{post.video_data.thumbnail_url}}" alt="" loading="lazy">
+                        </div>
+                        <div class=""><h2>{{post.video_data.video_title}}</h2>
+                            <p>{{post.video_data.channel_title}}</p>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            {% endif %}
+            {% elif post.post_type == "youtube_reel" %}
+            {% if post.reels_data %}
+
+            <div class="post_creator_dashboard">
+            <a href="{% url 'manage-contents-delete' post.id %}"><button>Delete Post</button></a>
+            <a href="{% url 'reel' post.reels_data.reel_id %}">
+                <div class="reel_item">
+                    <img src="{{ post.reels_data.thumbnail_url }}" alt="">
+                </div>
+            </a>
+            </div>
+
+    {% endif %}
+
+
+    {% endif %}
+
+
+    
+    
+    {%endfor%}
+
+</div>
+
+{% endif %}
+
+{% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %} 
+
+
+
+{% block script %}
+<!-- <script src="create.js"></script> -->
+
+<script>
+  document.getElementById("{{create_action}}").setAttribute("disabled", "true");
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+<form action="" method="post">
+    <h1>Apply for Creator</h1>
+
+    {% csrf_token %}
+
+    <p>Complete your profile before applying for Creator</p>
+    <a href="{% url 'user_manager' %}">Profile</a>
+
+    <button type="submit">Apply</button>
+
+</form>

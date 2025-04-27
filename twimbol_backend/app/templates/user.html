@@ -1,0 +1,92 @@
+{% extends 'base.html' %} 
+{% block title %}User{% endblock %} 
+
+
+
+{% block content %}
+
+
+
+<h1>Hello, {{user}}!</h1>
+{% if profile.user_type == 'creator' %}
+
+<a href="{% url 'dashboard' %}">Go to creator dashboard</a>
+
+{% endif %}
+
+<form action="" method="post" enctype="multipart/form-data">
+    <img src="{{profile.profile_pic.url}}" alt="" id="profile_pic_img" style="width: 150px; height: 150px;">
+    {% csrf_token %}
+    {{form.as_p}}
+    <input type="submit" value="Update">
+    
+</form>
+
+
+
+
+
+Followers: {{follow.followers.count}}
+{% for follower in follow.followers %}
+
+<div class="follower">
+<a href="{% url 'profile' follower.follower %}">
+    {{follower.follower}}
+    
+</a>
+</div>
+{% endfor %}
+
+
+Following: {{follow.following.count}}
+{% for following in follow.following %}
+
+<div class="following">
+<a href="{% url 'profile' following.following %}">
+    {{following.following}}
+    
+</a>
+</div>
+{% endfor %}
+
+
+
+
+
+Liked posts
+{% for post in liked_posts %}
+
+<div class="liked_post">
+<a href="{% url 'post' post.post.id %}">
+    {{post.post}}
+</a>
+</div>
+{% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+<a href="{% url 'logout' %}">Logout</a>
+
+<form action="" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="delete_profile" value="true">
+    <input type="submit" value="Delete Profile" onclick="return confirm('Are you sure you want to delete your profile? This action cannot be undone.');">
+</form>
+
+{% endblock %} 
+
+
+{% block script %}
+
+
+{% endblock %}

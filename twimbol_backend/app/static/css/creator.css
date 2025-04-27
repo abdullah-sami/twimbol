@@ -1,0 +1,44 @@
+.post_container_creator_dashboard{
+    width: 100vw;
+    display: block;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    display: flex;
+    flex-direction: row;
+}
+.post_creator_dashboard{
+    
+    display: block;
+    width: 15vw;
+    height: 20vh;
+    margin: 2vw !important;
+    background: wheat;
+    transition: .2s all;
+    overflow: hidden    ;
+
+}
+.post_creator_dashboard:hover{  
+    border: 1px solid rgb(210, 210, 210);
+    transform: translate(-1px, -5px);
+    box-shadow: 1px 5px 5px rgb(185, 185, 185);
+}
+
+.post_creator_dashboard img{
+    display: block; 
+    max-width: 10vw !important;
+}
+
+
+.post_creator_dashboard_banner{
+    max-width: 10vw !important;
+    display: block;
+}
+
+
+
+
+
+
+
+
+
