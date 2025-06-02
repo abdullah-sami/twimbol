@@ -22,7 +22,7 @@ class Event(models.Model):
 
     participants = models.ManyToManyField(User, related_name='event_participated', blank=True)
 
-    posts = models.ManyToManyField(Post, related_name='event_post', blank=True, null=True)
+    posts = models.ManyToManyField(Post, related_name='event_post', blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

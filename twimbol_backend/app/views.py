@@ -14,7 +14,7 @@ from rest_framework.decorators import api_view, action
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly, AllowAny
 
 
 
@@ -69,7 +69,7 @@ class SearchViewSet(ModelViewSet):
             queryset = Post.objects.annotate(
                 priority=Case(
                     When(post_title__icontains=query, then=1),
-                    When(post_type__iexact='youtube_reel', then=2),
+                    When(post_type__iexact='reel', then=2),
                     When(created_by__username__icontains=query, then=3),
                     When(post_description__icontains=query, then=4),
                     default=5,
@@ -83,8 +83,9 @@ class SearchViewSet(ModelViewSet):
             ).filter(
                 (Q(post_title__icontains=query) |
                 Q(created_by__username__icontains=query) |
+                Q(post_type__icontains="post") |
                 Q(post_description__icontains=query) )
-                # & Q(post_type__icontains="youtube_reel") 
+                & Q(post_type__icontains="reel") 
             ).order_by('priority', '-trending_score', '-created_at')
 
         else:
@@ -157,7 +158,8 @@ class PostCommentViewSet(ModelViewSet):
 
 
 
-
+from create.models import *
+from create.serializers import *
 
 class ReelsPagination(PageNumberPagination):
     page_size = 30
@@ -177,11 +179,38 @@ class ReelsPagination(PageNumberPagination):
 
 
 
+
 class ReelsDataViewSet(ModelViewSet):
-    queryset = Youtube_Reels_Data.objects.all().order_by('-created_at')
-    serializer_class = YoutubeReelsDataSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]  
-    pagination_class = ReelsPagination
+    queryset = ReelCloudinary.objects.all().order_by('-created_at')
+    serializer_class = ReelCloudinarySerializer
+    permission_classes = [AllowAny]  
+    pagination_class = ReelsPagination 
+
+
+# class ReelsPagination(PageNumberPagination):
+#     page_size = 30
+#     page_size_query_param = 'page_size'
+#     max_page_size = 100
+
+#     def get_paginated_response(self, data):
+#         return Response({
+#             'count': self.page.paginator.count,
+#             'page_size': self.page_size,
+#             'page': self.page.number,
+#             'total_pages': self.page.paginator.num_pages,
+#             'next': self.get_next_link(),
+#             'previous': self.get_previous_link(),
+#             'results': data
+#         })
+
+
+
+
+# class ReelsDataViewSet(ModelViewSet):
+#     queryset = Youtube_Reels_Data.objects.all().order_by('-created_at')
+#     serializer_class = YoutubeReelsDataSerializer
+#     permission_classes = [AllowAny]  
+#     pagination_class = ReelsPagination 
 
 
 

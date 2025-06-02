@@ -4,12 +4,14 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from rest_framework import routers
 
 from . import views
-
+from create.views import ApplyForCreatorViewSet
 
 router = routers.DefaultRouter()
 
-router.register('profile', views.UserProfile, basename='user_profile')
-
+router.register('profile', views.UserProfileViewSet, basename='user_profile')
+router.register('register', views.RegisterViewSet, basename='register')
+router.register('update', views.UpdateProfileViewSet, basename='update-profile')
+router.register('creator-application', ApplyForCreatorViewSet, basename='apply-for-creator')
 
 
 urlpatterns = [
@@ -23,4 +25,4 @@ urlpatterns = [
     path('register/', views.register_view, name='register'),
 
     path('api/', include(router.urls)),
-]
+] 

@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import *
 from user.serializers import UserProfileSerializer, UserSerializer
-
+from create.models import *
+from create.serializers import *
 
 
 
@@ -17,6 +18,7 @@ class PostSerializer(serializers.ModelSerializer):
             'post_type',
             'post_title',
             'post_description',
+            'created_at',
             'like_count',
             'post_banner',
             'created_by',
@@ -51,24 +53,24 @@ class PostSearchSerializer(serializers.ModelSerializer):
     trending_score = serializers.IntegerField()
     priority = serializers.IntegerField()
     reels_data = serializers.SerializerMethodField()
-    video_data = serializers.SerializerMethodField()
+    # video_data = serializers.SerializerMethodField()
     user_profile = serializers.SerializerMethodField() 
     username = serializers.SerializerMethodField() 
 
     class Meta:
         model = Post
-        fields = ['id', 'post_title', 'post_type', 'post_description', 'post_banner', 'created_by', 'created_at', 'priority', 'trending_score', 'reels_data',  'video_data', 'user_profile', 'username']
+        fields = ['id', 'post_title', 'post_type', 'post_description', 'post_banner', 'created_by', 'created_at', 'priority', 'trending_score', 'reels_data',  'user_profile', 'username']
     
     
     def get_reels_data(self, obj):
-        if obj.post_type == 'youtube_reel' and hasattr(obj, 'reels_data'):
-            return YoutubeReelsDataSerializer(obj.reels_data).data
+        if obj.post_type == 'reel' and hasattr(obj, 'reels'):
+            return ReelCloudinarySerializer(obj.reels).data
         return None
     
-    def get_video_data(self, obj):
-        if obj.post_type == 'youtube_video_upload' and hasattr(obj, 'video_data'):
-            return YoutubeVideoDataSerializer(obj.video_data).data
-        return None
+    # def get_video_data(self, obj):
+    #     if obj.post_type == 'youtube_video_upload' and hasattr(obj, 'video_data'):
+    #         return VideoCloudinarySerializer(obj.video_data).data
+    #     return None
     
 
     def get_user_profile(self, obj):
@@ -85,19 +87,12 @@ class PostSearchSerializer(serializers.ModelSerializer):
 
 class YoutubeReelsDataSerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
-    username = serializers.SerializerMethodField()
     class Meta:
         model = Youtube_Reels_Data
-        fields = ['post', 'reel_id', 'reel_title', 'reel_description', 'thumbnail_url', 'created_at', 'user_profile', 'username']
+        fields = ['post', 'reel_id', 'reel_title', 'reel_description', 'thumbnail_url', 'created_at', 'user_profile']
     
     def get_user_profile(self, obj):
-        if hasattr(obj.post.created_by, 'profile'):
-            return UserProfileSerializer(obj.post.created_by.profile).data
-        return None
-    
-    def get_username(self, obj):
-        return UserSerializer(obj.post.created_by).data
-        
+        return UserProfileSerializer(obj.post.created_by.profile).data
     
 
         
@@ -139,6 +134,12 @@ class YoutubeReelsIdSerializer(serializers.ModelSerializer):
     class Meta:
         model = Youtube_Reels_Id
         fields = '__all__'
+
+
+
+
+
+
 
 
 

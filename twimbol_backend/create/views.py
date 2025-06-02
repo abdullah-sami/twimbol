@@ -2,6 +2,7 @@ from django.urls import reverse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from .forms import *
+from .serializers import *
 from app.models import *
 from user.models import CreatorApplication
 from app.utils.youtube_api import get_video_data, upload_to_youtube, get_youtube_credentials
@@ -10,6 +11,22 @@ from user.decorators import admin_required, creator_required, visitor_required
 from event.models import *
 import tempfile
 
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from rest_framework.decorators import api_view, action
+from rest_framework.pagination import PageNumberPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly, AllowAny
+
+
+
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import *
+from .serializers import *
+import cloudinary.uploader
 
 @login_required
 def dashboard(request):
@@ -416,6 +433,10 @@ def settings(request):
 
 
 
+
+
+
+
 @login_required
 def apply_for_creator(request):
     user = request.user
@@ -428,10 +449,250 @@ def apply_for_creator(request):
         return redirect(reverse('dashboard')+'?upload_message=creator_application_already_submitted')
     
 
-
-
     context={
         "create_action": "apply-for-creator",
     }
 
     return render(request, 'apply.html', context)
+
+
+
+
+
+
+
+
+
+class ApplyForCreatorViewSet(ModelViewSet):
+    queryset = CreatorApplication.objects.all()
+    serializer_class = CreatorApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Default: show only the logged-in user's applications
+        return CreatorApplication.objects.filter(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        # Prevent duplicate applications
+        if CreatorApplication.objects.filter(user=request.user).exists():
+            return Response(
+                {"detail": "You have already applied for creator."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create a new creator application
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(
+            {"detail": "Creator application submitted successfully."},
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=False, methods=['get'], url_path='by-user/(?P<user_id>[^/.]+)')
+    def by_user(self, request, user_id=None):
+        # Allow admin/staff or user themselves to see applications by user ID
+        if not request.user.is_staff and str(request.user.id) != str(user_id):
+            return Response(
+                {"detail": "You do not have permission to view this user's applications."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        applications = CreatorApplication.objects.filter(user_id=user_id)
+        serializer = self.get_serializer(applications, many=True)
+        return Response(serializer.data)
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# class ReelUploadView(APIView):
+#     parser_classes = (MultiPartParser, FormParser)
+
+#     def post(self, request, *args, **kwargs):
+#         video_file = request.FILES.get('video')
+#         title = request.data.get('title', '')
+
+#         if not video_file:
+#             return Response(
+#                 {'error': 'No video file provided'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         try:
+#             # Upload to Cloudinary
+#             upload_result = cloudinary.uploader.upload_large(
+#                 video_file,
+#                 resource_type="video",
+#                 chunk_size=6000000,  # 6MB chunks
+#                 folder="videos"
+#             )
+
+#             # Save to database
+#             video = ReelCloudinary.objects.create(
+#                 title=title,
+#                 video_url=upload_result['secure_url']
+#             )
+
+#             serializer = VideoSerializer(video)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+#         except Exception as e:
+#             return Response(
+#                 {'error': str(e)},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+        
+
+
+import cloudinary
+
+cloudinary.config(
+    cloud_name="ducr0o0wa",
+    api_key="763735417813897",
+    api_secret="YR2l3awAJDjlBuuOPEbnWVj6Cpk"
+)
+
+
+
+from rest_framework.viewsets import ModelViewSet
+from .models import *
+from .serializers import *
+from notifications.models import notifications
+
+
+
+class ReelCloudinaryViewSet(ModelViewSet):
+
+
+    queryset = ReelCloudinary.objects.all()
+    serializer_class = ReelCloudinarySerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def create(self, request, *args, **kwargs):
+        video_file = request.FILES.get('video')
+        title = request.data.get('title', '')
+        reel_description = request.data.get('description', '')
+
+        if not video_file:
+            return Response(
+                {'error': 'No video file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Upload to Cloudinary
+            upload_result = cloudinary.uploader.upload_large(
+                video_file,
+                resource_type="video",
+                chunk_size=6000000,  # 6MB chunks
+                folder="reels",
+            )
+
+            # Create a Post instance
+            post = Post.objects.create(
+                post_type='reel',
+                post_title=title,
+                post_description=reel_description,
+                created_by=request.user
+            )
+            notifications.objects.create(
+                user=request.user,
+                message=f"Reel uploaded!",
+                page="reel",  # Example page
+                page_item_id=post.id  # Optional, can be set to a specific ID if needed
+            )
+            # Save to ReelCloudinary model
+            serializer = self.get_serializer(data={
+                'title': title,
+                'video_url': upload_result['secure_url'],
+                'reel_description': reel_description,
+                'thumbnail_url': upload_result.get('thumbnail_url', 'https://picsum.photos/90/160'),
+                'created_by': request.user.id,
+                'post': post.id
+            })
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print(f"Error: {str(e)}")  # Log the error to the console
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+
+class VideoCloudinaryViewSet(ModelViewSet):
+
+
+    queryset = VideoCloudinary.objects.all()
+    serializer_class = VideoCloudinarySerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def create(self, request, *args, **kwargs):
+        video_file = request.FILES.get('video')
+        title = request.data.get('title', '')
+        video_description = request.data.get('description', '')
+
+        if not video_file:
+            return Response(
+                {'error': 'No video file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Upload to Cloudinary
+            upload_result = cloudinary.uploader.upload_large(
+                video_file,
+                resource_type="video",
+                chunk_size=6000000,  # 6MB chunks
+                folder="videos",
+            )
+
+            print(upload_result)
+
+            # Create a Post instance
+            post = Post.objects.create(
+                post_type='video',
+                post_title=title,
+                post_description=video_description,
+                created_by=request.user
+            )
+
+            # Save to ReelCloudinary model
+            serializer = self.get_serializer(data={
+                'title': title,
+                'video_url': upload_result['secure_url'],
+                'video_description': video_description,
+                'thumbnail_url': upload_result.get('thumbnail_url', 'https://picsum.photos/90/160'),
+                'created_by': request.user.id,
+                'post': post.id
+            })
+
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            print(f"Error: {str(e)}")  # Log the error to the console
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

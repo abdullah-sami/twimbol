@@ -10,7 +10,7 @@ class Post(models.Model):
     post_title = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
     post_description = models.TextField(null=True)
-    post_banner = models.ImageField(upload_to='img/posts/', null=True, blank=True, default='img/posts/463315330_975679841271321_5666464099814645228_n.jpg')
+    post_banner = models.ImageField(upload_to='img/posts/', null=True, blank=True, default='img/posts/post_banner_default.jpg')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='post_created_by')
     
 

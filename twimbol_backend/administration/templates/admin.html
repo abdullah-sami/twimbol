@@ -64,7 +64,9 @@
             {% for application in new_applications %}
             <a href="{% url 'profile' application.user %}">
                 <div class="user-card">
+                    {% if application.user.profile.profile_pic %}
                     <img src="{{application.user.profile.profile_pic.url}}" alt="" style="width: 100px; height: 100px;">
+                        {%endif%}
                     <h3>{{ application.user.profile.first_name }} {{ application.user.profile.last_name }}</h3>
                     <p><strong>Username:</strong> {{ application.user.username }}</p>
                     <p><strong>User Type:</strong>{% for group in application.user.groups.all %}
@@ -110,8 +112,9 @@
     {% for user in users %}
     <a href="{% url 'profile' user %}">
     <div class="user-card">
+        {% if user.profile.profile_pic %}
         <img src="{{user.profile.profile_pic.url}}" alt="" style="width: 100px; height: 100px;">
-
+        {%endif%}
         <h3>{{ user.profile.first_name }} {{ user.profile.last_name }}</h3>
         <p><strong>Username:</strong> {{ user.username }}</p>
             <p><strong>User Type:</strong>{% for group in user.groups.all %}

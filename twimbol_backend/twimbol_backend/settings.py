@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-zacmm9e2l*c=smobi=%x2#8ql%-_7#kn9gjct%)4f8$qg*a^@a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', 'https://decf-59-153-102-115.ngrok-free.app']
+
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -47,7 +48,10 @@ INSTALLED_APPS = [
     'event',
     'message',
     'notifications',
-]
+    'corsheaders',
+    'cloudinary',
+    'cloudinary_storage',
+] 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -57,8 +61,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'rest_framework_simplejwt.authentication.JWTAuthentication',
+    'corsheaders.middleware.CorsMiddleware'
 ]
+
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'twimbol_backend.urls'
 
@@ -145,7 +152,9 @@ LOGIN_URL = 'login'
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://7895-103-180-245-249.ngrok-free.app"
+    "https://71ff-59-153-102-119.ngrok-free.app",
+    "http://192.168.0.175:8081",
+    "http://127.0.0.1:80",
 ]
 
 
@@ -154,10 +163,26 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
 
-    )    
+    ),
 }
 
 from datetime import timedelta
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=100),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=100),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
+
+# import cloudinary
+# cloudinary.config(
+#     cloud_name="ducr0o0wa",
+#     api_key="763735417813897",
+#     api_secret="YR2l3awAJDjlBuuOPEbnWVj6Cpk",
+#     secure=True
+# )
+
+DEFAULT_VIDEO_STORAGE = 'cloudinary_storage.storage.VideoMediaCloudinaryStorage'
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
