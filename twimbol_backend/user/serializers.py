@@ -7,6 +7,11 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User, Group
 
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+
+
+
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -39,6 +44,10 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 
+
+
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -49,6 +58,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 
+<<<<<<< HEAD
 class UpdateProfileSerializer(serializers.ModelSerializer):
     userId = serializers.SerializerMethodField()
 
@@ -59,15 +69,28 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
     def get_userId(self, obj):
         # Return the ID of the associated user
         return obj.user.id
+=======
+<<<<<<< HEAD
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
 
 
 
+<<<<<<< HEAD
+=======
+
+=======
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
         # Add custom user data to the response
         data['user'] = {
             'id': self.user.id,
@@ -76,6 +99,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             # Add more fields as needed
         }
 
+<<<<<<< HEAD
         return data
     
 
@@ -108,3 +132,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.groups.add(visitor_group)
 
         return user
+=======
+<<<<<<< HEAD
+
+        return data
+
+
+
+=======
+        return data
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e

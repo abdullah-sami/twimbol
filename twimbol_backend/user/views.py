@@ -10,6 +10,59 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from rest_framework import viewsets, permissions
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import *
+
+
+
+
+
+
+
+
+
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserProfile.objects.filter(user=user)
+
+
+
+
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        username = self.request.query_params.get('username')
+        if username:
+            queryset = queryset.filter(username=username)
+        return queryset
+   
+
+
+
+
+
+
+=======
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
+
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 from rest_framework import status
@@ -21,6 +74,7 @@ from django.core.exceptions import PermissionDenied  # Import PermissionDenied f
 def profile(request, profile_user_name):
     user = request.user
 
+
     try:
         profile_user = User.objects.get(username=profile_user_name)
         profile = UserProfile.objects.get(user=profile_user)
@@ -30,25 +84,30 @@ def profile(request, profile_user_name):
         profile = None
         message = 'No such user.'
 
+
     posts = Post.objects.filter(created_by=profile_user).order_by('-created_at')
-    
+   
+
 
     if request.method == 'GET':
         if request.GET.get('q'):
             q = request.GET.get('q')
-        
+       
             posts = posts.filter(post_type=q)
+
 
     if user == profile_user:
         return redirect('user_manager')
-    
+   
     if request.user.groups.filter(name='admin').exists():
         user.is_admin = True
-    
+   
     is_creator =  profile.user.groups.filter(name='creator').exists()
     is_admin = profile.user.groups.filter(name='admin').exists()
 
-    
+
+   
+
 
 
 
@@ -62,6 +121,8 @@ def profile(request, profile_user_name):
     following_count = Follower.objects.filter(follower=profile_user).count()
 
 
+
+
     context = {
         'profile': profile,
         'user': user,
@@ -73,9 +134,9 @@ def profile(request, profile_user_name):
             'is_following': is_following,
             'follower_count': follower_count,
             'following_count': following_count,},
-        
+       
     }
-    
+   
     return render(request, 'profile.html', context)
 
 
@@ -84,8 +145,19 @@ def profile(request, profile_user_name):
 
 
 
+<<<<<<< HEAD
 
 class UserProfileViewSet(viewsets.ModelViewSet):
+=======
+<<<<<<< HEAD
+
+
+
+
+
+=======
+class ProfileViewSet(viewsets.ModelViewSet):
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -94,6 +166,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         # Allow users to view only their own profile
         user = self.request.user
         return UserProfile.objects.filter(user=user)
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
 
     def perform_update(self, serializer):
         # Ensure the user cannot update another user's profile
@@ -110,8 +183,12 @@ def follow(request, profile_user_name):
     user = request.user
     profile_user = User.objects.get(username=profile_user_name)
 
+
     if user == profile_user:
         return redirect('profile', profile_user_name=profile_user_name)
+
+
+
 
 
 
@@ -119,8 +196,10 @@ def follow(request, profile_user_name):
         follower = Follower.objects.get(follower=user, following=profile_user)
         follower.delete()
 
+
     except Follower.DoesNotExist:
         Follower.objects.create(follower=user, following=profile_user)
+
 
     return redirect('profile', profile_user_name=profile_user_name)
 
@@ -146,13 +225,25 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 
+   
+
+
+
+
+
+
+
+
 @login_required
 def user_manager(request):
 
 
+
+
     user = request.user
     profile = user.profile
-    
+   
+
 
     if(user.profile):
         if request.method == 'POST':
@@ -163,8 +254,10 @@ def user_manager(request):
                     uploaded_file = request.FILES.get('profile_pic')
                     uploaded_file.name = f'img/profile_pics/{uploaded_file.name}'
 
+
                     profile.profile_pic = uploaded_file
-                
+               
+
 
                 return redirect('user_manager')
         else:
@@ -174,17 +267,23 @@ def user_manager(request):
             user=User.objects.get(username=user.username),
         )
 
+
     if request.method == 'POST' and 'delete_profile' in request.POST:
         user.delete()
         return redirect('login')
-    
+   
     # liked posts
     liked_posts = Post_Stat_like.objects.filter(created_by=user).order_by('-created_at')
+
+
 
 
     # follower check
     followers = Follower.objects.filter(following=user).order_by('-created_at')
     following = Follower.objects.filter(follower=user).order_by('-created_at')
+
+
+
 
 
 
@@ -201,6 +300,8 @@ def user_manager(request):
         }
 
 
+
+
     return render(request, 'user.html', context)
 
 
@@ -210,6 +311,7 @@ def user_manager(request):
 
 
 
+<<<<<<< HEAD
 class UpdateProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UpdateProfileSerializer
@@ -234,17 +336,22 @@ class UpdateProfileViewSet(viewsets.ModelViewSet):
 
 
 
+=======
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
 def register_view(request):
 
+
     if request.user.is_authenticated:
         return redirect('user_manager')
+
 
     if request.method == 'POST':
         register_form = UserCreateForm(request.POST)
         if register_form.is_valid():
             user = register_form.save()
+
 
             UserProfile.objects.create(
                 user=User.objects.get(username=register_form.cleaned_data['username']),
@@ -255,10 +362,12 @@ def register_view(request):
     else:
         register_form = UserCreateForm()
 
+
     context = {
         'message': 'Please register to view this page.',
         'form': register_form
         }
+
 
     return render(request, 'login.html', context)
 
@@ -268,6 +377,7 @@ def register_view(request):
 
 
 
+<<<<<<< HEAD
 from notifications.models import notifications
 
 class RegisterViewSet(viewsets.ViewSet):
@@ -299,30 +409,44 @@ class RegisterViewSet(viewsets.ViewSet):
 
 
 
+=======
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
 
 def login_view(request):
 
+<<<<<<< HEAD
+=======
+
+   
+
+
+
+
+>>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
     if request.user.is_authenticated:
         return redirect('user_manager')
+
 
     if request.method == 'POST':
         login_form = AuthenticationForm(data=request.POST)
         if login_form.is_valid():
             user = login_form.get_user()
             login(request, user)
-            
+           
             return redirect('home')
     else:
         login_form = AuthenticationForm()
+
+
 
 
     context = {
         'message': 'login',
         'form': login_form
         }
-    
+   
     return render(request, 'login.html', context)
 
 
@@ -333,6 +457,20 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+
+
+
+
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+
+
+
+

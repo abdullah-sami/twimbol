@@ -49,7 +49,11 @@ class PostViewSet(ModelViewSet):
 
 
     def get_queryset(self):
+<<<<<<< HEAD
+        return super().get_queryset().filter(post_type='post')
+=======
         return super().get_queryset().filter(post_type="post")
+>>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
 
 
     def perform_create(self, serializer):
