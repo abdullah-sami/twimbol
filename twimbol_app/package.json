@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.1.2",
+    "dayjs": "^1.11.13",
+    "dayjs-ext": "^2.1.1",
+    "react-native-hypertext": "^0.0.3",
+    "react-native-image-picker": "^8.2.0"
+  }
+}

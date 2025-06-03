@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Twimbol",
+    "slug": "twimbol",
+    "version": "1.0.0",
+    "newArchEnabled": true,
+    "icon": "./assets/icons/logo_icon.png",
+    "splash": {
+      "image": "./assets/icons/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/icons/logo_icon.png"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "jsEngine": "hermes",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "a066e957-e620-4649-916e-4e6b35e30041"
+      }
+    },
+    "android": {
+      "package": "com.web.rafid.twimbol",
+      "icon": "./assets/icons/logo_icon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+../twimbol_backend/
+../.venv/
+../bin/
+../Pipfile*
+../requirements.txt
+
+../.git
+production
+-

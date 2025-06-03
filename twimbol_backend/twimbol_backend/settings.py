@@ -185,4 +185,4 @@ SIMPLE_JWT = {
 
 DEFAULT_VIDEO_STORAGE = 'cloudinary_storage.storage.VideoMediaCloudinaryStorage'
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaC   loudinaryStorage'
