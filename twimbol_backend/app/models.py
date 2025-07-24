@@ -3,7 +3,7 @@ from django.db.models.fields.related import OneToOneField, ForeignKey
 from django.contrib.auth.models import User
 # Create your models here.
 
-
+ 
 
 class Post(models.Model):
     post_type = models.CharField(max_length=100)

@@ -8,6 +8,7 @@ import TimeAgo from '@/components/time';
 import Header from '@/components/header';
 import { Gesture, GestureHandlerRootView, RefreshControl } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PostsFeed = () => {
 
@@ -28,6 +29,7 @@ const PostsFeed = () => {
     setRefreshing(false); // Hide the refresh spinner
   };
 
+  
 
   const renderPost = ({ item }) => {
 
@@ -90,15 +92,15 @@ const PostsFeed = () => {
 
   return (
     <GestureHandlerRootView className="flex-1">
-
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
       <Header />
 
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Posts</Text>
-          <TouchableOpacity style={styles.bookmarkButton}>
+          {/* <TouchableOpacity style={styles.bookmarkButton}>
             <Bookmark size={24} color="#fff" fill="#FF6B47" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {postsLoading && (
@@ -125,7 +127,7 @@ const PostsFeed = () => {
         />
 
       </View>
-
+</SafeAreaView>
     </GestureHandlerRootView>
 
 

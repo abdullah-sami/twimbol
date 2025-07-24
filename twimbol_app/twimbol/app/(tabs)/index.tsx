@@ -1,4 +1,5 @@
 import { Text, View, Image, StyleSheet, ActivityIndicator } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Link from "expo-router/link";
 import React from "react";
 import { Stack } from "expo-router";
@@ -16,7 +17,6 @@ import { GestureHandlerRootView, FlatList, ScrollView, RefreshControl } from "re
 import useFetch from '@/services/useFetch'
 
 import { fetchSearchResults, fetchReelResults } from '@/services/api'
-import { SafeAreaView } from "react-native-safe-area-context";
 
 
 
@@ -51,8 +51,9 @@ export default function Index() {
 
 
   return (
-    <GestureHandlerRootView className="flex-1">
-        <View className="flex-1 bg-bgPrimary">
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
+        <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
           {/* Header */}
           <Header />
 
@@ -72,6 +73,7 @@ export default function Index() {
             <ReelsFeed reels={reelsData} layout="grid" onReelPress={handleReelPress} range={30} />
           </ScrollView>
         </View>
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 }

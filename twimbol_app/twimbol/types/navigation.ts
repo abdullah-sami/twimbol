@@ -12,4 +12,5 @@ export type RootStackParamList = {
     settings: undefined;
     notifications: undefined;
     createcontents: undefined;
+    events: { eventid: string };
   };

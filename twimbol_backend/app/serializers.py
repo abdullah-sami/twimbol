@@ -26,10 +26,6 @@ class PostSerializer(serializers.ModelSerializer):
             'like_count',
             'post_banner',
             'created_by',
-<<<<<<< HEAD
-            'created_at',
-=======
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
             'user_profile',
             'username',
             'comments',
@@ -41,24 +37,17 @@ class PostSerializer(serializers.ModelSerializer):
    
     def get_like_count(self, obj):
         return Post_Stat_like.objects.filter(post=obj).count()
-<<<<<<< HEAD
    
-=======
     
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
     def get_comments(self, obj):
         comments = Post_Comment.objects.filter(post=obj).values('comment')
         return comments
 
-<<<<<<< HEAD
 
-=======
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
     def get_user_profile(self, obj):
         if hasattr(obj.created_by, 'profile'):
             return UserProfileSerializer(obj.created_by.profile).data
         return None
-<<<<<<< HEAD
    
     def get_username(self, obj):
         return UserSerializer(obj.created_by).data
@@ -67,11 +56,9 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 
-=======
     
     def get_username(self, obj):
         return UserSerializer(obj.created_by).data
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
 
 
 
@@ -82,7 +69,6 @@ class PostSearchSerializer(serializers.ModelSerializer):
     trending_score = serializers.IntegerField()
     priority = serializers.IntegerField()
     reels_data = serializers.SerializerMethodField()
-<<<<<<< HEAD
     # video_data = serializers.SerializerMethodField()
     user_profile = serializers.SerializerMethodField() 
     username = serializers.SerializerMethodField() 
@@ -92,7 +78,6 @@ class PostSearchSerializer(serializers.ModelSerializer):
         fields = ['id', 'post_title', 'post_type', 'post_description', 'post_banner', 'created_by', 'created_at', 'priority', 'trending_score', 'reels_data',  'user_profile', 'username']
     
     
-=======
     video_data = serializers.SerializerMethodField()
     user_profile = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
@@ -103,19 +88,16 @@ class PostSearchSerializer(serializers.ModelSerializer):
         fields = ['id', 'post_title', 'post_type', 'post_description', 'post_banner', 'created_by', 'created_at', 'priority', 'trending_score', 'reels_data',  'video_data', 'user_profile', 'username']
    
    
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
     def get_reels_data(self, obj):
         if obj.post_type == 'reel' and hasattr(obj, 'reels'):
             return ReelCloudinarySerializer(obj.reels).data
         return None
-<<<<<<< HEAD
     
     # def get_video_data(self, obj):
     #     if obj.post_type == 'youtube_video_upload' and hasattr(obj, 'video_data'):
     #         return VideoCloudinarySerializer(obj.video_data).data
     #     return None
     
-=======
    
     def get_video_data(self, obj):
         if obj.post_type == 'youtube_video_upload' and hasattr(obj, 'video_data'):
@@ -123,7 +105,6 @@ class PostSearchSerializer(serializers.ModelSerializer):
         return None
    
 
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
     def get_user_profile(self, obj):
         if hasattr(obj.created_by, 'profile'):
@@ -145,13 +126,11 @@ class YoutubeReelsDataSerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
     class Meta:
         model = Youtube_Reels_Data
-<<<<<<< HEAD
         fields = ['post', 'reel_id', 'reel_title', 'reel_description', 'thumbnail_url', 'created_at', 'user_profile']
     
     def get_user_profile(self, obj):
         return UserProfileSerializer(obj.post.created_by.profile).data
     
-=======
         fields = ['post', 'reel_id', 'reel_title', 'reel_description', 'thumbnail_url', 'created_at', 'user_profile', 'username']
    
     def get_user_profile(self, obj):
@@ -167,7 +146,6 @@ class YoutubeReelsDataSerializer(serializers.ModelSerializer):
 
        
 
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
 
@@ -177,6 +155,8 @@ class PostCommentSerializer(serializers.ModelSerializer):
         fields = [
             'post',
             'comment',
+            'created_by',
+            'created_at',
         ]
 
 
@@ -189,6 +169,8 @@ class PostStatLikeSerializer(serializers.ModelSerializer):
         model = Post_Stat_like
         fields = [
             'post',
+            'created_by',
+            'created_at',
         ]
 
 
@@ -219,25 +201,3 @@ class YoutubeReelsIdSerializer(serializers.ModelSerializer):
         model = Youtube_Reels_Id
         fields = '__all__'
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-<<<<<<< HEAD
-        
-=======
-
-
-       
-
- 
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e

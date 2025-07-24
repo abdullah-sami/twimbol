@@ -29,10 +29,30 @@
     },
     "android": {
       "package": "com.web.rafid.twimbol",
-      "icon": "./assets/icons/logo_icon.png"
+      "icon": "./assets/icons/logo_icon.png",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "twimbol.com",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
+    "scheme": "twimbol",
     "plugins": [
-      "expo-router"
-    ]
+      "expo-router",
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "userInterfaceStyle": "automatic"
   }
 }

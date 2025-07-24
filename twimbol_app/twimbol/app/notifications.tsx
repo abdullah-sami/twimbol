@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Image
@@ -21,6 +20,7 @@ import NotificationItem from '@/components/notification';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@/types/navigation'; // <- Import types
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 const Notifications = () => {
@@ -36,7 +36,7 @@ const Notifications = () => {
 
   return (
     <GestureHandlerRootView className="flex-1">
-      <SafeAreaView style={styles.container}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right", "bottom"]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Notifications</Text>
           <TouchableOpacity style={styles.settingsButton}>
@@ -87,10 +87,7 @@ const Notifications = () => {
 export default Notifications
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

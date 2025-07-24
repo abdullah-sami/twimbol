@@ -35,7 +35,7 @@ const Create = () => {
   return (
     <>
       <GestureHandlerRootView>
-        <SafeAreaView>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
           <Header />
           <View style={styles.container}>
 

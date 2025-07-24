@@ -10,9 +10,6 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from rest_framework import viewsets, permissions
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 
@@ -59,10 +56,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 
-=======
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
-
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 from rest_framework import status
@@ -145,19 +138,11 @@ def profile(request, profile_user_name):
 
 
 
-<<<<<<< HEAD
-
 class UserProfileViewSet(viewsets.ModelViewSet):
-=======
-<<<<<<< HEAD
 
 
 
 
-
-=======
-class ProfileViewSet(viewsets.ModelViewSet):
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -166,8 +151,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         # Allow users to view only their own profile
         user = self.request.user
         return UserProfile.objects.filter(user=user)
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
-
+    
     def perform_update(self, serializer):
         # Ensure the user cannot update another user's profile
         serializer.save(user=self.request.user)
@@ -311,7 +295,6 @@ def user_manager(request):
 
 
 
-<<<<<<< HEAD
 class UpdateProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UpdateProfileSerializer
@@ -336,8 +319,6 @@ class UpdateProfileViewSet(viewsets.ModelViewSet):
 
 
 
-=======
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
 def register_view(request):
@@ -377,7 +358,6 @@ def register_view(request):
 
 
 
-<<<<<<< HEAD
 from notifications.models import notifications
 
 class RegisterViewSet(viewsets.ViewSet):
@@ -409,22 +389,11 @@ class RegisterViewSet(viewsets.ViewSet):
 
 
 
-=======
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
 
 def login_view(request):
 
-<<<<<<< HEAD
-=======
-
-   
-
-
-
-
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
     if request.user.is_authenticated:
         return redirect('user_manager')
 

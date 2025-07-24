@@ -49,11 +49,7 @@ class PostViewSet(ModelViewSet):
 
 
     def get_queryset(self):
-<<<<<<< HEAD
         return super().get_queryset().filter(post_type='post')
-=======
-        return super().get_queryset().filter(post_type="post")
->>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
 
 
     def perform_create(self, serializer):
@@ -142,18 +138,32 @@ class CommentPagination(PageNumberPagination):
     
 
 
+
 class PostCommentViewSet(ModelViewSet):
     queryset = Post_Comment.objects.all().order_by('-created_at')
     serializer_class = PostCommentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = CommentPagination
 
+    def get_queryset(self):
+        """
+        Override to filter comments by post_id from URL
+        """
+        queryset = super().get_queryset()
+        post_id = self.kwargs.get('post_id')
+        if post_id:
+            return queryset.filter(post_id=post_id)
+        return queryset.none()  # Return empty queryset if no post_id
+
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-
-
+        """
+        Set the comment author and associated post
+        """
+        post_id = self.kwargs.get('post_id')
+        post = get_object_or_404(Post, id=post_id)
+        serializer.save(created_by=self.request.user, post=post)
     
-    
+     
     
 
 

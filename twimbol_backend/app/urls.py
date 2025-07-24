@@ -7,7 +7,7 @@ router = routers.DefaultRouter()
 router.register('posts', views.PostViewSet, basename='posts')
 router.register('reels', views.ReelsDataViewSet, basename='reels')
 router.register('videos', views.YtVideoDataViewSet, basename='videos')
-router.register('post_comments', views.PostCommentViewSet, basename='post_comments')
+# router.register('posts/<str:post_id>/comments', views.PostCommentViewSet, basename='post_comments')
 router.register('post_likes', views.PostStatLikeViewSet, basename='post_likes')
 router.register('search', views.SearchViewSet, basename='search_api')
 
@@ -16,6 +16,10 @@ router.register('search', views.SearchViewSet, basename='search_api')
 urlpatterns = [
 
     path('api/', include(router.urls)),
+    path('api/posts/<int:post_id>/comments/', views.PostCommentViewSet.as_view({
+        'get': 'list',
+        'post': 'create'
+    }), name='post_comments'),
 
     path('', views.home, name='home'),
 

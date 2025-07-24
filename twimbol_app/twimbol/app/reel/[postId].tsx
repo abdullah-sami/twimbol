@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet, Dimensions, FlatList, Text, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Dimensions, FlatList, Text, Image, TouchableOpacity, Share } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { Video } from 'expo-av';
 import {
   GestureHandlerRootView,
@@ -14,6 +15,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import useFetch from '@/services/useFetch';
 import { fetchReelResults, TWIMBOL_API_CONFIG } from '@/services/api';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
 
@@ -119,34 +121,38 @@ const ReelsPlayer = ({ route }) => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <FlatList
-        ref={flatListRef}
-        data={reelsData || []}
-        keyExtractor={(item) => item.post}
-        renderItem={({ item }) => (
-          <VideoItem
-            video={item}
-            isActive={reelsData[activeVideoIndex]?.post === item.post}
-            setVideoRef={(ref) => {
-              videoRefs.current[item.post] = ref;
-            }}
-          />
-        )}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{
-          itemVisiblePercentThreshold: 80,
-        }}
-        onRefresh={handleRefresh}
-        refreshing={refreshing}
-        initialNumToRender={2}
-        maxToRenderPerBatch={3}
-        windowSize={5}
-        snapToInterval={height}
-        snapToAlignment="start"
-        decelerationRate="fast"
-      />
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right", "bottom"]}>
+        <FlatList
+          ref={flatListRef}
+          data={reelsData || []}
+          keyExtractor={(item) => item.post}
+          renderItem={({ item }) => (
+            <VideoItem
+              video={item}
+              isActive={reelsData[activeVideoIndex]?.post === item.post}
+              setVideoRef={(ref) => {
+                videoRefs.current[item.post] = ref;
+              }}
+            />
+          )}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 80,
+          }}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          initialNumToRender={2}
+          maxToRenderPerBatch={3}
+          windowSize={5}
+          snapToInterval={height}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1 }}
+        />
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 };
@@ -164,13 +170,52 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   // Mock data for UI display
   const engagementData = {
-    likes: '337K',
-    comments: '15K',
-    shares: '25K',
+    likes: video.like_count || 0,
+    comments: video.comments.length || 0,
+    shares: 0,
     username: `${video.user_profile.user.first_name} ${video.user_profile.user.last_name || ''}` || 'User',
     description: video.reel_description || 'Ooey - So Sick of Love',
-    pp: video.user_profile.user.profile_pic?`${TWIMBOL_API_CONFIG.BASE_URL}${video.user_profile.user.profile_pic}` : 'https://randomuser.me/api/portraits/men/32.jpg'
+    pp: video.user_profile.user.profile_pic ? `${TWIMBOL_API_CONFIG.BASE_URL}${video.user_profile.user.profile_pic}` : 'https://randomuser.me/api/portraits/men/32.jpg'
   };
+
+
+  // Handle share functionality
+  const handleShare = async (reelId:any) => {
+  try {
+    const result = await Share.share({
+      message: `🎬 Watch this reel on Twimbool!\nhttps://twimbol.com/reel/${reelId}`,
+    });
+
+    if (result.action === Share.sharedAction) {
+      // Optional: API call to increment share count
+      // await fetch(`https://your-backend.com/api/reels/${reelId}/increment_share/`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${accessToken}`, // if needed
+      //     'Content-Type': 'application/json',
+      //   },
+      // });
+
+      Toast.show({
+        type: 'success',
+        text1: 'Shared!',
+        text2: 'Reel shared with friends 🚀',
+        position: 'bottom',
+      });
+
+      // Optionally update local share count
+      // setEngagementData(prev => ({ ...prev, shares: prev.shares + 1 }));
+    }
+  } catch (error) {
+    console.error('Sharing failed:', error);
+    Toast.show({
+      type: 'error',
+      text1: 'Oops!',
+      text2: 'Failed to share. Try again.',
+      position: 'bottom',
+    });
+  }
+};
 
 
   // Set up video ref
@@ -244,138 +289,151 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   const displayDuration = formatTimeToMMSS(videoDuration);
 
+
   return (
-    <View style={styles.videoContainer}>
-      <TapGestureHandler
-        waitFor={doubleTapRef}
-        onActivated={togglePlayPause}
-      >
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      {/* <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right"]}> */}
+
+      <View style={styles.videoContainer}>
         <TapGestureHandler
-          ref={doubleTapRef}
-          numberOfTaps={2}
-          onActivated={onDoubleTap}
+          waitFor={doubleTapRef}
+          onActivated={togglePlayPause}
         >
-          <View>
-            <Video
-              ref={videoRef}
-              source={{ uri: video.video_url }}
-              style={styles.video}
-              resizeMode="cover"
-              shouldPlay={isActive && isPlaying}
-              isLooping
-              useNativeControls={false}
-              onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-              progressUpdateIntervalMillis={500}
-            />
-            <Animated.View style={[styles.heartOverlay, animatedStyle]}>
-              {scale.value > 1 && (
-                <Ionicons name="heart" size={100} color="white" />
+          <TapGestureHandler
+            ref={doubleTapRef}
+            numberOfTaps={2}
+            onActivated={onDoubleTap}
+          >
+            <View>
+              <Video
+                ref={videoRef}
+                source={{ uri: video.video_url }}
+                style={styles.video}
+                resizeMode="cover"
+                shouldPlay={isActive && isPlaying}
+                isLooping
+                useNativeControls={false}
+                onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+                progressUpdateIntervalMillis={500}
+              />
+              <Animated.View style={[styles.heartOverlay, animatedStyle]}>
+                {scale.value > 1 && (
+                  <Ionicons name="heart" size={100} color="white" />
+                )}
+              </Animated.View>
+
+              {/* Play/Pause indicator */}
+              {showPlayIcon && (
+                <View style={styles.playIconContainer}>
+                  <Ionicons
+                    name={isPlaying ? "play-circle" : "pause-circle"}
+                    size={80}
+                    color="rgba(255, 255, 255, 0.8)"
+                  />
+                </View>
               )}
-            </Animated.View>
-
-            {/* Play/Pause indicator */}
-            {showPlayIcon && (
-              <View style={styles.playIconContainer}>
-                <Ionicons
-                  name={isPlaying ? "play-circle" : "pause-circle"}
-                  size={80}
-                  color="rgba(255, 255, 255, 0.8)"
-                />
-              </View>
-            )}
-          </View>
+            </View>
+          </TapGestureHandler>
         </TapGestureHandler>
-      </TapGestureHandler>
 
-      {/* Duration indicator at top */}
-      <View style={styles.durationContainer}>
-        <Text style={styles.durationText}>{displayDuration}</Text>
-      </View>
+        {/* Duration indicator at top */}
+        <View style={styles.durationContainer}>
+          <Text style={styles.durationText}>{displayDuration}</Text>
+        </View>
 
-      {/* Progress bar */}
-      <View style={styles.progressBarContainer}>
-        <View
-          style={[
-            styles.progressBar,
-            { width: `${videoDuration ? (currentPosition / videoDuration) * 100 : 0}%` }
-          ]}
-        />
-      </View>
-
-      {/* Right side action buttons */}
-      <View style={styles.rightOverlay}>
-        <TouchableOpacity style={styles.actionButton} onPress={toggleLike}>
-          <Ionicons
-            name={liked ? "heart" : "heart-outline"}
-            size={28}
-            color={liked ? "#FF4B4B" : "white"}
+        {/* Progress bar */}
+        <View style={styles.progressBarContainer}>
+          <View
+            style={[
+              styles.progressBar,
+              { width: `${videoDuration ? (currentPosition / videoDuration) * 100 : 0}%` }
+            ]}
           />
-          <Text style={styles.actionText}>{engagementData.likes}</Text>
-        </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="chatbubble-outline" size={28} color="white" />
-          <Text style={styles.actionText}>{engagementData.comments}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="arrow-redo-outline" size={28} color="white" />
-          <Text style={styles.actionText}>{engagementData.shares}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.actionButton} onPress={toggleSaved}>
-          <Ionicons
-            name={saved ? "bookmark" : "bookmark-outline"}
-            size={28}
-            color={saved ? "#FFDD00" : "white"}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Bottom user info */}
-      <View style={styles.bottomOverlay}>
-        <View style={styles.userInfoContainer}>
-          <View style={styles.profileContainer}>
-            <Image
-              source={{uri: engagementData.pp}}
-              style={styles.profileImage}
+        {/* Right side action buttons */}
+        <View style={styles.rightOverlay}>
+          <TouchableOpacity style={styles.actionButton} onPress={toggleLike}>
+            <Ionicons
+              name={liked ? "heart" : "heart-outline"}
+              size={28}
+              color={liked ? "#FF4B4B" : "white"}
             />
-            <Text style={styles.username}>{engagementData.username}</Text>
-          </View>
-          <TouchableOpacity style={styles.followButton}>
-            <Ionicons name="person-add-outline" size={20} color="white" />
+            <Text style={styles.actionText}>{engagementData.likes}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.actionButton}>
+            <Ionicons name="chatbubble-outline" size={28} color="white" />
+            <Text style={styles.actionText}>{engagementData.comments}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => handleShare(video.post)}
+          >
+            <Ionicons name="arrow-redo-outline" size={28} color="white" />
+            <Text style={styles.actionText}>{engagementData.shares}</Text>
+          </TouchableOpacity>
+
+
+
+          <TouchableOpacity style={styles.actionButton} onPress={toggleSaved}>
+            <Ionicons
+              name={saved ? "bookmark" : "bookmark-outline"}
+              size={28}
+              color={saved ? "#FFDD00" : "white"}
+            />
           </TouchableOpacity>
         </View>
-        <Text style={styles.description}>{engagementData.description}</Text>
 
-        {/* Music player indicator */}
-        {video.music_info && (
-          <View style={styles.musicContainer}>
-            <Ionicons name="musical-notes-outline" size={16} color="white" />
-            <View style={styles.musicTrack}>
+        {/* Bottom user info */}
+        <View style={styles.bottomOverlay}>
+          <View style={styles.userInfoContainer}>
+            <View style={styles.profileContainer}>
               <Image
-                source={{ uri: video.music_cover || 'https://i.scdn.co/image/ab67616d0000b2732df02f0877da45b745829432' }}
-                style={styles.musicThumbnail}
+                source={{ uri: engagementData.pp }}
+                style={styles.profileImage}
               />
-              <Text style={styles.musicTitle} numberOfLines={1}>
-                {video.music_info}
-              </Text>
+              <Text style={styles.username}>{engagementData.username}</Text>
             </View>
+            <TouchableOpacity style={styles.followButton}>
+              <Ionicons name="person-add-outline" size={20} color="white" />
+            </TouchableOpacity>
           </View>
-        )}
+          <Text style={styles.description}>{engagementData.description}</Text>
+
+          {/* Music player indicator */}
+          {video.music_info && (
+            <View style={styles.musicContainer}>
+              <Ionicons name="musical-notes-outline" size={16} color="white" />
+              <View style={styles.musicTrack}>
+                <Image
+                  source={{ uri: video.music_cover || 'https://i.scdn.co/image/ab67616d0000b2732df02f0877da45b745829432' }}
+                  style={styles.musicThumbnail}
+                />
+                <Text style={styles.musicTitle} numberOfLines={1}>
+                  {video.music_info}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
+      {/* </SafeAreaView> */}
+    </GestureHandlerRootView>
   );
 };
 
 const styles = StyleSheet.create({
   videoContainer: {
-    height: height,
+    flex: 1,
     width: '100%',
+    height: height,
     backgroundColor: 'black',
     position: 'relative',
   },
   video: {
+    // ...StyleSheet.absoluteFillObject, // This makes the video fill its parent
     width: '100%',
     height: '100%',
   },

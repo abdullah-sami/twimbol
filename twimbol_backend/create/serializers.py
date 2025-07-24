@@ -3,6 +3,8 @@ from user.models import CreatorApplication
 from user.serializers import UserProfileSerializer, UserSerializer
 from .models import *
 
+from app.models import Post_Stat_like, Post_Comment
+
 
 
 
@@ -19,12 +21,43 @@ class CreatorApplicationSerializer(serializers.ModelSerializer):
 
 class ReelCloudinarySerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+    liked_by_user = serializers.SerializerMethodField()
+
     class Meta:
         model = ReelCloudinary
-        fields = ['post', 'video_url', 'title', 'reel_description', 'thumbnail_url','created_by', 'created_at', 'user_profile']
+        # fields = ['post', 'video_url', 'title', 'reel_description', 'thumbnail_url','created_by', 'created_at', 'user_profile']
+
+        fields = [
+            'title',
+            'video_url',
+            'created_at',
+            'post',
+            'reel_description',
+            'thumbnail_url',
+            'view_count',
+            'like_count',
+            'comments',
+            'created_by',
+            'user_profile',
+            'liked_by_user',
+        ]
     
     def get_user_profile(self, obj):
         return UserProfileSerializer(obj.post.created_by.profile).data
+    
+    def get_like_count(self, obj):
+        return Post_Stat_like.objects.filter(post=obj.post).count()
+
+    def get_comments(self, obj):
+        return Post_Comment.objects.filter(post=obj.post)
+    
+    def get_liked_by_user(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Post_Stat_like.objects.filter(post=obj.post, created_by=user).exists()
+        return False
     
 
 

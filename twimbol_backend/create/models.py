@@ -20,7 +20,7 @@ class ReelCloudinary(models.Model):
     reel_description = models.TextField(blank=True, null=True)
     thumbnail_url = models.URLField(null=True)
     view_count = models.IntegerField(default=0)
-    like_count = models.IntegerField(default=0)
+    # like_count = models.IntegerField(default=0)
     created_by = models.ForeignKey(
         User,
         related_name='reel_by',
