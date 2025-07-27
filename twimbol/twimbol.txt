@@ -1,0 +1,12 @@
+app name: Twimbol
+
+short description: Safe social media and content sharing app especially designed for kids.
+
+description: Twimbol is a social media & content sharing platform aiming to build a safe internet for all. Our content policy ensures that no harmful content is being presented. We carefully observe comments and user interactions to keep the platform secure specially for the kids. Twimbol always monitors for policy violations and takes necessary actions as needed. Features: Reels, Posts, Events, Messaging and so on.
+
+
+email address: twimbol@gmail.com
+contact: +8801982971464
+
+
+privacy-policy: https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy

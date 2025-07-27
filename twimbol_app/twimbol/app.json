@@ -28,7 +28,7 @@
       }
     },
     "android": {
-      "package": "com.web.rafid.twimbol",
+      "package": "com.app.rafid.twimbol",
       "icon": "./assets/icons/logo_icon.png",
       "intentFilters": [
         {
@@ -53,6 +53,6 @@
       "expo-font",
       "expo-web-browser"
     ],
-    "userInterfaceStyle": "automatic"
+    "userInterfaceStyle": "light"
   }
 }

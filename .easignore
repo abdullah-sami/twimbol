@@ -1,0 +1,26 @@
+
+# Optionally, ignore specific files directly in the root if not within twimbol_app
+# If .easignore is in the *root* of your monorepo, these rules are more specific
+# if you want to keep .easignore in the same directory as .gitignore
+
+# Example of specific files to ignore if they are NOT inside twimbol_app
+.env
+twimbol_backend/
+LICENSE
+Pipfile
+Pipfile.lock
+README.md
+requirements.txt
+twimbol_backend.zip
+twimbol.docx
+twimbol.pdf
+twimbol.xlsx
+
+# Standard ignores for node projects (if they exist outside twimbol_app or for cleanliness)
+node_modules/
+.git/
+.expo/
+build/
+dist/
+*.log
+*.zip
