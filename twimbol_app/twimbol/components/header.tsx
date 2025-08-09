@@ -15,9 +15,8 @@ const Header = () => {
   const navigation = useNavigation();
 
     return (
-<View className="android:elevation-7 w-100 h-10  bg-white flex-row justify-space-between align-center shadow-lg">
+<View className="android:elevation-7 w-100 h-20  bg-white flex-row justify-space-between align-center shadow-lg">
         <Image
-          
           source={images.logo}  
           style={styles.logo}
           className="ml-5"

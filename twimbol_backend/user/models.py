@@ -13,12 +13,13 @@ class UserProfile(models.Model):
     user_phone = models.CharField(max_length=50, null=True, blank=True)
     user_address = models.CharField(max_length=50, null=True, blank=True)
     user_type = models.CharField(max_length=50, default='regular')
+    birthday = models.DateField(null=True, blank=True, default='2000-01-01')
 
     user_social_fb = models.CharField(max_length=50, null=True, blank=True)
     user_social_twt = models.CharField(max_length=50, null=True, blank=True)
     user_social_yt = models.CharField(max_length=50, null=True, blank=True)
 
-    user_status = models.CharField(max_length=50, default=1)
+    user_status = models.CharField(max_length=50, default='1')
     user_banned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

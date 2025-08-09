@@ -17,6 +17,7 @@ import { GestureHandlerRootView, FlatList, ScrollView, RefreshControl } from "re
 import useFetch from '@/services/useFetch'
 
 import { fetchSearchResults, fetchReelResults } from '@/services/api'
+import SafetyReminderModal from "@/components/safety/safetyreminder";
 
 
 
@@ -31,6 +32,46 @@ export default function Index() {
 
   const [reelsData, setReelsData] = useState(reels || []); // Initialize with existing data or an empty array
   const [refreshing, setRefreshing] = useState(false);
+
+    // Safety reminder modal state
+  const [showSafetyModal, setShowSafetyModal] = useState(false);
+
+
+
+  // Check if safety reminder should be shown
+  useEffect(() => {
+    const checkSafetyReminder = async () => {
+      try {
+        const lastShown = await AsyncStorage.getItem('safetyReminderLastShown');
+        const today = new Date().toDateString();
+        
+        // Show modal if never shown before or if it's a new day
+        if (!lastShown || lastShown !== today) {
+          setShowSafetyModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking safety reminder:', error);
+        // Show modal as fallback if there's an error
+        setShowSafetyModal(true);
+      }
+    };
+    checkSafetyReminder();
+  }, []);
+  // Handle safety reminder acceptance
+  const handleSafetyReminderAccept = async () => {
+    try {
+      const today = new Date().toDateString();
+      await AsyncStorage.setItem('safetyReminderLastShown', today);
+      setShowSafetyModal(false);
+    } catch (error) {
+      console.error('Error saving safety reminder date:', error);
+      setShowSafetyModal(false); // Still close the modal even if saving fails
+    }
+  };
+
+
+
+
 
   // Fetch data only if reelsData is empty
   useEffect(() => {
@@ -52,7 +93,7 @@ export default function Index() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: showSafetyModal ? "#FF6E42" : "#fff" }} edges={["top", "left", "right"]}>
         <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
           {/* Header */}
           <Header />
@@ -72,6 +113,12 @@ export default function Index() {
             {/* Reels */}
             <ReelsFeed reels={reelsData} layout="grid" onReelPress={handleReelPress} range={30} />
           </ScrollView>
+          {/* Safety Reminder Modal */}
+          <SafetyReminderModal
+            visible={showSafetyModal}
+            onAccept={handleSafetyReminderAccept}
+            
+          />
         </View>
       </SafeAreaView>
     </GestureHandlerRootView>

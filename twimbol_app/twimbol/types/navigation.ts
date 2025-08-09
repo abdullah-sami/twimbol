@@ -9,8 +9,10 @@ export type RootStackParamList = {
     profile: undefined;
     profile_user: { userId: string };
     profile_edit: undefined;
-    settings: undefined;
     notifications: undefined;
     createcontents: undefined;
     events: { eventid: string };
+    settings: undefined;
+    faq: undefined;
+    termsnconditions: undefined;
   };

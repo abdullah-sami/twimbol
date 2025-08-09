@@ -1,17 +1,20 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
-  TouchableOpacity, 
-  ScrollView ,
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  ScrollView,
   Image,
+  Linking
 } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
-import {icons} from '@/constants/icons';
+import { icons } from '@/constants/icons';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
-const Settings = ({ navigation }:any) => {
+const Settings = ({ navigation }: any) => {
   // Navigation handlers
   const handleBackPress = () => {
     navigation.goBack();
@@ -21,114 +24,152 @@ const Settings = ({ navigation }:any) => {
     navigation.navigate(screen);
   };
 
+
+
+  // Add this function to handle URL opening
+  const openURL = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Don't know how to open URI: " + url);
+      }
+    } catch (error) {
+      console.error('An error occurred', error);
+    }
+  };
+
+  // Add this function to handle email opening
+  const openEmail = async (email, subject = '', body = '') => {
+    const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      const supported = await Linking.canOpenURL(mailto);
+      if (supported) {
+        await Linking.openURL(mailto);
+      } else {
+        console.log("Email client not available");
+      }
+    } catch (error) {
+      console.error('An error occurred opening email', error);
+    }
+  };
+
+
+
+
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Image source={icons.arrow_back} tintColor={'#FF6E42'} style={styles.backButtonImg}/>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
-      </View>
-
-      <ScrollView style={styles.scrollView}>
-        {/* General Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>General</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => handleMenuItemPress('Account')}
-          >
-            <Text style={styles.menuItemText}>Account</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={[styles.container, { flex: 1, backgroundColor: "#fff" }]} edges={["top", "left", "right"]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Image source={icons.arrow_back} tintColor={'#FF6E42'} style={styles.backButtonImg} />
           </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => handleMenuItemPress('Notifications')}
-          >
-            <Text style={styles.menuItemText}>Notifications</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => handleMenuItemPress('ActivityStatus')}
-          >
-            <Text style={styles.menuItemText}>Activity Status</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => handleMenuItemPress('BlockedUser')}
-          >
-            <Text style={styles.menuItemText}>Blocked Users</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Settings</Text>
         </View>
 
-        {/* Feedback Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Feedback</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
-            onPress={() => handleMenuItemPress('SendFeedback')}
-          >
-            <Text style={styles.menuItemText}>Send Feedback</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('FAQs')}
-          >
-            <Text style={styles.menuItemText}>FAQs</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('ReportBug')}
-          >
-            <Text style={styles.menuItemText}>Report a Bug</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('TermsConditions')}
-          >
-            <Text style={styles.menuItemText}>Terms & Conditions</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-          
-          <View style={styles.separator} />
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => handleMenuItemPress('PrivacyPolicy')}
-          >
-            <Text style={styles.menuItemText}>Privacy Policy</Text>
-            {/* <ChevronRight color="#fff" size={20} /> */}
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        <ScrollView style={styles.scrollView}>
+          {/* General Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>General</Text>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('Account')}
+            >
+              <Text style={styles.menuItemText}>Account</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('Notifications')}
+            >
+              <Text style={styles.menuItemText}>Notifications</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('ActivityStatus')}
+            >
+              <Text style={styles.menuItemText}>Activity Status</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('BlockedUser')}
+            >
+              <Text style={styles.menuItemText}>Blocked Users</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+          </View>
+
+          {/* Feedback Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Feedback</Text>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+
+              onPress={() => openEmail('web.rafidabdullahsami@gmail.com', 'Feedback on Twimbol', 'I would like share my feedback on..')}
+            >
+              <Text style={styles.menuItemText}>Send Feedback</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('faq')}
+            >
+              <Text style={styles.menuItemText}>FAQs</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => openEmail('web.rafidabdullahsami@gmail.com', 'Found a bug', '')}
+            >
+              <Text style={styles.menuItemText}
+              >Report a Bug</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('termsnconditions')}
+            >
+              <Text style={styles.menuItemText}>Terms & Conditions</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+
+            <View style={styles.separator} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => openURL('https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy/')}
+            >
+              <Text style={styles.menuItemText}>Privacy Policy</Text>
+              {/* <ChevronRight color="#fff" size={20} /> */}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
 
@@ -140,7 +181,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FF6E42',
     width: '90%',
-    height:100,
+    height: 120,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -156,8 +197,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     fontWeight: 'bold',
     marginLeft: -40,
-    marginTop: -20,
+    // marginTop: -20,
     borderRadius: 50,
+    marginTop: 20,
   },
   backButtonImg: {
     width: 30,
@@ -167,6 +209,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 28,
     fontWeight: 'bold',
+    marginTop: 20,
   },
   scrollView: {
     flex: 1,

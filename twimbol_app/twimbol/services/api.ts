@@ -22,6 +22,81 @@ const getHeaders = async () => {
 
 
 
+
+
+
+
+
+// Register API
+export const fetchRegister = async ({ username, email, password, birthday }: { username: string; email:string, password: string, birthday: string }) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/register/`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username:username,
+      email:email,
+      password:password,
+      birthday: birthday, 
+    }),
+  });
+
+   if (!response.ok) {
+    const errorData = await response.json();
+    console.log('Registration error:', errorData);
+    
+    // Create a proper Error object with custom message
+    let errorMessage = 'Registration failed. Please try again.';
+    
+    if (errorData.username) {
+      errorMessage = errorData.username[0];
+    } else if (errorData.email) {
+      errorMessage = errorData.email[0];
+    } else if (errorData.password) {
+      errorMessage = errorData.password[0];
+    }
+    
+    throw new Error(errorMessage);
+  }
+  const data = await response.json();
+  return data;
+};
+
+
+
+
+
+// Login API
+export const fetchLogin = async ({ username, password }: { username: string; password: string }) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/login/`;
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      username,
+      password,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to login: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data;
+};
+
+
+
+
+
+
 // Helper function to refresh the access token
 const refreshAccessToken = async () => {
   const refresh = await AsyncStorage.getItem('refresh');
@@ -72,61 +147,6 @@ const fetchWithTokenRefresh = async (url: string, options: RequestInit) => {
 
   return response;
 };
-
-
-// Login API
-export const fetchLogin = async ({ username, password }: { username: string; password: string }) => {
-  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/login/`;
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username,
-      password,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to login: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data;
-};
-
-
-
-
-
-
-// Register API
-export const fetchRegister = async ({ username, email, password }: { username: string; email:string, password: string }) => {
-  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/register/`;
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username:username,
-      email:email,
-      password:password,
-    }),
-  });
-
-  if (!response.ok) {
-    console.log(response.statusText)
-    throw new Error(`Failed to Register: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  return data;
-};
-
 
 
 

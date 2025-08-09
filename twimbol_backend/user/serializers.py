@@ -1,17 +1,7 @@
 from rest_framework import serializers
 from .models import *
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
 from django.contrib.auth.models import User, Group
-
-
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
-
-
-
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -19,7 +9,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'user']  # Remove profile_pic from here
+        fields = ['id', 'user']
 
     def get_user(self, obj):
         profile_pic_url = obj.profile_pic.url if obj.profile_pic else None
@@ -29,7 +19,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'email': obj.user.email,
             'first_name': obj.first_name,
             'last_name': obj.last_name,
-            'profile_pic': profile_pic_url,  # Use URL instead of raw field
+            'profile_pic': profile_pic_url,
             'user_phone': obj.user_phone,
             'user_address': obj.user_address,
             'user_type': obj.user_type,
@@ -40,12 +30,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'user_banned': obj.user_banned,
             'user_group': [group.name for group in obj.user.groups.all()]
         }
-    
-
-
-
-
-
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -54,11 +38,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['username']
 
 
-
-
-
-
-# <<<<<<< HEAD
 class UpdateProfileSerializer(serializers.ModelSerializer):
     userId = serializers.SerializerMethodField()
 
@@ -67,56 +46,47 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
         fields = ['userId', 'first_name', 'last_name', 'profile_pic', 'user_phone', 'user_address', 'user_social_fb', 'user_social_twt', 'user_social_yt']
 
     def get_userId(self, obj):
-        # Return the ID of the associated user
         return obj.user.id
-# =======
-# <<<<<<< HEAD
-# >>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 
-
-
-
-# <<<<<<< HEAD
-# =======
-
-# =======
-# >>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
-# >>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
-
-# <<<<<<< HEAD
-
-# =======
-# >>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
+        
         # Add custom user data to the response
         data['user'] = {
             'id': self.user.id,
             'username': self.user.username,
             'email': self.user.email,
-            # Add more fields as needed
         }
-
-# <<<<<<< HEAD
+        
         return data
-    
-
-
-
 
 
 
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    birthday = serializers.DateField(required=False)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password']
+        fields = ['username', 'email', 'password', 'birthday']
+
+    
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Username already exists.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists.")
+        return value
 
     def create(self, validated_data):
+        birthday = validated_data.pop('birthday', None)
+        
         # Create the user
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -124,22 +94,14 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
         )
 
-        # Create the user profile
-        UserProfile.objects.create(user=user, id=user.id)
+        UserProfile.objects.create(
+            user=user, 
+            id=user.id, 
+            birthday=birthday or '2000-01-01'
+        )
 
-        # Assign the user to the 'visitor' group
+
         visitor_group, _ = Group.objects.get_or_create(name='visitor')
         user.groups.add(visitor_group)
 
         return user
-# =======
-# <<<<<<< HEAD
-
-        return data
-
-
-
-# =======
-        return data
-# >>>>>>> e358dd667ba7e058e5cea64610cf0bd79c5b451a
-# >>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, SafeAreaView, ScrollView, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,72 +9,70 @@ import { images } from '@/constants/images';
 import { RefreshControl } from 'react-native-gesture-handler';
 
 const Profile = () => {
-    const navigation = useNavigation();
-    const [isloggedin, setisloggedin] = useState(false)
-    const [usergroup, setusergroup] = useState('visitor')
-    const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
+  const [isloggedin, setisloggedin] = useState(false)
+  const [usergroup, setusergroup] = useState('visitor')
+  const [refreshing, setRefreshing] = useState(false);
 
-
-    useEffect(() => {
-      const checkUserId = async () => {
-        try {
-          const userGroup = await AsyncStorage.getItem('user_group');
-          if (userGroup == 'creator') {
-            setusergroup(userGroup);
-          } 
-        } catch (error) {
-          console.error('Error retrieving user group', error);
+  useEffect(() => {
+    const checkUserId = async () => {
+      try {
+        const userGroup = await AsyncStorage.getItem('user_group');
+        if (userGroup == 'creator') {
+          setusergroup(userGroup);
         }
-      };
-  
-      checkUserId();
-    }, []);
-
-
-  
-
-  const { data: profile, loading: profileLoading, error: profileError, refetch, execute } = useFetch(
-    () => fetchUserProfile(),)
-
-
-    
-
-    const loggedinStatus = async () => {
-      const value = await AsyncStorage.getItem('user_id');
-      
-    
-      if (value) {
-        AsyncStorage.setItem('user', JSON.stringify(profile)); 
-      } else {
-        console.log('User is not logged in');
+      } catch (error) {
+        console.error('Error retrieving user group', error);
       }
-    
-      setisloggedin(!!value);
     };
 
-  
-    useEffect(() => {
-      loggedinStatus();
-    }, []);
-    
-
-    
+    checkUserId();
+  }, []);
 
 
-const handleApplyCreator = () => {
-  navigation.navigate('(tabs)', { screen: 'create' });
-};
 
-const handlePrivacyPolicy = () => {
-    console.log('Navigate to Privacy & Policy');
-    // navigation.navigate('PrivacyPolicy');
-};
 
-const handleSettingsPress = () => {
+  const { data: profile, loading: profileLoading, error: profileError, refetch, execute } = useFetch(
+    () => fetchUserProfile(),false)
+
+
+
+// Add this after your existing useEffects
+useEffect(() => {
+  const checkLoginAndFetch = async () => {
+    const userId = await AsyncStorage.getItem('user_id');
+    if (userId) {
+      setisloggedin(true);
+      // Only execute profile fetch if user is logged in
+      refetch ();
+    } else {
+      setisloggedin(false);
+    }
+  };
+
+  checkLoginAndFetch();
+}, []);
+
+
+
+
+  const handleApplyCreator = () => {
+    navigation.navigate('(tabs)', { screen: 'create' });
+  };
+
+  const handlePrivacyPolicy = (url) => {
+
+    Linking.openURL(url);
+
+  };
+
+
+
+  const handleSettingsPress = () => {
     navigation.navigate('settings' as never);
-};
+  };
 
-  
+
   const handleLogin = () => {
     // @ts-ignore
     navigation.navigate('authentication', { authpage: 'login' });
@@ -82,66 +80,87 @@ const handleSettingsPress = () => {
 
   };
 
-  const handleLogout = () => {
-    AsyncStorage.getItem('user_group').then((value)=>console.log(value))
-    AsyncStorage.multiRemove(['access', 'refresh', 'user_id', 'user', 'user_group']);
-    navigation.navigate('authentication', { authpage: 'login' });
+  const handleLogout = async () => {
+    try {
+      const userGroup = await AsyncStorage.getItem('user_group');
+
+
+      await AsyncStorage.multiRemove(['access', 'refresh', 'user_id', 'user', 'user_group']);
+
+      const remainingUserId = await AsyncStorage.getItem('user_id');
+      console.log('User ID after logout:', remainingUserId); // Should be null
+
+      navigation.navigate('authentication', { authpage: 'login' });
+
+    } catch (error) {
+      console.error('Error during logout:', error);
+      navigation.navigate('authentication', { authpage: 'login' });
+    }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true); // Show the refresh spinner
     await refetch(); // Call the passed refresh function
-    setRefreshing(false); 
+    setRefreshing(false);
   };
 
 
-  
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}  refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#FF6E42']} />
+      <ScrollView contentContainerStyle={styles.scrollContainer} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={['#FF6E42']} />
       }>
-        
+
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <Text style={styles.greeting}>
-          {!isloggedin
-              ? 'Welcome!'
-              : profileLoading
-              ? 'Loading...'
-              : profile.first_name == null && profile.last_name == null
-              ? `Hello New User!`
-              : profile.last_name
-              ? `Hello ${profile.last_name}!`
-              : profile.first_name
-              ? `Hello ${profile.first_name}!`
-              : 'Error loading profile'}
-            </Text>
-          
+  {!isloggedin 
+    ? 'Welcome!' 
+    : profileLoading 
+      ? 'Loading...' 
+      : !profile 
+        ? `Hello New User!` 
+        : !profile.first_name && !profile.last_name 
+          ? `Hello New User!` 
+          : !profile.last_name 
+            ? `Hello ${profile.first_name}!` 
+            : !profile.first_name 
+              ? `Hello ${profile.last_name}!` 
+              : `Hello ${profile.first_name}!`
+  }
+</Text>
+
           {/* Avatar Container */}
           <View style={styles.avatarOuterContainer}>
-          <View style={styles.avatarContainer}>
-            <Image
-              source={
-                profile && profile.profile_pic
-                  ? { uri: `${TWIMBOL_API_CONFIG.BASE_URL}${profile.profile_pic}` }
-                  : images.defaultProfilePic
-              }
-              style={styles.avatar}
-            />
-          </View>
+            <View style={styles.avatarContainer}>
+              <Image
+                source={
+                  profile && profile.profile_pic
+                    ? { uri: `${TWIMBOL_API_CONFIG.BASE_URL}${profile.profile_pic}` }
+                    : images.defaultProfilePic
+                }
+                style={styles.avatar}
+              />
+            </View>
           </View>
         </View>
-        
+
         {/* Profile Information */}
         <View style={styles.profileInfo}>
-          <Text style={styles.userName}>{!profile?"User":profile.first_name==null&&profile.last_name==null?"User X":`${profile.first_name}${profile.last_name?` ${profile.last_name}`:''}`}</Text>
-          <Text style={styles.userRole}>{profile?`@${profile.username}`:"@username"}</Text>
+          <Text style={styles.userName}>
+            {!profile
+              ? "User"
+              : !profile.first_name && !profile.last_name
+                ? "User X"
+                : `${profile.first_name || ''}${profile.last_name ? ` ${profile.last_name}` : ''}`
+            }
+          </Text>
+          <Text style={styles.userRole}>{isloggedin && profile ? `@${profile.username}` : "@username"}</Text>
         </View>
-        
+
         {/* Profile Menu Options */}
         <View style={styles.menuContainer}>
           {/* Edit Profile */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigation.navigate('profile_edit' as never)}
             activeOpacity={0.7}
@@ -152,9 +171,9 @@ const handleSettingsPress = () => {
             <Text style={styles.menuText}>Edit Profile</Text>
             <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
-          
+
           {/* Apply for Creator */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={handleApplyCreator}
             activeOpacity={0.7}
@@ -162,14 +181,14 @@ const handleSettingsPress = () => {
             <View style={styles.menuIconContainer}>
               <MaterialCommunityIcons name="account-star-outline" size={24} color="white" />
             </View>
-            <Text style={styles.menuText}>{usergroup=='visitor'?'Apply for CREATOR':'Go to dashboard'}</Text>
+            <Text style={styles.menuText}>{usergroup == 'visitor' ? 'Apply for CREATOR' : 'Go to dashboard'}</Text>
             <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
-          
+
           {/* Privacy & Policy */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
-            onPress={handlePrivacyPolicy}
+            onPress={() => handlePrivacyPolicy("https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy")}
             activeOpacity={0.7}
           >
             <View style={styles.menuIconContainer}>
@@ -178,9 +197,9 @@ const handleSettingsPress = () => {
             <Text style={styles.menuText}>Privacy & Policy</Text>
             <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
-          
+
           {/* Settings */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.menuItem}
             onPress={() => handleSettingsPress()}
             activeOpacity={0.7}
@@ -192,26 +211,26 @@ const handleSettingsPress = () => {
             <MaterialCommunityIcons name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
         </View>
-        
+
         {/* Bottom Buttons */}
         <View style={styles.bottomButtonsContainer}>
           {/* Back Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.navigate('(tabs)' as never)}
             activeOpacity={0.7}
           >
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
-          
+
           {/* Logout Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.logoutButton}
-            onPress={isloggedin?handleLogout:handleLogin}
+            onPress={isloggedin ? handleLogout : handleLogin}
             activeOpacity={0.7}
           >
-            <MaterialCommunityIcons name={isloggedin?"logout":"login"} size={20} color={isloggedin?"#FF4D4D":"#FF6E42"} style={styles.logoutIcon} />
-            <Text style={isloggedin?styles.logoutText:styles.loginText}>{isloggedin?"Log out":"Login"}</Text>
+            <MaterialCommunityIcons name={isloggedin ? "logout" : "login"} size={20} color={isloggedin ? "#FF4D4D" : "#FF6E42"} style={styles.logoutIcon} />
+            <Text style={isloggedin ? styles.logoutText : styles.loginText}>{isloggedin ? "Log out" : "Login"}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

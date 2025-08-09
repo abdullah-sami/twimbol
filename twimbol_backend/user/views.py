@@ -13,6 +13,12 @@ from rest_framework import viewsets, permissions
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import *
 
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import *
+from rest_framework import status
+from rest_framework.response import Response
+from django.core.exceptions import PermissionDenied  # Import PermissionDenied from Django
+
 
 
 
@@ -56,11 +62,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 
-from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import *
-from rest_framework import status
-from rest_framework.response import Response
-from django.core.exceptions import PermissionDenied  # Import PermissionDenied from Django
 
 
 @visitor_required
@@ -371,8 +372,8 @@ class RegisterViewSet(viewsets.ViewSet):
             notifications.objects.create(
                 user=User.objects.get(username=data.username),
                 message=f"Welcome {user}! Your account has been successfully created.",
-                page="profile",  # Example page
-                page_item_id=None  # Optional, can be set to a specific ID if needed
+                page="profile",  
+                page_item_id=None 
             )
 
             return Response({
@@ -424,11 +425,6 @@ def login_view(request):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
-
-
-
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
 
 
 

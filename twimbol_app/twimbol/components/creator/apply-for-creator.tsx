@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Linking
 } from 'react-native';
 import { ChevronLeft, AlertTriangle } from 'lucide-react-native';
 import { useNavigation } from 'expo-router';
@@ -85,7 +86,7 @@ const ApplyForCreator = () => {
           Alert.alert(
             'Something went wrong!',
             "We couldn't process your application",
-            [{ text: 'OK', onPress: () => {} }]
+            [{ text: 'OK', onPress: () => { } }]
           );
         }
       } else {
@@ -98,6 +99,23 @@ const ApplyForCreator = () => {
       setIsSubmitting(false);
     }
   };
+
+
+  
+// Handle URL opening
+const openURL = async (url) => {
+  try {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      console.log("Don't know how to open URI: " + url);
+    }
+  } catch (error) {
+    console.error('An error occurred', error);
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -141,12 +159,12 @@ const ApplyForCreator = () => {
             ) : (
               <>
                 <TouchableOpacity
-                  style={[styles.applyButton, isSubmitting && styles.disabledButton]}
+                  style={[styles.completeProfileButton, isSubmitting && styles.disabledButton]}
                   onPress={() => {
                     navigation.navigate('profile_edit' as never);
                   }}
                 >
-                  <Text style={styles.applyButtonText}>Complete your profile</Text>
+                  <Text style={styles.completeProfileButtonText}>Complete your profile</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -169,20 +187,16 @@ const ApplyForCreator = () => {
             By applying, you agree to our{' '}
             <Text
               style={[styles.termsText, styles.terms]}
-              onPress={() => {
-                navigation.navigate('terms_of_service' as never);
-              }}
+              onPress={() => openURL('https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy/')}
             >
               Terms of Service
             </Text>{' '}
             and{' '}
             <Text
               style={[styles.termsText, styles.terms]}
-              onPress={() => {
-                navigation.navigate('creator_guidelines' as never);
-              }}
+              onPress={() => openURL('https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy/')}
             >
-              Creator Guidelines
+              Privacy Policy
             </Text>
             .
           </Text>
@@ -274,11 +288,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+  completeProfileButton: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 25,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
   disabledButton: {
     backgroundColor: '#ffaa9a',
   },
   applyButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  completeProfileButtonText: {
+    color: '#000',
     fontSize: 16,
     fontWeight: '600',
   },

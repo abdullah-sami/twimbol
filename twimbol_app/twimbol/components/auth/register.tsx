@@ -1,19 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, Keyboard, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView, ScrollView, Keyboard, ActivityIndicator, Alert, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { fetchRegister } from '@/services/api';
 import useFetch from '@/services/useFetch';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import { DatePickerInput, formatDate } from '../time';
 
 const Register = ({ handleLoginPress }: { handleLoginPress: any }) => {
   const [email, setEmail] = useState('');
   const [user, setUser] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isUserFocused, setIsUserFocused] = useState(false);
+  const [isBirthdayFocused, setIsBirthdayFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [isConfirmPasswordFocused, setIsConfirmPasswordFocused] = useState(false);
 
@@ -22,6 +25,7 @@ const Register = ({ handleLoginPress }: { handleLoginPress: any }) => {
 
   const emailInputRef = useRef(null);
   const userInputRef = useRef(null);
+  const birthdayInputRef = useRef(null);
   const passwordInputRef = useRef(null);
   const confirmPasswordInputRef = useRef(null);
 
@@ -32,41 +36,43 @@ const Register = ({ handleLoginPress }: { handleLoginPress: any }) => {
       username: user,
       password: password,
       email: email,
+      birthday: formatDate(birthday),
     }), false
   );
 
 
   // Form validation
   const validateForm = () => {
-    if (!email || !user || !password || !confirmPassword) {
+    if (!email || !user || !password || !confirmPassword || !birthday) {
       Alert.alert('Error', 'All fields are required');
       return false;
     }
-    
+
     if (password !== confirmPassword) {
       Alert.alert('Error', 'Passwords do not match');
       return false;
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       Alert.alert('Error', 'Please enter a valid email address');
       return false;
     }
-    
+
     return true;
   };
 
   const handleSignUp = () => {
     if (!validateForm()) return;
-    
+
     // Execute with the registration parameters explicitly passed here
     execute({
       username: user,
       email: email,
       password: password,
+      birthday: formatDate(birthday),
     });
-
+    console.log('Registering user:', { username: user, email, password, birthday: formatDate(birthday) });
     Keyboard.dismiss();
   };
 
@@ -103,6 +109,24 @@ const Register = ({ handleLoginPress }: { handleLoginPress: any }) => {
   const toggleConfirmPasswordVisibility = () => {
     setConfirmPasswordVisible(!confirmPasswordVisible);
   };
+
+
+
+
+  // Handle URL opening
+  const openURL = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Don't know how to open URI: " + url);
+      }
+    } catch (error) {
+      console.error('An error occurred', error);
+    }
+  };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -157,11 +181,22 @@ const Register = ({ handleLoginPress }: { handleLoginPress: any }) => {
               onFocus={() => setIsUserFocused(true)}
               onBlur={() => setIsUserFocused(false)}
               returnKeyType="next"
-              onSubmitEditing={() => passwordInputRef.current && passwordInputRef.current.focus()}
+              onSubmitEditing={() => birthdayInputRef.current && birthdayInputRef.current.focus()}
               blurOnSubmit={false}
               editable={!loading}
             />
           </View>
+
+          {/* Birthday input */}
+          <DatePickerInput
+            birthday={birthday}
+            setBirthday={setBirthday}
+            isBirthdayFocused={isBirthdayFocused}
+            setIsBirthdayFocused={setIsBirthdayFocused}
+            styles={styles}
+            loading={loading}
+            passwordInputRef={passwordInputRef}
+          />
 
           {/* Password Input */}
           <View style={[styles.inputContainer, isPasswordFocused && styles.inputContainerFocused]}>
@@ -233,10 +268,31 @@ const Register = ({ handleLoginPress }: { handleLoginPress: any }) => {
             </View>
           )}
 
+          {/* Terms and Conditions */}
+          <Text style={styles.termsText}>
+            By registering, you agree to our{' '}
+            <Text
+              style={[styles.termsText, styles.terms]}
+              onPress={() => openURL('https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy/')}
+            >
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text
+              style={[styles.termsText, styles.terms]}
+              onPress={() => openURL('https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy/')}
+            >
+              Privacy Policy
+            </Text>
+            .
+          </Text>
+
+
+
           {/* Sign Up Button */}
-          <TouchableOpacity 
-            style={[styles.signUpButton, loading && styles.signUpButtonDisabled]} 
-            onPress={handleSignUp} 
+          <TouchableOpacity
+            style={[styles.signUpButton, loading && styles.signUpButtonDisabled]}
+            onPress={handleSignUp}
             activeOpacity={0.8}
             disabled={loading}
           >
@@ -371,6 +427,15 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
     fontSize: 14,
     textAlign: 'center',
+  },
+  termsText: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 0,
+  },
+  terms: {
+    color: '#FF6E42',
   },
 });
 

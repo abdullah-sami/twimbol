@@ -21,13 +21,14 @@ const Login = ({ handleRegisterPress }: { handleRegisterPress: any }) => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [issubmitting, setissubmitting] = useState(false)
   const [errrmsg, seterrrmsg] = useState('')
+  const [successmsg, setsuccessmsg] = useState(null)
 
 
   const { data: authTokens, loading, error, reset, execute } = useFetch(() =>
     fetchLogin({
       username: user,
       password: password
-    }))
+    }), false)
 
   const { data: profile, loading: profileloading, error: profileerror, reset: profilereset, execute: profileexecute } = useFetch(() =>
     fetchUserProfile(), false)
@@ -62,34 +63,44 @@ const Login = ({ handleRegisterPress }: { handleRegisterPress: any }) => {
   }, [navigation]);
 
 
+
+  useEffect(() => {
+    // Clear any previous states when component loads
+    seterrrmsg('');
+    setsuccessmsg(null);
+
+    // Only reset if the functions are available
+    if (reset) {
+      reset();
+    }
+    if (profilereset) {
+      profilereset();
+    }
+  }, []);
+
   const handleLogin = async () => {
     setissubmitting(true);
-  
+
     if (user === '' || password === '') {
       alert('Please fill in all fields');
       setissubmitting(false);
       return;
     }
-  
+
     await execute({
       username: user,
       password: password,
     });
 
-    if (error && error instanceof Error) {
-      seterrrmsg(error.message)
-    } else {
-      console.error('An unknown error occurred.');
-    }
-    
+
 
   };
-  
 
 
 
 
-  
+
+
 
 
 
@@ -99,20 +110,33 @@ const Login = ({ handleRegisterPress }: { handleRegisterPress: any }) => {
   useEffect(() => {
     const afterLogin = async () => {
       if (authTokens) {
+        seterrrmsg(''); // Clear any error messages on success
         await AsyncStorage.setItem('access', authTokens.access);
         await AsyncStorage.setItem('refresh', authTokens.refresh);
         await AsyncStorage.setItem('user_id', authTokens.user.id.toString());
-  
+
+        setsuccessmsg('Login Successful!');
+
         // Now fetch the user profile
         profileexecute({});
+
+
+
+
       } else if (error) {
         setissubmitting(false);
-        // alert('Login failed');
+        if (error instanceof Error) {
+          seterrrmsg(error.message);
+        } else {
+          seterrrmsg('Login failed. Please try again.');
+        }
       }
     };
-  
+
     afterLogin();
   }, [authTokens, error]);
+
+
 
   // Use useEffect to monitor profile changes
   useEffect(() => {
@@ -219,9 +243,18 @@ const Login = ({ handleRegisterPress }: { handleRegisterPress: any }) => {
           </TouchableOpacity>
         </View>
 
-        
-          {errrmsg ? (<Text style={{ color: 'red', margin: 10 }}>{errrmsg} Check username and password</Text>) : ''}
-        
+
+        {/* Message display */}
+        {errrmsg && errrmsg.length > 0 && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errrmsg} Check username and password.</Text>
+          </View>
+        )}
+        {successmsg && (
+          <View style={styles.successContainer}>
+            <Text style={styles.successText}>{successmsg}</Text>
+          </View>
+        )}
 
         {/* Forgot Password Link */}
         <TouchableOpacity
@@ -367,6 +400,32 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 1,
     backgroundColor: '#E0E0E0',
+  },
+  errorContainer: {
+    backgroundColor: '#FFE8E6',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#FF3B30',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  successContainer: {
+    backgroundColor: '#E6FFED',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  successText: {
+    color: '#4CAF50',
+    fontSize: 14,
+    textAlign: 'center',
   },
   registerContainer: {
     flexDirection: 'row',

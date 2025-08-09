@@ -1,16 +1,34 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, SafeAreaView, Linking } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 const TermsAndConditions = () => {
-  const handleDecline = () => {
-    console.log('User declined terms');
-    // Handle decline action
+  
+  
+  const navigation = useNavigation();
+
+  // Navigation handler for accepting terms
+  const handleAccept = () => {
+    navigation.goBack(); // Navigate back to the previous screen
   };
 
-  const handleAccept = () => {
-    console.log('User accepted terms');
-    // Handle accept action
+
+
+  // Add this function to handle email opening
+  const openEmail = async (email, subject = '', body = '') => {
+    const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    try {
+      const supported = await Linking.canOpenURL(mailto);
+      if (supported) {
+        await Linking.openURL(mailto);
+      } else {
+        console.log("Email client not available");
+      }
+    } catch (error) {
+      console.error('An error occurred opening email', error);
+    }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -25,7 +43,7 @@ const TermsAndConditions = () => {
           <View style={styles.sectionContent}>
             <Text style={styles.sectionTitle}>Creating & Owning Your Account</Text>
             <Text style={styles.sectionText}>
-              To use Twimbel, you'll need an account. Keep your login secure - your account is for your personal or business use only and may not be shared with others. Any activity happening on your account is your responsibility.
+              To use Twimbol, you'll need an account. Keep your login secure - your account is for your personal or business use only and may not be shared with others. Any activity happening on your account is your responsibility.
             </Text>
           </View>
         </View>
@@ -45,7 +63,7 @@ const TermsAndConditions = () => {
           <View style={styles.sectionContent}>
             <Text style={styles.sectionTitle}>Your Content, Your Control</Text>
             <Text style={styles.sectionText}>
-              You own the content you create, but you allow us to show it to others by posting content to Twimbel. You can delete content and manage the app. Only post what's truly yours to share.
+              You own the content you create, but you allow us to show it to others by posting content to Twimbol. You can delete content and manage the app. Only post what's truly yours to share.
             </Text>
           </View>
         </View>
@@ -63,7 +81,7 @@ const TermsAndConditions = () => {
         <View style={styles.section}>
           <Text style={styles.sectionNumber}>5.</Text>
           <View style={styles.sectionContent}>
-            <Text style={styles.sectionTitle}>Using Twimbel Right</Text>
+            <Text style={styles.sectionTitle}>Using Twimbol Right</Text>
             <Text style={styles.sectionText}>
               We highly recommend the most basic tips. Don't try to break, exploit, or reverse-engineer or keep the app online when our servers are down.
             </Text>
@@ -75,7 +93,7 @@ const TermsAndConditions = () => {
           <View style={styles.sectionContent}>
             <Text style={styles.sectionTitle}>Term Updates</Text>
             <Text style={styles.sectionText}>
-              We may adjust these terms as Twimbel evolves. We'll notify you of any updates or changes by email continuing to use the app means you accept the new terms of service.
+              We may adjust these terms as Twimbol evolves. We'll notify you of any updates or changes by email continuing to use the app means you accept the new terms of service.
             </Text>
           </View>
         </View>
@@ -85,25 +103,27 @@ const TermsAndConditions = () => {
           <View style={styles.sectionContent}>
             <Text style={styles.sectionTitle}>Need Help?</Text>
             <Text style={styles.sectionText}>
-              Got questions or concerns or just wanna say hi? Reach us at contact.twimbel@gmail.com
+              Got questions or concerns or just wanna say hi? Reach us at {' '}<Text
+                style={[styles.mailtext, styles.mail]}
+                onPress={() => openEmail('web.rafidabdullahsami@gmail.com', 'Terms & Conditions', '')}
+              >
+                twimbol@gmail.com
+              </Text>
             </Text>
           </View>
         </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            Thanks for being part of Twimbel.{'\n'}
+            Thanks for being part of Twimbol.{'\n'}
             Let's keep it awesome!
           </Text>
         </View>
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
-          <Text style={styles.declineButtonText}>Decline</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.acceptButton} onPress={handleAccept}>
-          <Text style={styles.acceptButtonText}>Accept</Text>
+          <Text style={styles.acceptButtonText}>I understand and accept the terms</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -113,17 +133,17 @@ const TermsAndConditions = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FF6E42',
+    backgroundColor: '#fff',
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 50,
     paddingBottom: 10,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#FF6E42',
     marginBottom: 4,
   },
   headerSubtitle: {
@@ -142,7 +162,7 @@ const styles = StyleSheet.create({
   sectionNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#FF6E42',
     marginRight: 12,
     marginTop: 2,
     minWidth: 20,
@@ -153,13 +173,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#FF6E42',
     marginBottom: 8,
     lineHeight: 24,
   },
   sectionText: {
     fontSize: 15,
-    color: 'rgba(255, 255, 255, 0.95)',
+    color: 'rgba(25, 25, 25, 0.95)',
     lineHeight: 22,
   },
   footer: {
@@ -178,6 +198,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     gap: 12,
+    backgroundColor: '#FF6E42',
   },
   declineButton: {
     flex: 1,
@@ -204,6 +225,14 @@ const styles = StyleSheet.create({
     color: '#FF6E42',
     fontSize: 16,
     fontWeight: '600',
+  },
+    mailtext: {
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 0,
+  },
+  mail: {
+    color: '#FF6E42',
   },
 });
 

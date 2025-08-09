@@ -13,9 +13,11 @@ import NotificationsScreen from './notifications';
 import ProfileScreen from './profile/index';
 import ProfileUserScreen from './profile/[userId]';
 import ProfileEdit from './profile/profile_edit';
-import SettingsScreen from './(settings)/settings';
 import CreateContents from './[create_contents]';
 import EventScreen from './event/[eventid]';
+import SettingsScreen from './(settings)/settings';
+import TermsAndConditions from './(settings)/termsnconsditions';
+import FAQScreen from './(settings)/faq';
   
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -32,10 +34,12 @@ export const linking = {
       profile: 'profile',
       profile_user: 'profile/:userId',
       profile_edit: 'profile/edit',
-      settings: 'settings',
-      notifications: 'notifications',
       createcontents: 'createcontents',
       events: 'event/:eventid',
+      settings: 'settings',
+      notifications: 'notifications',
+      termsnconditions: 'termsnconditions',
+      faq: 'faq',
     },
   },
 };
@@ -54,8 +58,10 @@ export default function RootLayout() {
       <Stack.Screen name="profile_user" component={ProfileUserScreen} />
       <Stack.Screen name="profile_edit" component={ProfileEdit} />
       <Stack.Screen name="settings" component={SettingsScreen} />
-      <Stack.Screen name="notifications" component={NotificationsScreen} />
       <Stack.Screen name="createcontents" component={CreateContents} />
+      <Stack.Screen name="notifications" component={NotificationsScreen} />
+      <Stack.Screen name="termsnconditions" component={TermsAndConditions} />
+      <Stack.Screen name="faq" component={FAQScreen} />
     </Stack.Navigator>
   );
 }

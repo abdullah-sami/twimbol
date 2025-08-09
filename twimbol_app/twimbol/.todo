@@ -1,0 +1,29 @@
+safety:
+    ✔ 1. Add a safety reminder modal that appears once per day. @done (8/5/2025, 9:51:39 PM)
+    ☐ 2. Add parental controls for content visibility.
+    ☐ 3. Add security in interaction with other users for children.
+    ☐ 4. Implement a reporting system for inappropriate content or behavior.
+    ☐ 5. Add a feature to block or mute users.
+
+settings:
+    1. Add a settings to manage account preferences:
+        ☐ 1. Add options to change password and email.
+        ☐ 3. Add a feature to delete account.
+        ☐ 4. Implement a dark mode toggle.
+
+    
+    2. notification:
+        ☐ 1. Add function to mark notifications as read.
+        ☐ 2. Add function to delete notifications.
+        ☐ 3. Add notification settings to control what types of notifications to receive.
+        ☐ 4. Add push notifications for important events (e.g., new messages, mentions).
+
+    3. Blocked Users:
+        ☐ 1. Add a feature to block users.
+        ☐ 2. Add a feature to view and manage blocked users.
+        ☐ 3. Implement a confirmation dialog before blocking a user.
+    
+    4. Privacy Settings:
+        ☐ 1. Add options to control who can see your profile and posts.
+        ☐ 2. Add a feature to make profile private or public.
+        ☐ 3. Implement a feature to control who can send friend requests.

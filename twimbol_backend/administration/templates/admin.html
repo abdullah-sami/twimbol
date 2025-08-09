@@ -105,7 +105,7 @@
         <h2>Unknown Page</h2>
         {% endif %}
         
-
+ 
         
         
         <div class="user-cards">
@@ -123,6 +123,7 @@
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Phone:</strong> {{ user.profile.user_phone }}</p>
             <p><strong>Address:</strong> {{ user.profile.user_address }}</p>
+            <p><strong>Birth Date:</strong> {{ user.profile.birth_date }}</p>
 
             Followers: {{ user.following.count }}
             <br>Following: {{ user.follower.count }}
