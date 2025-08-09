@@ -18,7 +18,9 @@ import EventScreen from './event/[eventid]';
 import SettingsScreen from './(settings)/settings';
 import TermsAndConditions from './(settings)/termsnconsditions';
 import FAQScreen from './(settings)/faq';
+import ParentalControlsMain from './(settings)/parentalcontrols';
   
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const linking = {
@@ -40,9 +42,12 @@ export const linking = {
       notifications: 'notifications',
       termsnconditions: 'termsnconditions',
       faq: 'faq',
+      parentalcontrols: 'parentalcontrols',
     },
   },
 };
+
+
 
 export default function RootLayout() {
   return (
@@ -57,8 +62,9 @@ export default function RootLayout() {
       <Stack.Screen name="profile" component={ProfileScreen} />
       <Stack.Screen name="profile_user" component={ProfileUserScreen} />
       <Stack.Screen name="profile_edit" component={ProfileEdit} />
-      <Stack.Screen name="settings" component={SettingsScreen} />
       <Stack.Screen name="createcontents" component={CreateContents} />
+      <Stack.Screen name="settings" component={SettingsScreen} />
+      <Stack.Screen name="parentalcontrols" component={ParentalControlsMain} />      
       <Stack.Screen name="notifications" component={NotificationsScreen} />
       <Stack.Screen name="termsnconditions" component={TermsAndConditions} />
       <Stack.Screen name="faq" component={FAQScreen} />

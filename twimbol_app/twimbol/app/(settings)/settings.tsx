@@ -13,6 +13,9 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { icons } from '@/constants/icons';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import * as IntentLauncher from 'expo-intent-launcher';
+
+
 
 const Settings = ({ navigation }: any) => {
   // Navigation handlers
@@ -26,7 +29,7 @@ const Settings = ({ navigation }: any) => {
 
 
 
-  // Add this function to handle URL opening
+  // Function to handle URL opening
   const openURL = async (url) => {
     try {
       const supported = await Linking.canOpenURL(url);
@@ -40,20 +43,12 @@ const Settings = ({ navigation }: any) => {
     }
   };
 
-  // Add this function to handle email opening
-  const openEmail = async (email, subject = '', body = '') => {
-    const mailto = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    try {
-      const supported = await Linking.canOpenURL(mailto);
-      if (supported) {
-        await Linking.openURL(mailto);
-      } else {
-        console.log("Email client not available");
-      }
-    } catch (error) {
-      console.error('An error occurred opening email', error);
-    }
-  };
+  // Function to handle email opening
+  const openEmail = async (email: string, subject = '', body = '') => {
+  await IntentLauncher.startActivityAsync('android.intent.action.SENDTO', {
+    data: `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  });
+};
 
 
 
@@ -104,11 +99,21 @@ const Settings = ({ navigation }: any) => {
 
             <View style={styles.separator} />
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.menuItem}
               onPress={() => handleMenuItemPress('BlockedUser')}
             >
               <Text style={styles.menuItemText}>Blocked Users</Text>
+               
+            </TouchableOpacity>
+
+            <View style={styles.separator} /> */}
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => handleMenuItemPress('parentalcontrols')}
+            >
+              <Text style={styles.menuItemText}>Parental Controls</Text>
               {/* <ChevronRight color="#fff" size={20} /> */}
             </TouchableOpacity>
           </View>

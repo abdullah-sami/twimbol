@@ -19,6 +19,8 @@ import useFetch from '@/services/useFetch'
 import { fetchSearchResults, fetchReelResults } from '@/services/api'
 import SafetyReminderModal from "@/components/safety/safetyreminder";
 
+import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from "@/components/safety/parentalcontrolsmanager";
+
 
 
 export default function Index() {
@@ -91,7 +93,15 @@ export default function Index() {
 
 
 
+
+
+  
+  
   return (
+  <ParentalControlProvider>
+  <TimeLimitChecker >
+    <TimeRestrictionChecker>
+      
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: showSafetyModal ? "#FF6E42" : "#fff" }} edges={["top", "left", "right"]}>
         <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
@@ -122,6 +132,9 @@ export default function Index() {
         </View>
       </SafeAreaView>
     </GestureHandlerRootView>
+  </TimeRestrictionChecker>
+</TimeLimitChecker>
+</ParentalControlProvider>
   );
 }
 

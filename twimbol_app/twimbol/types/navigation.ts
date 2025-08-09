@@ -15,4 +15,5 @@ export type RootStackParamList = {
     settings: undefined;
     faq: undefined;
     termsnconditions: undefined;
+    parentalcontrols: undefined;
   };
