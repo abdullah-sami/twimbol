@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -24,8 +25,20 @@ const ApplyForCreator = () => {
   const [userId, setUserId] = useState<string | undefined>(undefined);
 
   // Fetch creator application status only when userId is available
-  const { data: applicationStatus, refetch: refetchStatus, execute: executeStatus } = useFetch(
+  const { 
+    data: applicationStatus, 
+    refetch: refetchStatus, 
+    execute: executeStatus, 
+    loading: statusLoading,
+    error: statusError 
+  } = useFetch(
     () => (userId ? fetchCreatorApplicationStatus(userId) : Promise.resolve(null)),
+    false // Prevent automatic execution
+  );
+
+  // Fetch creator application data only when userId is available
+  const { data: application, refetch, execute } = useFetch(
+    () => (userId ? fetchCreatorApplication(userId) : Promise.resolve(null)),
     false // Prevent automatic execution
   );
 
@@ -34,9 +47,9 @@ const ApplyForCreator = () => {
     const checkUserId = async () => {
       try {
         const storedUserId = await AsyncStorage.getItem('user_id');
+        console.log('User ID from AsyncStorage:', storedUserId); // Debug log
         if (storedUserId) {
           setUserId(storedUserId);
-          executeStatus(); // Fetch application status immediately
         } else {
           console.error('User ID not found in AsyncStorage');
         }
@@ -46,13 +59,22 @@ const ApplyForCreator = () => {
     };
 
     checkUserId();
-  }, [executeStatus]);
+  }, []);
 
-  // Fetch creator application data only when userId is available
-  const { data: application, refetch, execute } = useFetch(
-    () => (userId ? fetchCreatorApplication(userId) : Promise.resolve(null)),
-    false // Prevent automatic execution
-  );
+  // Execute status check when userId is available
+  useEffect(() => {
+    if (userId) {
+      console.log('Executing status check for userId:', userId); // Debug log
+      executeStatus();
+    }
+  }, [userId]);
+
+  // Debug log for application status
+  useEffect(() => {
+    console.log('Application status data:', applicationStatus); // Debug log
+    console.log('Status loading:', statusLoading); // Debug log
+    console.log('Status error:', statusError); // Debug log
+  }, [applicationStatus, statusLoading, statusError]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -73,10 +95,12 @@ const ApplyForCreator = () => {
 
     try {
       if (userId) {
-        await execute({});
-        await executeStatus({});
+        const result = await execute({});
+        
+        // Refresh the status after submission
+        await executeStatus();
 
-        if (application && application.detail === 'Creator application submitted successfully.') {
+        if (result && result.detail === 'Creator application submitted successfully.') {
           Alert.alert(
             'Application Submitted',
             'Your creator application has been submitted successfully. We will review your information and get back to you soon.',
@@ -100,22 +124,69 @@ const ApplyForCreator = () => {
     }
   };
 
-
-  
-// Handle URL opening
-const openURL = async (url) => {
-  try {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      console.log("Don't know how to open URI: " + url);
+  // Handle URL opening
+  const openURL = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Don't know how to open URI: " + url);
+      }
+    } catch (error) {
+      console.error('An error occurred', error);
     }
-  } catch (error) {
-    console.error('An error occurred', error);
-  }
-};
+  };
 
+  // More robust check for application status
+  const hasAlreadyApplied = () => {
+    if (!applicationStatus) return false;
+    
+    // Check different possible status indicators
+    if (applicationStatus.application_status === '0') return true;
+    if (applicationStatus.application_status === 0) return true;
+    if (applicationStatus.status === 'pending') return true;
+    if (applicationStatus.status === 'submitted') return true;
+    if (applicationStatus.has_applied === true) return true;
+    
+    return false;
+  };
+
+  const getApplicationStatusText = () => {
+    if (!applicationStatus) return null;
+    
+    const status = applicationStatus.application_status || applicationStatus.status;
+    
+    switch (status) {
+      case '0':
+      case 0:
+      case 'pending':
+      case 'submitted':
+        return {
+          title: "Application Submitted",
+          subtitle: "We are reviewing your application and will get back to you soon."
+        };
+      case '1':
+      case 1:
+      case 'approved':
+        return {
+          title: "Application Approved",
+          subtitle: "Congratulations! Your creator application has been approved."
+        };
+      case '2':
+      case 2:
+      case 'rejected':
+        return {
+          title: "Application Rejected",
+          subtitle: "Unfortunately, your application was not approved. You can apply again."
+        };
+      default:
+        return {
+          title: "Application Submitted",
+          subtitle: "We are reviewing your application and will get back to you soon."
+        };
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -152,10 +223,30 @@ const openURL = async (url) => {
           <View style={styles.formContainer}>
             <Text style={styles.formTitle}>Creator Application</Text>
 
-            {applicationStatus && applicationStatus.application_status === '0' ? (
-              <>
-                <Text>You have already applied for creator.</Text>
-              </>
+            {statusLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#FF6E42" />
+                <Text style={styles.loadingText}>Checking application status...</Text>
+              </View>
+            ) : statusError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>Error loading application status</Text>
+                <TouchableOpacity 
+                  style={styles.retryButton} 
+                  onPress={() => executeStatus()}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : hasAlreadyApplied() ? (
+              <View style={styles.alreadyAppliedContainer}>
+                <Text style={styles.alreadyAppliedText}>
+                  {getApplicationStatusText()?.title || "Application Submitted"}
+                </Text>
+                <Text style={styles.alreadyAppliedSubtext}>
+                  {getApplicationStatusText()?.subtitle || "We are reviewing your application."}
+                </Text>
+              </View>
             ) : (
               <>
                 <TouchableOpacity
@@ -163,6 +254,7 @@ const openURL = async (url) => {
                   onPress={() => {
                     navigation.navigate('profile_edit' as never);
                   }}
+                  disabled={isSubmitting}
                 >
                   <Text style={styles.completeProfileButtonText}>Complete your profile</Text>
                 </TouchableOpacity>
@@ -280,6 +372,53 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  loadingText: {
+    marginLeft: 10,
+    color: '#666',
+    fontSize: 14,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  errorText: {
+    color: '#FF6E42',
+    fontSize: 14,
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: '#FF6E42',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 15,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  alreadyAppliedContainer: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  alreadyAppliedText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FF6E42',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  alreadyAppliedSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
   },
   applyButton: {
     backgroundColor: '#FF6E42',

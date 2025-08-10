@@ -1,9 +1,12 @@
 safety:
     ✔ 1. Add a safety reminder modal that appears once per day. @done (8/5/2025, 9:51:39 PM)
-    ☐ 2. Add parental controls for content visibility.
+    ✔ 2. Add parental controls for content visibility. @done (8/9/2025, 11:25:36 PM)
     ☐ 3. Add security in interaction with other users for children.
     ☐ 4. Implement a reporting system for inappropriate content or behavior.
-    ☐ 5. Add a feature to block or mute users.
+    ☐ 5. Implement time limits and restrictins in user interface.
+    ✔ 6. Add a feature to filter content based on user preferences (e.g., age-appropriate content). @done (8/9/2025, 11:26:52 PM)
+    ☐ 7. Add watch history tracking for parental review.
+    ☐ 8. Connect watch history with backend.
 
 settings:
     1. Add a settings to manage account preferences:
@@ -19,9 +22,11 @@ settings:
         ☐ 4. Add push notifications for important events (e.g., new messages, mentions).
 
     3. Blocked Users:
-        ☐ 1. Add a feature to block users.
-        ☐ 2. Add a feature to view and manage blocked users.
-        ☐ 3. Implement a confirmation dialog before blocking a user.
+        ✔ 1. Add a feature to block users. @done (8/9/2025, 11:24:19 PM)
+        ✔ 2. Add a feature to view and manage blocked users. @done (8/9/2025, 11:24:37 PM)
+        ✔ 3. Implement a confirmation dialog before blocking a user. @done (8/9/2025, 11:24:35 PM)
+        ☐ 4. Complete backend integration for blocking users.
+        ☐ 5. Implement blocking in the user interface (e.g., profile page, settings). 
     
     4. Privacy Settings:
         ☐ 1. Add options to control who can see your profile and posts.

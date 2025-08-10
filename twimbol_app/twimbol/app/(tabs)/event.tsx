@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useState } from 'react';
 import { images } from '@/constants/images';
 import Header from '@/components/header';
+import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 
 const event = () => {
   const [selectedCategory, setSelectedCategory] = useState('Others');
@@ -41,14 +42,14 @@ const event = () => {
 
   const renderHeader = () => (
     <>
-    <Header/>
-    <View style={styles.header}>
-          <Text style={styles.headerTitle}>Events</Text>
-          {/* <TouchableOpacity style={styles.bookmarkButton}>
+      <Header />
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Events</Text>
+        {/* <TouchableOpacity style={styles.bookmarkButton}>
             <Bookmark size={24} color="#fff" fill="#FF6B47" />
           </TouchableOpacity> */}
-        </View>
-      </>
+      </View>
+    </>
   );
 
   const renderTabs = () => (
@@ -121,7 +122,7 @@ const event = () => {
   );
 
   const renderEvent = () => (
-    <TouchableOpacity style={styles.Event} onPress={()=>{navigation.navigate('events', {eventid: 1})}}>
+    <TouchableOpacity style={styles.Event} onPress={() => { navigation.navigate('events', { eventid: 1 }) }}>
       <View style={styles.ImageContainer}>
         <View style={styles.ImagePlaceholder}>
           <View style={styles.logoPlaceholder}>
@@ -156,22 +157,29 @@ const event = () => {
 
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
-          {renderHeader()}
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} style={{marginBottom: 50}}>
-          {renderTabs()}
+    <ParentalControlProvider>
+      <TimeLimitChecker>
+        <TimeRestrictionChecker>
 
-          {selectedTab === 'Explore' ?
-            renderUpcomingEvents():<></>}
+          <GestureHandlerRootView style={styles.container}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['top', 'left', 'right']}>
+              {renderHeader()}
+              <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} style={{ marginBottom: 50 }}>
+                {renderTabs()}
 
-          
-          {renderCategories()}
-          
-          {renderEvent()}
-        </ScrollView>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+                {selectedTab === 'Explore' ?
+                  renderUpcomingEvents() : <></>}
+
+
+                {renderCategories()}
+
+                {renderEvent()}
+              </ScrollView>
+            </SafeAreaView>
+          </GestureHandlerRootView>
+        </TimeRestrictionChecker>
+      </TimeLimitChecker>
+    </ParentalControlProvider>
   );
 };
 

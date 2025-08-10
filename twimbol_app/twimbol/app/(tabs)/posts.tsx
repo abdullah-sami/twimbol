@@ -9,6 +9,7 @@ import Header from '@/components/header';
 import { Gesture, GestureHandlerRootView, RefreshControl } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 
 const PostsFeed = () => {
 
@@ -91,6 +92,10 @@ const PostsFeed = () => {
 
 
   return (
+    <ParentalControlProvider>
+      <TimeLimitChecker>
+        <TimeRestrictionChecker>
+          
     <GestureHandlerRootView className="flex-1">
       <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
       <Header />
@@ -129,6 +134,12 @@ const PostsFeed = () => {
       </View>
 </SafeAreaView>
     </GestureHandlerRootView>
+
+   
+
+        </TimeRestrictionChecker>
+      </TimeLimitChecker>
+    </ParentalControlProvider>
 
 
   );

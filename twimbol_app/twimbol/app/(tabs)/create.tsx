@@ -9,14 +9,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Create = () => {
   const [isCreator, setIsCreator] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkUserGroup = async () => {
       try {
         const userGroup = await AsyncStorage.getItem('user_group');
-        if (userGroup === 'creator') {
-          setIsCreator(true);
-        } else if (userGroup === 'admin') {
+        console.log('User group from AsyncStorage:', userGroup); // Debug log
+        
+        if (userGroup === 'creator' || userGroup === 'admin') {
           setIsCreator(true);
         } else {
           setIsCreator(false);
@@ -24,35 +25,42 @@ const Create = () => {
       } catch (error) {
         console.error('Error retrieving user group:', error);
         setIsCreator(false);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkUserGroup();
   }, []);
 
-
-
-  return (
-    <>
+  if (isLoading) {
+    return (
       <GestureHandlerRootView>
         <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
           <Header />
-          <View style={styles.container}>
-
-            {isCreator == true ? (<>
-
-              <CreatorDashboard />
-
-            </>) : <ApplyForCreator />}
-
+          <View style={[styles.container, styles.centerContent]}>
+            <Text>Loading...</Text>
           </View>
         </SafeAreaView>
       </GestureHandlerRootView>
-    </>
+    );
+  }
+
+  return (
+    <GestureHandlerRootView>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
+        <Header />
+        <View style={styles.container}>
+          {isCreator ? (
+            <CreatorDashboard />
+          ) : (
+            <ApplyForCreator />
+          )}
+        </View>
+      </SafeAreaView>
+    </GestureHandlerRootView>
   );
 };
-
-
 
 export default Create;
 
@@ -60,5 +68,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

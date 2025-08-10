@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import useFetch from '@/services/useFetch';
 import { fetchReelResults, TWIMBOL_API_CONFIG } from '@/services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 
 const { height } = Dimensions.get('window');
 
@@ -120,40 +121,46 @@ const ReelsPlayer = ({ route }) => {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right", "bottom"]}>
-        <FlatList
-          ref={flatListRef}
-          data={reelsData || []}
-          keyExtractor={(item) => item.post}
-          renderItem={({ item }) => (
-            <VideoItem
-              video={item}
-              isActive={reelsData[activeVideoIndex]?.post === item.post}
-              setVideoRef={(ref) => {
-                videoRefs.current[item.post] = ref;
-              }}
-            />
-          )}
-          pagingEnabled
-          showsVerticalScrollIndicator={false}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={{
-            itemVisiblePercentThreshold: 80,
-          }}
-          onRefresh={handleRefresh}
-          refreshing={refreshing}
-          initialNumToRender={2}
-          maxToRenderPerBatch={3}
-          windowSize={5}
-          snapToInterval={height}
-          snapToAlignment="start"
-          decelerationRate="fast"
-          style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1 }}
-        />
-      </SafeAreaView>
-    </GestureHandlerRootView>
+    <ParentalControlProvider>
+      <TimeLimitChecker>
+        <TimeRestrictionChecker>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right", "bottom"]}>
+              <FlatList
+                ref={flatListRef}
+                data={reelsData || []}
+                keyExtractor={(item) => item.post}
+                renderItem={({ item }) => (
+                  <VideoItem
+                    video={item}
+                    isActive={reelsData[activeVideoIndex]?.post === item.post}
+                    setVideoRef={(ref) => {
+                      videoRefs.current[item.post] = ref;
+                    }}
+                  />
+                )}
+                pagingEnabled
+                showsVerticalScrollIndicator={false}
+                onViewableItemsChanged={onViewableItemsChanged}
+                viewabilityConfig={{
+                  itemVisiblePercentThreshold: 80,
+                }}
+                onRefresh={handleRefresh}
+                refreshing={refreshing}
+                initialNumToRender={2}
+                maxToRenderPerBatch={3}
+                windowSize={5}
+                snapToInterval={height}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                style={{ flex: 1 }}
+                contentContainerStyle={{ flexGrow: 1 }}
+              />
+            </SafeAreaView>
+          </GestureHandlerRootView>
+        </TimeRestrictionChecker>
+      </TimeLimitChecker>
+    </ParentalControlProvider>
   );
 };
 
@@ -180,42 +187,42 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
 
   // Handle share functionality
-  const handleShare = async (reelId:any) => {
-  try {
-    const result = await Share.share({
-      message: `🎬 Watch this reel on Twimbool!\nhttps://twimbol.com/reel/${reelId}`,
-    });
-
-    if (result.action === Share.sharedAction) {
-      // Optional: API call to increment share count
-      // await fetch(`https://your-backend.com/api/reels/${reelId}/increment_share/`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${accessToken}`, // if needed
-      //     'Content-Type': 'application/json',
-      //   },
-      // });
-
-      Toast.show({
-        type: 'success',
-        text1: 'Shared!',
-        text2: 'Reel shared with friends 🚀',
-        position: 'bottom',
+  const handleShare = async (reelId: any) => {
+    try {
+      const result = await Share.share({
+        message: `🎬 Watch this reel on Twimbool!\nhttps://twimbol.com/reel/${reelId}`,
       });
 
-      // Optionally update local share count
-      // setEngagementData(prev => ({ ...prev, shares: prev.shares + 1 }));
+      if (result.action === Share.sharedAction) {
+        // Optional: API call to increment share count
+        // await fetch(`https://your-backend.com/api/reels/${reelId}/increment_share/`, {
+        //   method: 'POST',
+        //   headers: {
+        //     'Authorization': `Bearer ${accessToken}`, // if needed
+        //     'Content-Type': 'application/json',
+        //   },
+        // });
+
+        Toast.show({
+          type: 'success',
+          text1: 'Shared!',
+          text2: 'Reel shared with friends 🚀',
+          position: 'bottom',
+        });
+
+        // Optionally update local share count
+        // setEngagementData(prev => ({ ...prev, shares: prev.shares + 1 }));
+      }
+    } catch (error) {
+      console.error('Sharing failed:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Oops!',
+        text2: 'Failed to share. Try again.',
+        position: 'bottom',
+      });
     }
-  } catch (error) {
-    console.error('Sharing failed:', error);
-    Toast.show({
-      type: 'error',
-      text1: 'Oops!',
-      text2: 'Failed to share. Try again.',
-      position: 'bottom',
-    });
-  }
-};
+  };
 
 
   // Set up video ref
