@@ -1,3 +1,9 @@
+ui:
+    ☐ 1. reel comments
+    ☐ 2. post like, comments, share
+    ☐ 3. Complete settings menu
+
+
 safety:
     ✔ 1. Add a safety reminder modal that appears once per day. @done (8/5/2025, 9:51:39 PM)
     ✔ 2. Add parental controls for content visibility. @done (8/9/2025, 11:25:36 PM)
@@ -13,6 +19,7 @@ settings:
         ☐ 1. Add options to change password and email.
         ☐ 3. Add a feature to delete account.
         ☐ 4. Implement a dark mode toggle.
+        ☐ 5. Add email feature
 
     
     2. notification:

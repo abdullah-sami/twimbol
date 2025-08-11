@@ -17,6 +17,7 @@ import useFetch from '@/services/useFetch';
 import { fetchReelResults, TWIMBOL_API_CONFIG } from '@/services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
+import { getRandomColor } from '@/components/color';
 
 const { height } = Dimensions.get('window');
 
@@ -225,6 +226,9 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   };
 
 
+  const [profileBorderColor] = useState(getRandomColor());
+
+
   // Set up video ref
   useEffect(() => {
     if (videoRef.current) {
@@ -399,7 +403,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
             <View style={styles.profileContainer}>
               <Image
                 source={{ uri: engagementData.pp }}
-                style={styles.profileImage}
+                style={[styles.profileImage, { borderColor: profileBorderColor }]}
               />
               <Text style={styles.username}>{engagementData.username}</Text>
             </View>
@@ -509,6 +513,7 @@ const styles = StyleSheet.create({
   actionButton: {
     marginBottom: 24,
     alignItems: 'center',
+
   },
   actionText: {
     color: 'white',
@@ -536,13 +541,15 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'white',
   },
   username: {
     color: 'white',
     fontWeight: 'bold',
     marginLeft: 8,
     fontSize: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   followButton: {
     backgroundColor: '#FF4B4B',
@@ -553,6 +560,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     marginBottom: 12,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   musicContainer: {
     flexDirection: 'row',

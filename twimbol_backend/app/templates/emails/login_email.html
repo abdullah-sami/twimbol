@@ -1,0 +1,325 @@
+<!-- templates/emails/login_email.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recent Login Alert</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .alert-title {
+            color: #f39c12;
+            font-size: 28px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .alert-icon {
+            font-size: 32px;
+        }
+        .login-message {
+            font-size: 18px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.8;
+        }
+        .login-details {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+        }
+        .login-details h3 {
+            color: white;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            text-align: center;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 12px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: bold;
+            opacity: 0.9;
+        }
+        .detail-value {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            background-color: rgba(255,255,255,0.1);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .security-notice {
+            background-color: #fff3cd;
+            border: 2px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        .security-notice h4 {
+            color: #856404;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .security-notice p {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        .security-notice ul {
+            color: #856404;
+            margin: 0;
+            padding-left: 20px;
+        }
+        .security-notice li {
+            margin: 8px 0;
+        }
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 0 10px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-secure {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+        }
+        .btn-report {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+        .device-info {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .device-info h4 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .device-detail {
+            margin: 10px 0;
+            color: #555;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            color: #7f8c8d;
+        }
+        .footer-links {
+            margin: 20px 0;
+        }
+        .footer-links a {
+            color: #3498db;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .alert-warning {
+            background-color: #ffebee;
+            border: 2px solid #ffcdd2;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        .alert-warning h4 {
+            color: #c62828;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .alert-warning p {
+            color: #c62828;
+            margin-bottom: 0;
+        }
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                padding: 20px;
+            }
+            .alert-title {
+                font-size: 22px;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .login-message {
+                font-size: 16px;
+            }
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .detail-value {
+                text-align: left;
+            }
+            .btn {
+                display: block;
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">{{ company_name }}</div>
+        </div>
+
+        <h1 class="alert-title">
+            <span class="alert-icon">🔒</span>
+            Recent Login Alert
+        </h1>
+        
+        <p class="login-message">
+            Hello <strong>{{ user_name }}</strong>,<br>
+            We detected a recent login to your account. If this was you, no action is needed. 
+            If you don't recognize this activity, please secure your account immediately.
+        </p>
+
+        <div class="login-details">
+            <h3>📊 Login Details</h3>
+            
+            <div class="detail-row">
+                <span class="detail-label">👤 Account:</span>
+                <span class="detail-value">{{ user_name }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">📧 Email:</span>
+                <span class="detail-value">{{ user_email }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">🕐 Login Time:</span>
+                <span class="detail-value">{{ time|date:"M d, Y H:i T" }}</span>
+            </div>
+            
+            <div class="detail-row">
+                <span class="detail-label">🌍 Status:</span>
+                <span class="detail-value">{% if login_status == 'success' %}Successful{%else%}Failed{%endif%} Login</span>
+            </div>
+        </div>
+
+        <!-- <div class="device-info">
+            <h4>🖥️ Session Information</h4>
+            <div class="device-detail">
+                <strong>Login Method:</strong> Web Browser
+            </div>
+            <div class="device-detail">
+                <strong>Security Level:</strong> Standard Authentication
+            </div>
+            <div class="device-detail">
+                <strong>Session ID:</strong> Protected for security
+            </div>
+        </div> -->
+
+        <div class="security-notice">
+            <h4>🛡️ Security Reminder</h4>
+            <p>To keep your account secure, please ensure you:</p>
+            <ul>
+                <li>Use a strong, unique password for your account</li>
+                <li>Enable two-factor authentication if available</li>
+                <li>Log out from shared or public computers</li>
+                <li>Never share your login credentials with anyone</li>
+                <li>Report any suspicious activity immediately</li>
+            </ul>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{{ website_url }}" class="btn btn-secure">
+                This Was Me
+            </a>
+            <a href="mailto:{{ support_email }}?subject=Suspicious%20Login%20Activity&body=I%20did%20not%20authorize%20the%20recent%20login%20to%20my%20account." class="btn btn-report">
+                Report Suspicious Activity
+            </a>
+        </div>
+
+        <div class="alert-warning">
+            <h4>⚠️ Didn't Login Recently?</h4>
+            <p>
+                If you did not login to your account, please contact our security team immediately 
+                and consider changing your password as a precautionary measure.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p><strong>{{ company_name }} Security Team</strong></p>
+            <p>
+                📧 Security Issues: <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>
+                🌐 Visit our website: <a href="{{ website_url }}">{{ website_url }}</a>
+            </p>
+            
+            <!-- <div class="footer-links">
+                <a href="{{ website_url }}/security">Security Center</a>
+                <a href="{{ website_url }}/privacy">Privacy Policy</a>
+                <a href="{{ website_url }}/help">Help Center</a>
+            </div> -->
+
+            <p style="font-size: 12px; color: #95a5a6; margin-top: 30px;">
+                This is an automated security notification from {{ company_name }}.<br>
+                You received this email because login alerts are enabled for your account.<br>
+                Login Time: {{ time|date:"M d, Y H:i:s T" }}
+            </p>
+
+            <p style="font-size: 11px; color: #bdc3c7; margin-top: 20px;">
+                If you have questions about this alert, please contact our support team.<br>
+                Do not reply directly to this email as it is sent from an automated system.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

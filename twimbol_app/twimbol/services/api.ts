@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Base API Configuration
 export const TWIMBOL_API_CONFIG = {
-  // BASE_URL: "http://192.168.0.175:80",
+  // BASE_URL: "http://192.168.1.9:80",
   BASE_URL: "https://rafidabdullahsamiweb.pythonanywhere.com",
 };
 

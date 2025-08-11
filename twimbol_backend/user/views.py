@@ -18,12 +18,8 @@ from .serializers import *
 from rest_framework import status
 from rest_framework.response import Response
 from django.core.exceptions import PermissionDenied  # Import PermissionDenied from Django
-
-
-
-
-
-
+import logging
+from twimbol_backend.utils.email import send_welcome_email, send_login_email
 
 
 
@@ -359,7 +355,11 @@ def register_view(request):
 
 
 
+
 from notifications.models import notifications
+
+logger = logging.getLogger(__name__)
+
 
 class RegisterViewSet(viewsets.ViewSet):
     def create(self, request):
@@ -376,16 +376,47 @@ class RegisterViewSet(viewsets.ViewSet):
                 page_item_id=None 
             )
 
-            return Response({
+            # Send welcome email
+            email_sent = False
+            email_error = None
+            
+            try:
+                email_sent = send_welcome_email(
+                    user_email=data.email,
+                    user_name=data.username,
+                    # user_id=data.id
+                )
+                
+                if email_sent:
+                    logger.info(f"Welcome email sent successfully to {data.email}")
+                else:
+                    logger.warning(f"Welcome email failed to send to {data.email}")
+                    
+            except Exception as e:
+                email_error = str(e)
+                logger.error(f"Email sending error for {data.email}: {e}")
+
+            # Prepare response
+            response_data = {
                 'message': 'User registered successfully.',
                 'user': {
                     'id': data.id,
                     'username': data.username,
                     'email': data.email,
-                }
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                },
+                'email_sent': email_sent
+            }
 
+            # Add email status to response (optional - you might not want to expose this to client)
+            if not email_sent:
+                response_data['email_note'] = 'Welcome email delivery failed, but registration was successful.'
+                if email_error:
+                    # Log the error but don't expose it to the client for security
+                    logger.error(f"Email error details: {email_error}")
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -425,8 +456,70 @@ def login_view(request):
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
+    def post(self, request, *args, **kwargs):
+        client_ip = self._get_client_ip(request)
+        user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
+        username = request.data.get('username')
+        
+        
+        logger.info(f"Login attempt - Username: {username}, IP: {client_ip}, User-Agent: {user_agent[:100]}")
+        
+        response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == status.HTTP_200_OK:
+            self._process_successful_login(username, client_ip, user_agent, request)
+        else:
+            self._process_failed_login(username, client_ip, user_agent, request)
 
+        
+        return response
 
+    def _get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+    def _process_successful_login(self, username, client_ip, user_agent, request):
+        """Process successful login with enhanced logging"""
+        try:
+            user = User.objects.get(username=username)
+            
+            logger.info(f"Successful login - User: {username} (ID: {user.id}), IP: {client_ip}")
+            
+            email_sent = send_login_email(username, 'success')
+            
+            if email_sent:
+                logger.info(f"Login alert sent - User: {username}, Email: {user.email}")
+            else:
+                logger.warning(f"Failed to send login alert - User: {username}")
+                
+        except User.DoesNotExist:
+            logger.error(f"User not found after authentication: {username}")
+        except Exception as e:
+            logger.error(f"Error processing login for {username}: {str(e)}")
+        
+
+    def _process_failed_login(self, username, client_ip, user_agent, request):
+        """Process successful login with enhanced logging"""
+        try:
+            user = User.objects.get(username=username)
+            
+            logger.info(f"Successful login - User: {username} (ID: {user.id}), IP: {client_ip}")
+            
+            email_sent = send_login_email(username, 'failed')
+            
+            if email_sent:
+                logger.info(f"Login alert sent - User: {username}, Email: {user.email}")
+            else:
+                logger.warning(f"Failed to send login alert - User: {username}")
+                
+        except User.DoesNotExist:
+            logger.error(f"User not found after authentication: {username}")
+        except Exception as e:
+            logger.error(f"Error processing login for {username}: {str(e)}")
 
 
 
@@ -438,4 +531,4 @@ def logout_view(request):
 
 
 
-
+ 

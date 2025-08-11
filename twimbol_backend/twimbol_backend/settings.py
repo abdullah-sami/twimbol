@@ -175,14 +175,44 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# import cloudinary
-# cloudinary.config(
-#     cloud_name="ducr0o0wa",
-#     api_key="763735417813897",
-#     api_secret="YR2l3awAJDjlBuuOPEbnWVj6Cpk",
-#     secure=True
-# )
 
 DEFAULT_VIDEO_STORAGE = 'cloudinary_storage.storage.VideoMediaCloudinaryStorage'
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaC   loudinaryStorage'
+
+
+
+from decouple import config
+
+# Email Configuration for Gmail SMTP
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')  
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = config('EMAIL_HOST_USER')
+
+
+
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'email.log',
+        },
+    },
+    'loggers': {
+        'your_app_name': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
