@@ -6,6 +6,9 @@ export const TWIMBOL_API_CONFIG = {
   BASE_URL: "https://rafidabdullahsamiweb.pythonanywhere.com",
 };
 
+
+
+
 // Helper function to get headers with Authorization token
 
 const getHeaders = async () => {
@@ -16,7 +19,12 @@ const getHeaders = async () => {
   };
 };
 
-// Register API
+
+
+
+
+
+// Register API ****************************************
 export const fetchRegister = async ({
   username,
   email,
@@ -64,7 +72,18 @@ export const fetchRegister = async ({
   return data;
 };
 
-// Login API
+
+
+
+
+
+
+
+
+
+
+
+// Login API  ********************************
 export const fetchLogin = async ({
   username,
   password,
@@ -93,7 +112,14 @@ export const fetchLogin = async ({
   return data;
 };
 
-// Helper function to refresh the access token
+
+
+
+
+
+
+
+// Helper function to refresh the access token **********************
 const refreshAccessToken = async () => {
   const refresh = await AsyncStorage.getItem("refresh");
   if (!refresh) {
@@ -121,7 +147,12 @@ const refreshAccessToken = async () => {
   return data.access;
 };
 
-// Function to handle API requests with token refresh logic
+
+
+
+
+
+// Function to handle API requests with token refresh logic  ***********************************
 const fetchWithTokenRefresh = async (url: string, options: RequestInit) => {
   let response = await fetch(url, options);
 
@@ -147,7 +178,15 @@ const fetchWithTokenRefresh = async (url: string, options: RequestInit) => {
   return response;
 };
 
-// Search API
+
+
+
+
+
+
+
+
+// Search API **************************************
 export const fetchSearchResults = async ({ query }: { query: string }) => {
   const endpoint = query
     ? `${TWIMBOL_API_CONFIG.BASE_URL}/api/search?query=${encodeURIComponent(
@@ -170,7 +209,20 @@ export const fetchSearchResults = async ({ query }: { query: string }) => {
   return data.results;
 };
 
-// Posts API
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Posts API **************************************
 export const fetchPostResults = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts`;
   const headers = await getHeaders();
@@ -188,6 +240,11 @@ export const fetchPostResults = async () => {
   return data.results;
 };
 
+
+
+
+
+// Reels API **************************************
 export const fetchReelResults = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/reels`;
   const headers = await getHeaders();
@@ -203,6 +260,10 @@ export const fetchReelResults = async () => {
 
 
 
+
+
+
+// Fetch the first reel for a specific post ************************************
 export const fetchFirstReel = async (postId:number) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/reels/${postId}`;
   const headers = await getHeaders();
@@ -219,7 +280,7 @@ export const fetchFirstReel = async (postId:number) => {
 
 
 
-// Reel Item API
+// Reel Item API ***************************
 export const fetchReelItem = async (post_id: string) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/reels/${post_id}`;
 
@@ -238,7 +299,18 @@ export const fetchReelItem = async (post_id: string) => {
   return data;
 };
 
-// Notifications API
+
+
+
+
+
+
+
+
+
+
+
+// Notifications API ******************************************
 export const fetchNotifications = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/notifications`;
   const headers = await getHeaders();
@@ -256,7 +328,11 @@ export const fetchNotifications = async () => {
   return data;
 };
 
-// User Profile API
+
+
+
+
+// User Profile API **********************************
 
 export const fetchUserProfile = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/profile`;
@@ -275,7 +351,14 @@ export const fetchUserProfile = async () => {
   return data[0].user;
 };
 
-// Creator Application API
+
+
+
+
+
+
+
+// Creator Application API ***********************
 
 export const fetchCreatorApplication = async (user_id) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/creator-application/`;
@@ -298,6 +381,7 @@ export const fetchCreatorApplication = async (user_id) => {
   return data;
 };
 
+
 export const fetchCreatorApplicationStatus = async (user_id) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/creator-application/by-user/${user_id}/`;
   const headers = await getHeaders();
@@ -315,6 +399,13 @@ export const fetchCreatorApplicationStatus = async (user_id) => {
   return data[0];
 };
 
+
+
+
+
+
+
+// Comments API ******************************************
 export const fetchComments = async (post_id: string, page: number = 1) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts/${post_id}/comments/?page=${page}`;
   const headers = await getHeaders();
@@ -348,4 +439,57 @@ export const postComment = async (post_id: string, comment: string) => {
 
   const data = await response.json();
   return data;
+};
+
+
+
+
+
+
+
+
+
+
+
+// Likes API ******************************************
+export const postLikes = async (post_id: number) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/post_likes/${post_id}/`;
+  const headers = await getHeaders();
+
+  // Ensure Content-Type is set for POST requests
+  const requestHeaders = {
+    ...headers,
+    'Content-Type': 'application/json',
+  };
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: requestHeaders,
+    body: JSON.stringify({}), // Send empty JSON object as body
+  });
+
+  if (!response.ok) {
+    // Log more details about the error
+    const errorText = await response.text();
+    console.error('Error response:', response.status, response.statusText, errorText);
+    throw new Error(`Failed to post like: ${response.status} ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data; 
+};
+
+
+export const deleteLikes = async (post_id: number) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/post_likes/${post_id}/`;
+  const headers = await getHeaders();
+
+  const response = await fetch(endpoint, {
+    method: "DELETE",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete like: ${response.statusText}`);
+  }
 };

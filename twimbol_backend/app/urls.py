@@ -19,7 +19,13 @@ urlpatterns = [
         'get': 'list',
         'post': 'create'
     }), name='post_comments'),
-    path('api/post_likes/<int:post_id>', views.PostStatLikeViewSet, basename='post_likes')
+
+    path('api/post_likes/<int:post_id>/', views.PostStatLikeViewSet.as_view({
+        'get': 'list',
+        'post': 'create',
+        'delete': 'destroy'
+    }), name='post_likes'),
+
 
     path('', views.home, name='home'),
 

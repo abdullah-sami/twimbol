@@ -172,11 +172,8 @@ class PostCommentSerializer(serializers.ModelSerializer):
 class PostStatLikeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post_Stat_like
-        fields = [
-            'post',
-            'created_by',
-            'created_at',
-        ]
+        fields = '__all__'
+        read_only_fields = ('post', 'created_by', 'created_at')
 
 
 

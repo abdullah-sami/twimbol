@@ -14,7 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import useFetch from '@/services/useFetch';
-import { fetchFirstReel, fetchReelResults, TWIMBOL_API_CONFIG } from '@/services/api';
+import { deleteLikes, fetchFirstReel, fetchReelResults, postLikes, TWIMBOL_API_CONFIG } from '@/services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 import { getRandomColor } from '@/components/color';
@@ -169,6 +169,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   const videoRef = useRef(null);
   const doubleTapRef = useRef();
   const scale = useSharedValue(1);
+  const [likes, setLikes] = useState(video.like_count || 0);
   const [liked, setLiked] = useState(video.liked_by_user);
   const [saved, setSaved] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -183,7 +184,6 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   // Mock data for UI display
   const engagementData = {
-    likes: video.like_count || 0,
     comments: commentsCount,
     liked: liked,
     shares: 0,
@@ -290,19 +290,64 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
     transform: [{ scale: scale.value }],
   }));
 
-  const onDoubleTap = useCallback(() => {
+
+
+  const onDoubleTap = useCallback(async () => {
     if (!liked) {
       setLiked(true);
-      
+      setLikes((prevLikes) => prevLikes + 1);
+
+      try {
+        const res = await postLikes(video.post);
+      } catch (error) {
+        console.error('Error posting likes:', error);
+        setLiked(false);
+      }
     }
-    else{
-      setLiked(true);
+    else {
+      return;
     }
+
     scale.value = withSpring(1.5, { damping: 10 });
     setTimeout(() => {
       scale.value = withTiming(1, { duration: 300 });
     }, 300);
-  }, []);
+  }, [liked, setLikes, video.post, postLikes, scale]);
+
+
+
+  const toggleLike = useCallback(async () => {
+    if (!liked) {
+      setLiked(true);
+      setLikes((prevLikes) => prevLikes + 1);
+
+      try {
+        const res = await postLikes(video.post);
+      } catch (error) {
+        console.error('Error posting likes:', error);
+        setLiked(false);
+      }
+    }
+    else {
+      setLiked(false);
+      setLikes((prevLikes) => prevLikes - 1);
+
+      try {
+        const res = await deleteLikes(video.post);
+      } catch (error) {
+        console.error('Error deleting likes:', error);
+        setLiked(true);
+      }
+    }
+
+
+  }, [liked, setLikes, video.post, postLikes, deleteLikes]);
+
+
+  const toggleSaved = useCallback(() => setSaved(prev => !prev), []);
+
+
+
 
   const togglePlayPause = useCallback(() => {
     // Don't allow play/pause when comments are open
@@ -321,11 +366,9 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
     setTimeout(() => setShowPlayIcon(false), 800);
   }, [isPlaying, showComments]);
 
-  const toggleLike = useCallback(() => setLiked(prev => !prev), []);
-  const toggleSaved = useCallback(() => setSaved(prev => !prev), []);
 
   const formatTimeToMMSS = useCallback((milliseconds) => {
-    if (!milliseconds) return '0:00';
+    if (!milliseconds || milliseconds < 0) return '0:00';
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
@@ -335,12 +378,18 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   // Handle video playback status updates
   const onPlaybackStatusUpdate = useCallback((status) => {
     if (status.isLoaded) {
-      setVideoDuration(status.durationMillis || 0);
-      setCurrentPosition(status.positionMillis || 0);
+      // Always update both duration and position when status updates
+      if (status.durationMillis) {
+        setVideoDuration(status.durationMillis);
+      }
+      if (status.positionMillis !== undefined) {
+        setCurrentPosition(status.positionMillis);
+      }
     }
   }, []);
 
-  const displayDuration = formatTimeToMMSS(videoDuration);
+  const displayDuration = `${formatTimeToMMSS(currentPosition)} / ${formatTimeToMMSS(videoDuration)}`;
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -367,7 +416,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
                 isLooping
                 useNativeControls={false}
                 onPlaybackStatusUpdate={onPlaybackStatusUpdate}
-                progressUpdateIntervalMillis={500}
+                progressUpdateIntervalMillis={100}
               />
               <Animated.View style={[styles.heartOverlay, animatedStyle]}>
                 {scale.value > 1 && (
@@ -412,7 +461,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
               size={28}
               color={engagementData.liked ? "#FF4B4B" : "white"}
             />
-            <Text style={styles.actionText}>{engagementData.likes}</Text>
+            <Text style={styles.actionText}>{likes}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
