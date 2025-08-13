@@ -8,7 +8,6 @@ router.register('posts', views.PostViewSet, basename='posts')
 router.register('reels', views.ReelsDataViewSet, basename='reels')
 router.register('videos', views.YtVideoDataViewSet, basename='videos')
 # router.register('posts/<str:post_id>/comments', views.PostCommentViewSet, basename='post_comments')
-router.register('post_likes', views.PostStatLikeViewSet, basename='post_likes')
 router.register('search', views.SearchViewSet, basename='search_api')
 
 
@@ -20,6 +19,7 @@ urlpatterns = [
         'get': 'list',
         'post': 'create'
     }), name='post_comments'),
+    path('api/post_likes/<int:post_id>', views.PostStatLikeViewSet, basename='post_likes')
 
     path('', views.home, name='home'),
 
@@ -29,6 +29,8 @@ urlpatterns = [
     path('video/<str:video_id>/', views.video, name='video'),
     path('reel/<str:reel_id>/', views.reel, name='reel'),
 
+
+    path('privacy-policy/', views.privacy, name='privacy'),
 
     path('search/', views.search, name='search'),
 

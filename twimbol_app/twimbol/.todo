@@ -1,7 +1,9 @@
 ui:
-    ☐ 1. reel comments
-    ☐ 2. post like, comments, share
-    ☐ 3. Complete settings menu
+    ☐ 1. reel comments  ***
+    ☐ 2. post like, comments, share, menu ***
+    ☐ 3. Complete settings menu ***
+    ☐ 4. Complete all action buttons ***
+    ☐ 5. Connect events to backend ****
 
 
 safety:
@@ -19,11 +21,11 @@ settings:
         ☐ 1. Add options to change password and email.
         ☐ 3. Add a feature to delete account.
         ☐ 4. Implement a dark mode toggle.
-        ☐ 5. Add email feature
+        ✔ 5. Add email feature @done (8/11/2025, 11:24:51 PM)
 
     
     2. notification:
-        ☐ 1. Add function to mark notifications as read.
+        ☐ 1. Add function to mark notifications as read. ***
         ☐ 2. Add function to delete notifications.
         ☐ 3. Add notification settings to control what types of notifications to receive.
         ☐ 4. Add push notifications for important events (e.g., new messages, mentions).

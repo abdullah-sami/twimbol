@@ -555,13 +555,6 @@ class ApplyForCreatorViewSet(ModelViewSet):
         
 
 
-import cloudinary
-
-cloudinary.config(
-    cloud_name="ducr0o0wa",
-    api_key="763735417813897",
-    api_secret="YR2l3awAJDjlBuuOPEbnWVj6Cpk"
-)
 
 
 

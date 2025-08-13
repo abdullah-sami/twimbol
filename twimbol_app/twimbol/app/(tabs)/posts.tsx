@@ -108,12 +108,12 @@ const PostsFeed = () => {
           </TouchableOpacity> */}
         </View>
 
-        {postsLoading && (
+        {/* {postsLoading && (
           <ActivityIndicator
             size="large" color="#FF6E42" className='my-20' />
 
-        )}
-        <FlatList
+        )} */}
+        {posts && posts.length > 0 ?(<FlatList
           data={posts}
           renderItem={renderPost}
           keyExtractor={item => item.id}
@@ -129,7 +129,8 @@ const PostsFeed = () => {
             />
           }
 
-        />
+        />): <ActivityIndicator
+            size="large" color="#FF6E42" className='my-20' />}
 
       </View>
 </SafeAreaView>

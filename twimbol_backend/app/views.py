@@ -7,7 +7,7 @@ from .forms import *
 from django.urls import reverse
 
 from .serializers import *
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import api_view, action
@@ -109,13 +109,21 @@ class PostStatLikeViewSet(ModelViewSet):
 
 
     def get_queryset(self):
-        return super().get_queryset()
+        queryset = super().get_queryset()
+        post_id = self.kwargs.get('post_id')
+        if post_id:
+            return queryset.filter(post_id=post_id)
+        return queryset.none()  
         
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
-   
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 
@@ -146,21 +154,16 @@ class PostCommentViewSet(ModelViewSet):
     pagination_class = CommentPagination
 
     def get_queryset(self):
-        """
-        Override to filter comments by post_id from URL
-        """
         queryset = super().get_queryset()
         post_id = self.kwargs.get('post_id')
         if post_id:
             return queryset.filter(post_id=post_id)
-        return queryset.none()  # Return empty queryset if no post_id
+        return queryset.none()  
 
     def perform_create(self, serializer):
-        """
-        Set the comment author and associated post
-        """
+    
         post_id = self.kwargs.get('post_id')
-        post = get_object_or_404(Post, id=post_id)
+        post = Post.objects.filter(id=post_id).first()
         serializer.save(created_by=self.request.user, post=post)
     
      
@@ -649,21 +652,5 @@ def search(request):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+def privacy(request):
+    return render(request, 'privacy_policy.html')

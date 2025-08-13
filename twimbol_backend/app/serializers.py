@@ -147,9 +147,16 @@ class YoutubeReelsDataSerializer(serializers.ModelSerializer):
        
 
 
-
-
 class PostCommentSerializer(serializers.ModelSerializer):
+    # post = PostSerializer(read_only=True)
+    post = serializers.SerializerMethodField()
+    created_by = serializers.SerializerMethodField()
+
+    def get_created_by(self, obj):
+        return UserProfileSerializer(obj.created_by.profile).data
+    def get_post(self, obj):
+        return obj.post.id
+
     class Meta:
         model = Post_Comment
         fields = [
@@ -158,8 +165,6 @@ class PostCommentSerializer(serializers.ModelSerializer):
             'created_by',
             'created_at',
         ]
-
-
 
 
 

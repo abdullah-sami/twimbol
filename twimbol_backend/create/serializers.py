@@ -18,7 +18,6 @@ class CreatorApplicationSerializer(serializers.ModelSerializer):
 
 
 
-
 class ReelCloudinarySerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
@@ -27,8 +26,6 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ReelCloudinary
-        # fields = ['post', 'video_url', 'title', 'reel_description', 'thumbnail_url','created_by', 'created_at', 'user_profile']
-
         fields = [
             'title',
             'video_url',
@@ -51,13 +48,15 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
         return Post_Stat_like.objects.filter(post=obj.post).count()
 
     def get_comments(self, obj):
-        return Post_Comment.objects.filter(post=obj.post)
-    
+        comments = Post_Comment.objects.filter(post=obj.post).count()
+        return comments
+
     def get_liked_by_user(self, obj):
         user = self.context['request'].user
         if user.is_authenticated:
             return Post_Stat_like.objects.filter(post=obj.post, created_by=user).exists()
         return False
+
     
 
 

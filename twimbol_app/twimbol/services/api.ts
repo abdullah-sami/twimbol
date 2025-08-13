@@ -1,7 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Base API Configuration
 export const TWIMBOL_API_CONFIG = {
@@ -9,48 +6,50 @@ export const TWIMBOL_API_CONFIG = {
   BASE_URL: "https://rafidabdullahsamiweb.pythonanywhere.com",
 };
 
-
 // Helper function to get headers with Authorization token
 
 const getHeaders = async () => {
-  const token = await AsyncStorage.getItem('access');
+  const token = await AsyncStorage.getItem("access");
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   };
 };
 
-
-
-
-
-
-
-
 // Register API
-export const fetchRegister = async ({ username, email, password, birthday }: { username: string; email:string, password: string, birthday: string }) => {
+export const fetchRegister = async ({
+  username,
+  email,
+  password,
+  birthday,
+}: {
+  username: string;
+  email: string;
+  password: string;
+  birthday: string;
+}) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/register/`;
 
   const response = await fetch(endpoint, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      username:username,
-      email:email,
-      password:password,
-      birthday: birthday, 
+      username: username,
+      email: email,
+      password: password,
+      birthday: birthday,
     }),
   });
 
-   if (!response.ok) {
+  if (!response.ok) {
     const errorData = await response.json();
-    console.log('Registration error:', errorData);
-    
+    console.log("Registration error:", errorData);
+
     // Create a proper Error object with custom message
-    let errorMessage = 'Registration failed. Please try again.';
-    
+    let errorMessage = "Registration failed. Please try again.";
+
     if (errorData.username) {
       errorMessage = errorData.username[0];
     } else if (errorData.email) {
@@ -58,25 +57,27 @@ export const fetchRegister = async ({ username, email, password, birthday }: { u
     } else if (errorData.password) {
       errorMessage = errorData.password[0];
     }
-    
+
     throw new Error(errorMessage);
   }
   const data = await response.json();
   return data;
 };
 
-
-
-
-
 // Login API
-export const fetchLogin = async ({ username, password }: { username: string; password: string }) => {
+export const fetchLogin = async ({
+  username,
+  password,
+}: {
+  username: string;
+  password: string;
+}) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/login/`;
 
   const response = await fetch(endpoint, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       username,
@@ -92,33 +93,31 @@ export const fetchLogin = async ({ username, password }: { username: string; pas
   return data;
 };
 
-
-
-
-
-
 // Helper function to refresh the access token
 const refreshAccessToken = async () => {
-  const refresh = await AsyncStorage.getItem('refresh');
+  const refresh = await AsyncStorage.getItem("refresh");
   if (!refresh) {
-    throw new Error('Refresh token not found. Please log in again.');
+    throw new Error("Refresh token not found. Please log in again.");
   }
 
-  const response = await fetch(`${TWIMBOL_API_CONFIG.BASE_URL}/api/token/refresh/`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ refresh }),
-  });
+  const response = await fetch(
+    `${TWIMBOL_API_CONFIG.BASE_URL}/api/token/refresh/`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refresh }),
+    }
+  );
 
   if (!response.ok) {
     await AsyncStorage.clear();
-    throw new Error('Session expired. Please log in again.');
+    throw new Error("Session expired. Please log in again.");
   }
 
   const data = await response.json();
-  await AsyncStorage.setItem('access', data.access);
+  await AsyncStorage.setItem("access", data.access);
   return data.access;
 };
 
@@ -136,7 +135,7 @@ const fetchWithTokenRefresh = async (url: string, options: RequestInit) => {
 
       response = await fetch(url, { ...options, headers });
     } catch (error) {
-      throw new Error('Failed to refresh token or retry request.');
+      throw new Error("Failed to refresh token or retry request.");
     }
   }
 
@@ -148,21 +147,18 @@ const fetchWithTokenRefresh = async (url: string, options: RequestInit) => {
   return response;
 };
 
-
-
-
-
-
 // Search API
 export const fetchSearchResults = async ({ query }: { query: string }) => {
   const endpoint = query
-    ? `${TWIMBOL_API_CONFIG.BASE_URL}/api/search?query=${encodeURIComponent(query)}`
+    ? `${TWIMBOL_API_CONFIG.BASE_URL}/api/search?query=${encodeURIComponent(
+        query
+      )}`
     : `${TWIMBOL_API_CONFIG.BASE_URL}/api/search?query=asib`;
 
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -174,19 +170,13 @@ export const fetchSearchResults = async ({ query }: { query: string }) => {
   return data.results;
 };
 
-
-
-
-
-
-
 // Posts API
 export const fetchPostResults = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts`;
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -198,17 +188,12 @@ export const fetchPostResults = async () => {
   return data.results;
 };
 
-
-
-
-
-
 export const fetchReelResults = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/reels`;
   const headers = await getHeaders();
 
   const response = await fetchWithTokenRefresh(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -218,8 +203,18 @@ export const fetchReelResults = async () => {
 
 
 
+export const fetchFirstReel = async (postId:number) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/reels/${postId}`;
+  const headers = await getHeaders();
 
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers,
+  });
 
+  const data = await response.json();
+  return data;
+};
 
 
 
@@ -231,7 +226,7 @@ export const fetchReelItem = async (post_id: string) => {
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -243,17 +238,13 @@ export const fetchReelItem = async (post_id: string) => {
   return data;
 };
 
-
-
-
-
 // Notifications API
 export const fetchNotifications = async () => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/notifications`;
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -261,16 +252,9 @@ export const fetchNotifications = async () => {
     throw new Error(`Failed to fetch notifications: ${response.statusText}`);
   }
 
-  
-
   const data = await response.json();
   return data;
 };
-
-
-
-
-
 
 // User Profile API
 
@@ -279,7 +263,7 @@ export const fetchUserProfile = async () => {
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -289,17 +273,7 @@ export const fetchUserProfile = async () => {
 
   const data = await response.json();
   return data[0].user;
-
-
 };
-
-
-
-
-
-
-
-
 
 // Creator Application API
 
@@ -308,14 +282,12 @@ export const fetchCreatorApplication = async (user_id) => {
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'POST',
+    method: "POST",
     headers,
 
     body: JSON.stringify({
-      user:user_id,
+      user: user_id,
     }),
-
-
   });
 
   if (!response.ok) {
@@ -324,15 +296,14 @@ export const fetchCreatorApplication = async (user_id) => {
 
   const data = await response.json();
   return data;
-}
-
+};
 
 export const fetchCreatorApplicationStatus = async (user_id) => {
   const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/api/creator-application/by-user/${user_id}/`;
   const headers = await getHeaders();
 
   const response = await fetch(endpoint, {
-    method: 'GET',
+    method: "GET",
     headers,
   });
 
@@ -344,8 +315,37 @@ export const fetchCreatorApplicationStatus = async (user_id) => {
   return data[0];
 };
 
+export const fetchComments = async (post_id: string, page: number = 1) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts/${post_id}/comments/?page=${page}`;
+  const headers = await getHeaders();
 
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers,
+  });
 
+  if (!response.ok) {
+    throw new Error(`Failed to fetch comments: ${response.statusText}`);
+  }
 
+  const data = await response.json();
+  return data; // Return the full response object instead of just data.results
+};
 
+export const postComment = async (post_id: string, comment: string) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts/${post_id}/comments/`;
+  const headers = await getHeaders();
 
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ post: post_id, comment: comment }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to post comment: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  return data;
+};

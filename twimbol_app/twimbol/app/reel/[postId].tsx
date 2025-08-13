@@ -14,10 +14,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import useFetch from '@/services/useFetch';
-import { fetchReelResults, TWIMBOL_API_CONFIG } from '@/services/api';
+import { fetchFirstReel, fetchReelResults, TWIMBOL_API_CONFIG } from '@/services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 import { getRandomColor } from '@/components/color';
+import ReelComments from '@/components/comments/reelcomments';
 
 const { height } = Dimensions.get('window');
 
@@ -35,7 +36,7 @@ const ReelsPlayer = ({ route }) => {
     if (!postId) return fetchReelResults();
 
     return Promise.all([
-      fetch(`${TWIMBOL_API_CONFIG.BASE_URL}/api/reels/${postId}`).then(res => res.json()),
+      fetchFirstReel(postId),
       fetchReelResults()
     ]).then(([targetReel, reelsData]) => {
       // If we have both target reel and general reels
@@ -100,7 +101,6 @@ const ReelsPlayer = ({ route }) => {
     }
   }, [activeVideoIndex, reelsData]);
 
-
   if (loading && !reelsData) {
     return (
       <View style={styles.loadingContainer}>
@@ -108,7 +108,6 @@ const ReelsPlayer = ({ route }) => {
       </View>
     );
   }
-
 
   if (error) {
     return (
@@ -130,6 +129,7 @@ const ReelsPlayer = ({ route }) => {
               <FlatList
                 ref={flatListRef}
                 data={reelsData || []}
+                extraData={reelsData}
                 keyExtractor={(item) => item.post}
                 renderItem={({ item }) => (
                   <VideoItem
@@ -169,50 +169,43 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   const videoRef = useRef(null);
   const doubleTapRef = useRef();
   const scale = useSharedValue(1);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(video.liked_by_user);
   const [saved, setSaved] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
   const [currentPosition, setCurrentPosition] = useState(0);
 
+  const [showComments, setShowComments] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(video?.comments || 0);
+
+
+
   // Mock data for UI display
   const engagementData = {
     likes: video.like_count || 0,
-    comments: video.comments.length || 0,
+    comments: commentsCount,
+    liked: liked,
     shares: 0,
     username: `${video.user_profile.user.first_name} ${video.user_profile.user.last_name || ''}` || 'User',
     description: video.reel_description || 'Ooey - So Sick of Love',
     pp: video.user_profile.user.profile_pic ? `${TWIMBOL_API_CONFIG.BASE_URL}${video.user_profile.user.profile_pic}` : 'https://randomuser.me/api/portraits/men/32.jpg'
   };
 
-
   // Handle share functionality
-  const handleShare = async (reelId: any) => {
+  const handleShare = async (reelId) => {
     try {
       const result = await Share.share({
         message: `🎬 Watch this reel on Twimbool!\nhttps://twimbol.com/reel/${reelId}`,
       });
 
       if (result.action === Share.sharedAction) {
-        // Optional: API call to increment share count
-        // await fetch(`https://your-backend.com/api/reels/${reelId}/increment_share/`, {
-        //   method: 'POST',
-        //   headers: {
-        //     'Authorization': `Bearer ${accessToken}`, // if needed
-        //     'Content-Type': 'application/json',
-        //   },
-        // });
-
         Toast.show({
           type: 'success',
           text1: 'Shared!',
           text2: 'Reel shared with friends 🚀',
           position: 'bottom',
         });
-
-        // Optionally update local share count
-        // setEngagementData(prev => ({ ...prev, shares: prev.shares + 1 }));
       }
     } catch (error) {
       console.error('Sharing failed:', error);
@@ -226,20 +219,55 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   };
 
 
-  const [profileBorderColor] = useState(getRandomColor());
 
+  // FIXED: Handle comments modal with proper video pause/resume
+  const handleCommentsPress = useCallback(() => {
+    console.log('Comments button pressed, current showComments:', showComments); // Debug log
+
+    // Pause video when opening comments
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pauseAsync().catch(console.error);
+      setIsPlaying(false);
+    }
+
+    setShowComments(true);
+  }, [isPlaying, showComments]);
+
+  const handleCommentsClose = useCallback(() => {
+    console.log('Comments modal closing, current showComments:', showComments); // Debug log
+    setShowComments(false);
+
+    // Resume video when closing comments if it was active
+    if (isActive && videoRef.current) {
+      setTimeout(() => {
+        videoRef.current.playAsync().catch(console.error);
+        setIsPlaying(true);
+      }, 300); // Small delay to ensure modal is fully closed
+    }
+  }, [isActive, showComments]);
+
+  const handleCommentsCountChange = useCallback((newCount) => {
+    console.log('Comments count changed from', commentsCount, 'to:', newCount); // Debug log
+    setCommentsCount(newCount);
+  }, [commentsCount]);
+
+  const [profileBorderColor] = useState(getRandomColor());
 
   // Set up video ref
   useEffect(() => {
     if (videoRef.current) {
       setVideoRef({
         playAsync: () => {
-          videoRef.current.playAsync();
-          setIsPlaying(true);
+          if (videoRef.current) {
+            videoRef.current.playAsync();
+            setIsPlaying(true);
+          }
         },
         pauseAsync: () => {
-          videoRef.current.pauseAsync();
-          setIsPlaying(false);
+          if (videoRef.current) {
+            videoRef.current.pauseAsync();
+            setIsPlaying(false);
+          }
         }
       });
     }
@@ -249,8 +277,13 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   // Handle active state changes
   useEffect(() => {
-    setIsPlaying(isActive);
-  }, [isActive]);
+    // Don't auto-play if comments modal is open
+    if (!showComments) {
+      setIsPlaying(isActive);
+    }
+  }, [isActive, showComments]);
+
+
 
   // Handle double tap animation
   const animatedStyle = useAnimatedStyle(() => ({
@@ -258,7 +291,13 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   }));
 
   const onDoubleTap = useCallback(() => {
-    setLiked(true);
+    if (!liked) {
+      setLiked(true);
+      
+    }
+    else{
+      setLiked(true);
+    }
     scale.value = withSpring(1.5, { damping: 10 });
     setTimeout(() => {
       scale.value = withTiming(1, { duration: 300 });
@@ -266,6 +305,9 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   }, []);
 
   const togglePlayPause = useCallback(() => {
+    // Don't allow play/pause when comments are open
+    if (showComments) return;
+
     if (isPlaying) {
       videoRef.current?.pauseAsync();
       setIsPlaying(false);
@@ -277,7 +319,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
     // Show play icon briefly
     setShowPlayIcon(true);
     setTimeout(() => setShowPlayIcon(false), 800);
-  }, [isPlaying]);
+  }, [isPlaying, showComments]);
 
   const toggleLike = useCallback(() => setLiked(prev => !prev), []);
   const toggleSaved = useCallback(() => setSaved(prev => !prev), []);
@@ -300,20 +342,20 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   const displayDuration = formatTimeToMMSS(videoDuration);
 
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right"]}> */}
-
       <View style={styles.videoContainer}>
         <TapGestureHandler
           waitFor={doubleTapRef}
           onActivated={togglePlayPause}
+          // FIXED: Disable tap gestures when comments are open
+          enabled={!showComments}
         >
           <TapGestureHandler
             ref={doubleTapRef}
             numberOfTaps={2}
             onActivated={onDoubleTap}
+            enabled={!showComments}
           >
             <View>
               <Video
@@ -321,7 +363,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
                 source={{ uri: video.video_url }}
                 style={styles.video}
                 resizeMode="cover"
-                shouldPlay={isActive && isPlaying}
+                shouldPlay={isActive && isPlaying && !showComments}
                 isLooping
                 useNativeControls={false}
                 onPlaybackStatusUpdate={onPlaybackStatusUpdate}
@@ -366,14 +408,18 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
         <View style={styles.rightOverlay}>
           <TouchableOpacity style={styles.actionButton} onPress={toggleLike}>
             <Ionicons
-              name={liked ? "heart" : "heart-outline"}
+              name={engagementData.liked ? "heart" : "heart-outline"}
               size={28}
-              color={liked ? "#FF4B4B" : "white"}
+              color={engagementData.liked ? "#FF4B4B" : "white"}
             />
             <Text style={styles.actionText}>{engagementData.likes}</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleCommentsPress}
+            activeOpacity={0.7}
+          >
             <Ionicons name="chatbubble-outline" size={28} color="white" />
             <Text style={styles.actionText}>{engagementData.comments}</Text>
           </TouchableOpacity>
@@ -385,8 +431,6 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
             <Ionicons name="arrow-redo-outline" size={28} color="white" />
             <Text style={styles.actionText}>{engagementData.shares}</Text>
           </TouchableOpacity>
-
-
 
           <TouchableOpacity style={styles.actionButton} onPress={toggleSaved}>
             <Ionicons
@@ -429,8 +473,20 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
             </View>
           )}
         </View>
+
+        {/* FIXED: Comments Modal - Moved outside of gesture handlers and added proper props */}
+        {showComments && (
+          <ReelComments
+
+            visible={showComments}
+            onClose={handleCommentsClose}
+            postId={video.post}
+            initialCommentsCount={commentsCount}
+            onCommentsCountChange={handleCommentsCountChange}
+
+          />
+        )}
       </View>
-      {/* </SafeAreaView> */}
     </GestureHandlerRootView>
   );
 };
@@ -444,7 +500,6 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   video: {
-    // ...StyleSheet.absoluteFillObject, // This makes the video fill its parent
     width: '100%',
     height: '100%',
   },
@@ -513,7 +568,6 @@ const styles = StyleSheet.create({
   actionButton: {
     marginBottom: 24,
     alignItems: 'center',
-
   },
   actionText: {
     color: 'white',
