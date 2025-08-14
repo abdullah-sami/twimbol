@@ -17,7 +17,8 @@ urlpatterns = [
     path('api/', include(router.urls)),
     path('api/posts/<int:post_id>/comments/', views.PostCommentViewSet.as_view({
         'get': 'list',
-        'post': 'create'
+        'post': 'create',
+        'delete': 'destroy',
     }), name='post_comments'),
 
     path('api/post_likes/<int:post_id>/', views.PostStatLikeViewSet.as_view({

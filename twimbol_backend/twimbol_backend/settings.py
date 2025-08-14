@@ -154,7 +154,6 @@ LOGIN_URL = 'login'
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://71ff-59-153-102-119.ngrok-free.app",
     "http://192.168.0.175:8081",
     "http://127.0.0.1:80",
 ]
@@ -180,7 +179,7 @@ SIMPLE_JWT = {
 
 DEFAULT_VIDEO_STORAGE = 'cloudinary_storage.storage.VideoMediaCloudinaryStorage'
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaC   loudinaryStorage'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
 
@@ -190,7 +189,8 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaC   loudinaryStorage'
 cloudinary.config( 
     cloud_name=config('CLOUDINARY_CLOUD_NAME'),
     api_key=config('CLOUDINARY_API_KEY'),
-    api_secret=config('CLOUDINARY_API_SECRET')
+    api_secret=config('CLOUDINARY_API_SECRET'),
+    secure=True,
 )
 
 

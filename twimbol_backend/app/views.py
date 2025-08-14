@@ -204,6 +204,25 @@ class PostCommentViewSet(ModelViewSet):
         post = Post.objects.filter(id=post_id).first()
         serializer.save(created_by=self.request.user, post=post)
 
+    def destroy(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('post_id')
+        comment_id = request.data.get('comment_id')
+        
+        try:
+            instance = Post_Comment.objects.get(
+                post_id=post_id, 
+                id=comment_id,
+                created_by=request.user
+            )
+        except Post_Comment.DoesNotExist:
+            return Response(
+                {"detail": "Comment not found or you don't have permission to delete it."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+                
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
 

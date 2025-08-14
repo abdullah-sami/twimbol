@@ -17,15 +17,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
-import { fetchComments, postComment, TWIMBOL_API_CONFIG } from '@/services/api';
+import { deleteComment, fetchComments, postComment, TWIMBOL_API_CONFIG } from '@/services/api';
 import TimeAgo from '../time';
+import { BaseButton, RawButton, RectButton } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ReelComments = ({ 
-  visible, 
-  onClose, 
-  postId, 
+const ReelComments = ({
+  visible,
+  onClose,
+  postId,
   initialCommentsCount = 0,
-  onCommentsCountChange 
+  onCommentsCountChange
 }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -38,9 +40,17 @@ const ReelComments = ({
   const flatListRef = useRef(null);
   const textInputRef = useRef(null);
   const navigation = useNavigation();
+  const [userId, setuserId] = useState('')
 
-  // Debug logs
-  console.log('ReelComments render:', { visible, postId });
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem('user_id');
+      if (id){
+        setuserId(id);
+      }
+    };
+    fetchUserId();
+  }, []);
 
   // Navigate to user profile
   const handleUserPress = useCallback((userId) => {
@@ -62,17 +72,17 @@ const ReelComments = ({
     if (!profilePic) {
       return 'https://randomuser.me/api/portraits/men/32.jpg';
     }
-    
+
     // If it's already a full URL, return as is
     if (profilePic.startsWith('http://') || profilePic.startsWith('https://')) {
       return profilePic;
     }
-    
+
     // If it starts with /media, prepend base URL (you may need to adjust this based on your API config)
     if (profilePic.startsWith('/media/')) {
       return `${TWIMBOL_API_CONFIG.BASE_URL}${profilePic}`;
     }
-    
+
     // Otherwise, assume it's a relative path and prepend base URL
     return `${TWIMBOL_API_CONFIG.BASE_URL}/${profilePic}`;
   }, []);
@@ -86,21 +96,18 @@ const ReelComments = ({
 
     try {
       setLoading(pageNum === 1 && !isRefresh);
-      
-      console.log(`Fetching comments for post ${postId}, page ${pageNum}`);
-      
+
       const data = await fetchComments(postId, pageNum);
-      console.log('Comments fetched:', data);
-      
+
       // Update total comments count
       setTotalComments(data.count || 0);
-      
+
       if (isRefresh || pageNum === 1) {
         setComments(data.results || []);
       } else {
         setComments(prev => [...prev, ...(data.results || [])]);
       }
-      
+
       // Check if there are more pages
       setHasMore(!!data.next);
       setPage(pageNum);
@@ -127,19 +134,17 @@ const ReelComments = ({
 
     try {
       setPosting(true);
-      
-      console.log('Posting comment:', newComment.trim());
-      
+
+
       const newCommentData = await postComment(postId, newComment.trim());
-      console.log('Comment posted:', newCommentData);
-      
+
       // Add the new comment to the top of the list
       setComments(prev => [newCommentData, ...prev]);
       setNewComment('');
-      
+
       // Update total comments count
       setTotalComments(prev => prev + 1);
-      
+
       // Update comments count in parent component
       if (onCommentsCountChange) {
         onCommentsCountChange(totalComments + 1);
@@ -151,7 +156,7 @@ const ReelComments = ({
         text2: 'Comment posted!',
         position: 'top',
       });
-      
+
       // Scroll to top to show the new comment
       setTimeout(() => {
         flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
@@ -200,7 +205,6 @@ const ReelComments = ({
   // Fetch comments when modal opens
   useEffect(() => {
     if (visible && postId) {
-      console.log('Modal opened, fetching comments for postId:', postId);
       fetchCommentsData(1);
     }
   }, [visible, postId, fetchCommentsData]);
@@ -214,47 +218,122 @@ const ReelComments = ({
     }
   }, [visible]);
 
-  // Render individual comment item
-  const renderComment = useCallback(({ item }) => {
-    const user = item.created_by?.user;
-    const fullName = getUserFullName(user);
-    const username = user?.username;
-    const profilePicUrl = getProfilePicUrl(user?.profile_pic);
-    const userId = user?.id;
 
-    return (
-      <View style={styles.commentItem}>
-        <TouchableOpacity 
-          onPress={() => handleUserPress(userId)}
-          style={styles.avatarContainer}
-        >
-          <Image
-            source={{ uri: profilePicUrl }}
-            style={styles.commentAvatar}
-          />
-        </TouchableOpacity>
-        <View style={styles.commentContent}>
-          <View style={styles.commentHeader}>
-            <TouchableOpacity 
-              onPress={() => handleUserPress(userId)}
-              style={styles.userInfoContainer}
-            >
-              <Text style={styles.commentFullName}>
-                {fullName}
-              </Text>
-              {username && (
-                <Text style={styles.commentUsername}>
-                  @{username}
-                </Text>
-              )}
-            </TouchableOpacity>
-            <Text style={styles.commentTime}><TimeAgo time_string={item.created_at} /></Text>
-          </View>
-          <Text style={styles.commentText}>{item.comment}</Text>
-        </View>
-      </View>
+
+  // DELETE comment handler
+  const handleDeleteComment = useCallback(async (commentId, post) => {
+    Alert.alert(
+      'Delete Comment',
+      'Are you sure you want to delete this comment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteComment(post, commentId);
+
+              // Remove from local state
+              setComments(prev => prev.filter(c => c.id !== commentId));
+
+              // Update count
+              setTotalComments(prev => prev - 1);
+              if (onCommentsCountChange) {
+                onCommentsCountChange(totalComments - 1);
+              }
+
+              Toast.show({
+                type: 'success',
+                text1: 'Deleted',
+                text2: 'Comment removed successfully.',
+                position: 'top',
+              });
+            } catch (error) {
+              console.error('Error deleting comment:', error);
+              Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to delete comment.',
+                position: 'top',
+              });
+            }
+          }
+        }
+      ]
     );
-  }, [getUserFullName, getProfilePicUrl, handleUserPress]);
+  }, [onCommentsCountChange, totalComments]);
+
+
+  
+
+
+
+  
+  // Render individual comment item
+  // Replace the renderComment function with this updated version:
+
+const renderComment = useCallback(({ item }) => {
+  const comment_user = item.created_by?.user;
+  const fullName = getUserFullName(comment_user);
+  const username = comment_user?.username;
+  const profilePicUrl = getProfilePicUrl(comment_user?.profile_pic);
+  const commentUserId = comment_user?.id;
+  const comment_id = item.id;
+  const post = item.post;
+
+  // Debug logs - remove these after fixing
+  console.log('Current userId:', userId);
+  console.log('Comment userId:', commentUserId);
+  console.log('Are they equal?', commentUserId?.toString() === userId?.toString());
+
+  // More robust comparison
+  const canDelete = userId && commentUserId && 
+    (parseInt(userId) === parseInt(commentUserId) || userId.toString() === commentUserId.toString());
+
+  return (
+    <View style={styles.commentItem}>
+      <TouchableOpacity
+        onPress={() => handleUserPress(commentUserId)}
+        style={styles.avatarContainer}
+      >
+        <Image
+          source={{ uri: profilePicUrl }}
+          style={styles.commentAvatar}
+        />
+      </TouchableOpacity>
+      <View style={styles.commentContent}>
+        <View style={styles.commentHeader}>
+          <TouchableOpacity
+            onPress={() => handleUserPress(commentUserId)}
+            style={styles.userInfoContainer}
+          >
+            <Text style={styles.commentFullName}>
+              {fullName}
+            </Text>
+            {username && (
+              <Text style={styles.commentUsername}>
+                @{username}
+              </Text>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.commentTime}><TimeAgo time_string={item.created_at} /></Text>
+        </View>
+        <Text style={styles.commentText}>{item.comment}</Text>
+
+        {/* Updated delete button logic */}
+        {canDelete && (
+          <TouchableOpacity
+            onPress={() => handleDeleteComment(item.id, item.post)}
+            style={styles.deleteButton}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+}, [getUserFullName, getProfilePicUrl, handleUserPress, userId, handleDeleteComment]);
 
   // Render loading footer
   const renderFooter = useCallback(() => {
@@ -274,7 +353,7 @@ const ReelComments = ({
         <Text style={styles.loadingText}>Loading comments...</Text>
       </View>
     );
-    
+
     return (
       <View style={styles.emptyState}>
         <Ionicons name="chatbubbles-outline" size={48} color="#666" />
@@ -520,6 +599,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     marginTop: 4,
+  },
+  deleteButton: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingVertical: 6,
+    // paddingHorizontal: 2,
+    marginTop: 4,
+  },
+  deleteButtonText: {
+    color: '#ff4d4d',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

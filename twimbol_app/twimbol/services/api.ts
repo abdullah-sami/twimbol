@@ -442,6 +442,23 @@ export const postComment = async (post_id: string, comment: string) => {
 };
 
 
+export const deleteComment = async (post_id: number, comment_id: number) => {
+  console.log(post_id, comment_id);
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts/${post_id}/comments/`;
+  const headers = await getHeaders();
+
+  const response = await fetch(endpoint, {
+    method: "DELETE",
+    headers,
+    body: JSON.stringify({ comment_id: comment_id }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete comment: ${response.statusText}`);
+  }
+
+};
+
 
 
 

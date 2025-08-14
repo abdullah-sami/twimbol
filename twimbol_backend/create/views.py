@@ -26,6 +26,8 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import *
 from .serializers import *
+
+import cloudinary
 import cloudinary.uploader
 
 @login_required

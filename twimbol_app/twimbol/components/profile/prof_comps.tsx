@@ -37,7 +37,6 @@ const Profile = () => {
 
 
 
-// Add this after your existing useEffects
 useEffect(() => {
   const checkLoginAndFetch = async () => {
     const userId = await AsyncStorage.getItem('user_id');

@@ -222,16 +222,21 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   // FIXED: Handle comments modal with proper video pause/resume
   const handleCommentsPress = useCallback(() => {
-    console.log('Comments button pressed, current showComments:', showComments); // Debug log
 
-    // Pause video when opening comments
+    if (!video?.post) {
+      console.warn('No postId found for this reel');
+      return;
+    }
+
     if (videoRef.current && isPlaying) {
       videoRef.current.pauseAsync().catch(console.error);
       setIsPlaying(false);
     }
 
+    console.log('Comments button pressed, current showComments:', showComments); // Debug log
     setShowComments(true);
-  }, [isPlaying, showComments]);
+  }, [isPlaying, showComments, video.post]);
+
 
   const handleCommentsClose = useCallback(() => {
     console.log('Comments modal closing, current showComments:', showComments); // Debug log
@@ -472,6 +477,18 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
             <Ionicons name="chatbubble-outline" size={28} color="white" />
             <Text style={styles.actionText}>{engagementData.comments}</Text>
           </TouchableOpacity>
+          {/* FIXED: Comments Modal - Moved outside of gesture handlers and added proper props */}
+          {showComments && (
+            <ReelComments
+
+              visible={showComments}
+              onClose={handleCommentsClose}
+              postId={video?.post}
+              initialCommentsCount={commentsCount}
+              onCommentsCountChange={handleCommentsCountChange}
+
+            />
+          )}
 
           <TouchableOpacity
             style={styles.actionButton}
@@ -523,18 +540,6 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
           )}
         </View>
 
-        {/* FIXED: Comments Modal - Moved outside of gesture handlers and added proper props */}
-        {showComments && (
-          <ReelComments
-
-            visible={showComments}
-            onClose={handleCommentsClose}
-            postId={video.post}
-            initialCommentsCount={commentsCount}
-            onCommentsCountChange={handleCommentsCountChange}
-
-          />
-        )}
       </View>
     </GestureHandlerRootView>
   );

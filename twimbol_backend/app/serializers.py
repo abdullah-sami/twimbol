@@ -160,6 +160,7 @@ class PostCommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post_Comment
         fields = [
+            'id',
             'post',
             'comment',
             'created_by',
