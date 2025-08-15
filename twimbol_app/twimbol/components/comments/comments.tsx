@@ -22,12 +22,13 @@ import TimeAgo from '../time';
 import { BaseButton, RawButton, RectButton } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const ReelComments = ({
+const CommentsModal = ({
   visible,
   onClose,
   postId,
   initialCommentsCount = 0,
-  onCommentsCountChange
+  onCommentsCountChange,
+  userId
 }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -40,17 +41,7 @@ const ReelComments = ({
   const flatListRef = useRef(null);
   const textInputRef = useRef(null);
   const navigation = useNavigation();
-  const [userId, setuserId] = useState('')
 
-  useEffect(() => {
-    const fetchUserId = async () => {
-      const id = await AsyncStorage.getItem('user_id');
-      if (id){
-        setuserId(id);
-      }
-    };
-    fetchUserId();
-  }, []);
 
   // Navigate to user profile
   const handleUserPress = useCallback((userId) => {
@@ -265,75 +256,75 @@ const ReelComments = ({
   }, [onCommentsCountChange, totalComments]);
 
 
-  
 
 
 
-  
+
+
   // Render individual comment item
   // Replace the renderComment function with this updated version:
 
-const renderComment = useCallback(({ item }) => {
-  const comment_user = item.created_by?.user;
-  const fullName = getUserFullName(comment_user);
-  const username = comment_user?.username;
-  const profilePicUrl = getProfilePicUrl(comment_user?.profile_pic);
-  const commentUserId = comment_user?.id;
-  const comment_id = item.id;
-  const post = item.post;
+  const renderComment = useCallback(({ item }) => {
+    const comment_user = item.created_by?.user;
+    const fullName = getUserFullName(comment_user);
+    const username = comment_user?.username;
+    const profilePicUrl = getProfilePicUrl(comment_user?.profile_pic);
+    const commentUserId = comment_user?.id;
+    const comment_id = item.id;
+    const post = item.post;
 
-  // Debug logs - remove these after fixing
-  console.log('Current userId:', userId);
-  console.log('Comment userId:', commentUserId);
-  console.log('Are they equal?', commentUserId?.toString() === userId?.toString());
+    // Debug logs - remove these after fixing
+    console.log('Current userId:', userId);
+    console.log('Comment userId:', commentUserId);
+    console.log('Are they equal?', commentUserId?.toString() === userId?.toString());
 
-  // More robust comparison
-  const canDelete = userId && commentUserId && 
-    (parseInt(userId) === parseInt(commentUserId) || userId.toString() === commentUserId.toString());
+    // More robust comparison
+    const canDelete = userId && commentUserId &&
+      (parseInt(userId) === parseInt(commentUserId) || userId.toString() === commentUserId.toString());
 
-  return (
-    <View style={styles.commentItem}>
-      <TouchableOpacity
-        onPress={() => handleUserPress(commentUserId)}
-        style={styles.avatarContainer}
-      >
-        <Image
-          source={{ uri: profilePicUrl }}
-          style={styles.commentAvatar}
-        />
-      </TouchableOpacity>
-      <View style={styles.commentContent}>
-        <View style={styles.commentHeader}>
-          <TouchableOpacity
-            onPress={() => handleUserPress(commentUserId)}
-            style={styles.userInfoContainer}
-          >
-            <Text style={styles.commentFullName}>
-              {fullName}
-            </Text>
-            {username && (
-              <Text style={styles.commentUsername}>
-                @{username}
+    return (
+      <View style={styles.commentItem}>
+        <TouchableOpacity
+          onPress={() => handleUserPress(commentUserId)}
+          style={styles.avatarContainer}
+        >
+          <Image
+            source={{ uri: profilePicUrl }}
+            style={styles.commentAvatar}
+          />
+        </TouchableOpacity>
+        <View style={styles.commentContent}>
+          <View style={styles.commentHeader}>
+            <TouchableOpacity
+              onPress={() => handleUserPress(commentUserId)}
+              style={styles.userInfoContainer}
+            >
+              <Text style={styles.commentFullName}>
+                {fullName}
               </Text>
-            )}
-          </TouchableOpacity>
-          <Text style={styles.commentTime}><TimeAgo time_string={item.created_at} /></Text>
-        </View>
-        <Text style={styles.commentText}>{item.comment}</Text>
+              {username && (
+                <Text style={styles.commentUsername}>
+                  @{username}
+                </Text>
+              )}
+            </TouchableOpacity>
+            <Text style={styles.commentTime}><TimeAgo time_string={item.created_at} /></Text>
+          </View>
+          <Text style={styles.commentText}>{item.comment}</Text>
 
-        {/* Updated delete button logic */}
-        {canDelete && (
-          <TouchableOpacity
-            onPress={() => handleDeleteComment(item.id, item.post)}
-            style={styles.deleteButton}
-          >
-            <Text style={styles.deleteButtonText}>Delete</Text>
-          </TouchableOpacity>
-        )}
+          {/* Updated delete button logic */}
+          {canDelete && (
+            <TouchableOpacity
+              onPress={() => handleDeleteComment(item.id, item.post)}
+              style={styles.deleteButton}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
-    </View>
-  );
-}, [getUserFullName, getProfilePicUrl, handleUserPress, userId, handleDeleteComment]);
+    );
+  }, [getUserFullName, getProfilePicUrl, handleUserPress, userId, handleDeleteComment]);
 
   // Render loading footer
   const renderFooter = useCallback(() => {
@@ -421,9 +412,18 @@ const renderComment = useCallback(({ item }) => {
           <View style={styles.inputRow}>
             <TextInput
               ref={textInputRef}
-              style={styles.textInput}
-              placeholder="Add a comment..."
-              placeholderTextColor="#999"
+              style={[
+                styles.textInput,
+                (!userId || posting) && styles.disabledTextInput
+              ]}
+              placeholder={
+                !userId
+                  ? "Please log in to comment..."
+                  : posting
+                    ? "Posting comment..."
+                    : "Add a comment..."
+              }
+              placeholderTextColor={(!userId || posting) ? "#ccc" : "#999"}
               value={newComment}
               onChangeText={setNewComment}
               multiline
@@ -431,6 +431,8 @@ const renderComment = useCallback(({ item }) => {
               returnKeyType="send"
               onSubmitEditing={handlePostComment}
               blurOnSubmit={false}
+              editable={!(!userId || posting)}
+              selectTextOnFocus={!(!userId || posting)}
             />
             <TouchableOpacity
               style={[
@@ -562,6 +564,11 @@ const styles = StyleSheet.create({
     marginRight: 12,
     backgroundColor: '#fff',
   },
+  disabledTextInput: {
+    backgroundColor: '#f5f5f5',
+    opacity: 0.6,
+    color: '#999',
+  },
   postButton: {
     padding: 8,
     justifyContent: 'center',
@@ -614,4 +621,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ReelComments;
+export default CommentsModal;

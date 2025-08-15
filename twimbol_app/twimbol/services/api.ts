@@ -240,9 +240,22 @@ export const fetchPostResults = async () => {
   return data.results;
 };
 
+export const fetchPost = async ({postId}) =>{
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/api/posts/${postId}`;
+  const headers = await getHeaders();
 
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers,
+  });
 
+  if (!response.ok) {
+    throw new Error(`Failed to fetch post: ${response.statusText}`);
+  }
 
+  const data = await response.json();
+  return data;
+};
 
 // Reels API **************************************
 export const fetchReelResults = async () => {

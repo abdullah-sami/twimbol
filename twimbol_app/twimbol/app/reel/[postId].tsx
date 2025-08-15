@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet, Dimensions, FlatList, Text, Image, TouchableOpacity, Share } from 'react-native';
+import { View, StyleSheet, Dimensions, FlatList, Text, Image, TouchableOpacity, Share, Animated } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Video } from 'expo-av';
 import {
   GestureHandlerRootView,
   TapGestureHandler,
 } from 'react-native-gesture-handler';
-import Animated, {
+import ReanimatedAnimated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
@@ -18,7 +18,8 @@ import { deleteLikes, fetchFirstReel, fetchReelResults, postLikes, TWIMBOL_API_C
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 import { getRandomColor } from '@/components/color';
-import ReelComments from '@/components/comments/reelcomments';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import CommentsModal from '@/components/comments/comments';
 
 const { height } = Dimensions.get('window');
 
@@ -59,6 +60,18 @@ const ReelsPlayer = ({ route }) => {
   const [refreshing, setRefreshing] = useState(false);
   const videoRefs = useRef({});
   const flatListRef = useRef(null);
+
+  const [userId, setuserId] = useState('')
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem('user_id');
+      if (id) {
+        setuserId(id);
+      }
+    };
+    fetchUserId();
+  }, []);
 
   // Handle refresh
   const handleRefresh = useCallback(() => {
@@ -138,6 +151,7 @@ const ReelsPlayer = ({ route }) => {
                     setVideoRef={(ref) => {
                       videoRefs.current[item.post] = ref;
                     }}
+                    userId={userId}
                   />
                 )}
                 pagingEnabled
@@ -165,7 +179,7 @@ const ReelsPlayer = ({ route }) => {
   );
 };
 
-const VideoItem = ({ video, isActive, setVideoRef }) => {
+const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
   const videoRef = useRef(null);
   const doubleTapRef = useRef();
   const scale = useSharedValue(1);
@@ -180,7 +194,10 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(video?.comments || 0);
 
-
+  
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
 
   // Mock data for UI display
   const engagementData = {
@@ -218,11 +235,8 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
     }
   };
 
-
-
   // FIXED: Handle comments modal with proper video pause/resume
   const handleCommentsPress = useCallback(() => {
-
     if (!video?.post) {
       console.warn('No postId found for this reel');
       return;
@@ -233,13 +247,12 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
       setIsPlaying(false);
     }
 
-    console.log('Comments button pressed, current showComments:', showComments); // Debug log
+    console.log('Comments button pressed, current showComments:', showComments);
     setShowComments(true);
   }, [isPlaying, showComments, video.post]);
 
-
   const handleCommentsClose = useCallback(() => {
-    console.log('Comments modal closing, current showComments:', showComments); // Debug log
+    console.log('Comments modal closing, current showComments:', showComments);
     setShowComments(false);
 
     // Resume video when closing comments if it was active
@@ -247,12 +260,12 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
       setTimeout(() => {
         videoRef.current.playAsync().catch(console.error);
         setIsPlaying(true);
-      }, 300); // Small delay to ensure modal is fully closed
+      }, 300);
     }
   }, [isActive, showComments]);
 
   const handleCommentsCountChange = useCallback((newCount) => {
-    console.log('Comments count changed from', commentsCount, 'to:', newCount); // Debug log
+    console.log('Comments count changed from', commentsCount, 'to:', newCount);
     setCommentsCount(newCount);
   }, [commentsCount]);
 
@@ -282,22 +295,18 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   // Handle active state changes
   useEffect(() => {
-    // Don't auto-play if comments modal is open
     if (!showComments) {
       setIsPlaying(isActive);
     }
   }, [isActive, showComments]);
 
-
-
-  // Handle double tap animation
+  // Handle double tap animation - FIXED: Use ReanimatedAnimated for animated style
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-
-
   const onDoubleTap = useCallback(async () => {
+    if (userId){
     if (!liked) {
       setLiked(true);
       setLikes((prevLikes) => prevLikes + 1);
@@ -308,18 +317,15 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
         console.error('Error posting likes:', error);
         setLiked(false);
       }
-    }
-    else {
+    } else {
       return;
-    }
+    }}
 
     scale.value = withSpring(1.5, { damping: 10 });
     setTimeout(() => {
       scale.value = withTiming(1, { duration: 300 });
     }, 300);
-  }, [liked, setLikes, video.post, postLikes, scale]);
-
-
+  }, [liked, setLikes, video.post, scale]);
 
   const toggleLike = useCallback(async () => {
     if (!liked) {
@@ -332,8 +338,7 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
         console.error('Error posting likes:', error);
         setLiked(false);
       }
-    }
-    else {
+    } else {
       setLiked(false);
       setLikes((prevLikes) => prevLikes - 1);
 
@@ -344,18 +349,11 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
         setLiked(true);
       }
     }
-
-
-  }, [liked, setLikes, video.post, postLikes, deleteLikes]);
-
+  }, [liked, setLikes, video.post]);
 
   const toggleSaved = useCallback(() => setSaved(prev => !prev), []);
 
-
-
-
   const togglePlayPause = useCallback(() => {
-    // Don't allow play/pause when comments are open
     if (showComments) return;
 
     if (isPlaying) {
@@ -366,11 +364,9 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
       setIsPlaying(true);
     }
 
-    // Show play icon briefly
     setShowPlayIcon(true);
     setTimeout(() => setShowPlayIcon(false), 800);
   }, [isPlaying, showComments]);
-
 
   const formatTimeToMMSS = useCallback((milliseconds) => {
     if (!milliseconds || milliseconds < 0) return '0:00';
@@ -380,10 +376,8 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
     return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
   }, []);
 
-  // Handle video playback status updates
   const onPlaybackStatusUpdate = useCallback((status) => {
     if (status.isLoaded) {
-      // Always update both duration and position when status updates
       if (status.durationMillis) {
         setVideoDuration(status.durationMillis);
       }
@@ -395,6 +389,24 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
 
   const displayDuration = `${formatTimeToMMSS(currentPosition)} / ${formatTimeToMMSS(videoDuration)}`;
 
+  const showToastMessage = useCallback((message) => {
+    setToastMessage(message);
+    setShowToast(true);
+
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowToast(false));
+  }, [toastOpacity]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -402,7 +414,6 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
         <TapGestureHandler
           waitFor={doubleTapRef}
           onActivated={togglePlayPause}
-          // FIXED: Disable tap gestures when comments are open
           enabled={!showComments}
         >
           <TapGestureHandler
@@ -423,13 +434,12 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
                 onPlaybackStatusUpdate={onPlaybackStatusUpdate}
                 progressUpdateIntervalMillis={100}
               />
-              <Animated.View style={[styles.heartOverlay, animatedStyle]}>
+              <ReanimatedAnimated.View style={[styles.heartOverlay, animatedStyle]}>
                 {scale.value > 1 && (
                   <Ionicons name="heart" size={100} color="white" />
                 )}
-              </Animated.View>
+              </ReanimatedAnimated.View>
 
-              {/* Play/Pause indicator */}
               {showPlayIcon && (
                 <View style={styles.playIconContainer}>
                   <Ionicons
@@ -443,12 +453,10 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
           </TapGestureHandler>
         </TapGestureHandler>
 
-        {/* Duration indicator at top */}
         <View style={styles.durationContainer}>
           <Text style={styles.durationText}>{displayDuration}</Text>
         </View>
 
-        {/* Progress bar */}
         <View style={styles.progressBarContainer}>
           <View
             style={[
@@ -458,9 +466,17 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
           />
         </View>
 
-        {/* Right side action buttons */}
         <View style={styles.rightOverlay}>
-          <TouchableOpacity style={styles.actionButton} onPress={toggleLike}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              if (!userId) {
+                showToastMessage("Please log in to like posts!");
+                return;
+              }
+              toggleLike();
+            }}
+          >
             <Ionicons
               name={engagementData.liked ? "heart" : "heart-outline"}
               size={28}
@@ -477,16 +493,15 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
             <Ionicons name="chatbubble-outline" size={28} color="white" />
             <Text style={styles.actionText}>{engagementData.comments}</Text>
           </TouchableOpacity>
-          {/* FIXED: Comments Modal - Moved outside of gesture handlers and added proper props */}
-          {showComments && (
-            <ReelComments
 
+          {showComments && (
+            <CommentsModal
               visible={showComments}
               onClose={handleCommentsClose}
               postId={video?.post}
               initialCommentsCount={commentsCount}
               onCommentsCountChange={handleCommentsCountChange}
-
+              userId={userId}
             />
           )}
 
@@ -507,7 +522,6 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Bottom user info */}
         <View style={styles.bottomOverlay}>
           <View style={styles.userInfoContainer}>
             <View style={styles.profileContainer}>
@@ -523,7 +537,6 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
           </View>
           <Text style={styles.description}>{engagementData.description}</Text>
 
-          {/* Music player indicator */}
           {video.music_info && (
             <View style={styles.musicContainer}>
               <Ionicons name="musical-notes-outline" size={16} color="white" />
@@ -540,6 +553,11 @@ const VideoItem = ({ video, isActive, setVideoRef }) => {
           )}
         </View>
 
+        {showToast && (
+          <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+            <Text style={styles.toastText}>{toastMessage}</Text>
+          </Animated.View>
+        )}
       </View>
     </GestureHandlerRootView>
   );
@@ -710,6 +728,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  toast: {
+    position: 'absolute',
+    bottom: 100,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    zIndex: 1000,
+    alignSelf: 'center',
+  },
+  toastText: {
+    color: 'white',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 

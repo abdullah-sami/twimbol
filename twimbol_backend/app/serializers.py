@@ -15,6 +15,8 @@ class PostSerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
+    liked_by_user = serializers.SerializerMethodField()
+
     class Meta:
         model = Post
         fields = [
@@ -29,10 +31,8 @@ class PostSerializer(serializers.ModelSerializer):
             'user_profile',
             'username',
             'comments',
+            'liked_by_user',
         ]
-
-
-
 
    
     def get_like_count(self, obj):
@@ -52,14 +52,11 @@ class PostSerializer(serializers.ModelSerializer):
     def get_username(self, obj):
         return UserSerializer(obj.created_by).data
 
-
-
-
-
-    
-    def get_username(self, obj):
-        return UserSerializer(obj.created_by).data
-
+    def get_liked_by_user(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Post_Stat_like.objects.filter(post_id=obj.id, created_by=user).exists()
+        return False
 
 
 

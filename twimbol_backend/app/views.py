@@ -59,6 +59,8 @@ class PostViewSet(ModelViewSet):
 
 
 
+
+
 class SearchViewSet(ModelViewSet):
     serializer_class = PostSearchSerializer  # Specify the serializer class
 
