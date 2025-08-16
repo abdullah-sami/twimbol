@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.models import User, Group
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -105,3 +107,44 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.groups.add(visitor_group)
 
         return user
+    
+
+
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        return value
+    
+
+
+
+
+
+
+
+
+
+class RequestPasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("No account with this email.")
+        return value
+    
+
+class ResetPasswordConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField()
+    new_password = serializers.CharField()
+
+    def validate_new_password(self, value):
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        return value

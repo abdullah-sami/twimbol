@@ -10,10 +10,12 @@ export type RootStackParamList = {
     profile_user: { userId: string };
     profile_edit: undefined;
     notifications: undefined;
+    notification_preferences: undefined;
     createcontents: undefined;
     events: { eventid: string };
     settings: undefined;
     faq: undefined;
     termsnconditions: undefined;
     parentalcontrols: undefined;
+    accountsettings: undefined;
   };

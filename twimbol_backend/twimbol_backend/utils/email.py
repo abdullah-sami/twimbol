@@ -79,3 +79,82 @@ def send_login_email(user_name, login_status):
         print(f"Email sending failed: {e}")
         return False
     
+
+
+
+
+
+
+
+
+def send_pwd_cng_email(user_name, pwd_cng_stt):
+    subject = "Password changed"
+
+    user_email = User.objects.get(username=user_name).email
+
+    context = {
+        'user_name': user_name,
+        'user_email': user_email,
+        'company_name': 'TWIMBOL',
+        'support_email': 'web.rafidabdullahsami@gmail.com',
+        'website_url': 'http://rafidabdullahsamiweb.pythonanywhere.com',
+        'time': timezone.now(),
+        'pwd': pwd_cng_stt
+    }
+
+    html_message = render_to_string('emails/pwd_cng_email.html', context)
+    plain_message = strip_tags(html_message)
+
+
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user_email],
+            html_message=html_message,
+            fail_silently=False,
+            
+        )
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {e}")
+        return False
+    
+
+
+
+
+
+
+
+
+def pwd_reset_email(email, resetcode):
+    subject = "Password Reset Code"
+
+
+    context = {
+        'user_email': email,
+        'company_name': 'TWIMBOL',
+        'support_email': 'web.rafidabdullahsami@gmail.com',
+        'website_url': 'http://rafidabdullahsamiweb.pythonanywhere.com',
+        'time': timezone.now(),
+    }
+
+    plain_message = strip_tags(f"Dear {email}, your password reset code is: {resetcode}. This code is valid for 10 minutes. If you did not request code, you can ignore this email.")
+
+
+    try:
+        send_mail(
+            subject=subject,
+            message=plain_message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[email],
+            fail_silently=False,
+            
+        )
+        return True
+    except Exception as e:
+        print(f"Email sending failed: {e}")
+        return False
+    

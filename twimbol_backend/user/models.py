@@ -19,7 +19,7 @@ class UserProfile(models.Model):
     user_social_twt = models.CharField(max_length=50, null=True, blank=True)
     user_social_yt = models.CharField(max_length=50, null=True, blank=True)
 
-    user_status = models.CharField(max_length=50, default='1')
+    user_status = models.BooleanField(default=True)
     user_banned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -42,11 +42,6 @@ class CreatorApplication(models.Model):
 
 
 
-
-
-
-
-
 class Follower(models.Model):
     follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
     following = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
@@ -62,4 +57,11 @@ class Follower(models.Model):
 
 
 
-    
+
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)  # 6-digit reset code
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.code}"

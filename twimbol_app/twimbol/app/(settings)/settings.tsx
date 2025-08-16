@@ -71,7 +71,7 @@ const Settings = ({ navigation }: any) => {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => handleMenuItemPress('Account')}
+              onPress={() => handleMenuItemPress('accountsettings')}
             >
               <Text style={styles.menuItemText}>Account</Text>
               {/* <ChevronRight color="#fff" size={20} /> */}
@@ -81,7 +81,7 @@ const Settings = ({ navigation }: any) => {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => handleMenuItemPress('Notifications')}
+              onPress={() => handleMenuItemPress('notification_preferences')}
             >
               <Text style={styles.menuItemText}>Notifications</Text>
               {/* <ChevronRight color="#fff" size={20} /> */}
@@ -89,13 +89,13 @@ const Settings = ({ navigation }: any) => {
 
             <View style={styles.separator} />
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.menuItem}
               onPress={() => handleMenuItemPress('ActivityStatus')}
             >
               <Text style={styles.menuItemText}>Activity Status</Text>
-              {/* <ChevronRight color="#fff" size={20} /> */}
-            </TouchableOpacity>
+              {/* <ChevronRight color="#fff" size={20} /> 
+            </TouchableOpacity> */}
 
             <View style={styles.separator} />
 

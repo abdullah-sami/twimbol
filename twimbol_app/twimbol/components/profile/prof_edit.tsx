@@ -439,7 +439,7 @@ const ProfileEdit = () => {
             </TouchableOpacity>
           </View> */}
 
-          <TouchableOpacity style={styles.navigationItem}>
+          {/* <TouchableOpacity style={styles.navigationItem}>
             <Text style={styles.navigationItemText}>Change Password</Text>
             <ChevronRight size={16} color="#777" />
           </TouchableOpacity>
@@ -452,7 +452,7 @@ const ProfileEdit = () => {
           <TouchableOpacity style={styles.navigationItem}>
             <Text style={[styles.navigationItemText, styles.dangerText]}>Delete or Deactivate</Text>
             <ChevronRight size={16} color="#777" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
         </View>
       </ScrollView>

@@ -14,11 +14,12 @@ import TimeAgo from '@/components/time';
 import { useRoute, useNavigation } from '@react-navigation/native';
 // import { useNavigation } from 'expo-router';
 import { FlatList, GestureHandlerRootView } from 'react-native-gesture-handler';
-import NotificationItem from '@/components/notification';
+import NotificationItem from '@/components/notifications/notification';
+// import NotificationPreferences from '@/components/notifications/preferences';
 
 
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '@/types/navigation'; // <- Import types
+import { RootStackParamList } from '@/types/navigation'; 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -32,6 +33,12 @@ const Notifications = () => {
     () => fetchNotifications(),)
 
 
+  
+  const handleNotificationSettings = () =>{
+    
+  }
+
+
     
 
   return (
@@ -39,7 +46,7 @@ const Notifications = () => {
         <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right", "bottom"]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Notifications</Text>
-          <TouchableOpacity style={styles.settingsButton}>
+          <TouchableOpacity style={styles.settingsButton} onPress={()=>navigation.navigate('notification_preferences' as never)}>
             <Settings size={22} color="#000" />
           </TouchableOpacity>
         </View>

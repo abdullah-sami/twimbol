@@ -10,6 +10,7 @@ import SearchScreen from './search';
 import AuthScreen from './auth/[authpage]';
 import OnboardingScreen from './onboarding';
 import NotificationsScreen from './notifications';
+import NotificationPreferences from '@/components/notifications/preferences';
 import ProfileScreen from './profile/index';
 import ProfileUserScreen from './profile/[userId]';
 import ProfileEdit from './profile/profile_edit';
@@ -19,6 +20,7 @@ import SettingsScreen from './(settings)/settings';
 import TermsAndConditions from './(settings)/termsnconsditions';
 import FAQScreen from './(settings)/faq';
 import ParentalControlsMain from './(settings)/parentalcontrols';
+import AccountSettings from '@/components/settings/accountsettings';
   
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,6 +45,8 @@ export const linking = {
       termsnconditions: 'termsnconditions',
       faq: 'faq',
       parentalcontrols: 'parentalcontrols',
+      notificationPreferences: 'notification-preferences',
+      accountsettings: 'accountsettings'
     },
   },
 };
@@ -66,8 +70,11 @@ export default function RootLayout() {
       <Stack.Screen name="settings" component={SettingsScreen} />
       <Stack.Screen name="parentalcontrols" component={ParentalControlsMain} />      
       <Stack.Screen name="notifications" component={NotificationsScreen} />
+      <Stack.Screen name="notification_preferences" component={NotificationPreferences} />
       <Stack.Screen name="termsnconditions" component={TermsAndConditions} />
       <Stack.Screen name="faq" component={FAQScreen} />
+      <Stack.Screen name="accountsettings" component={AccountSettings} />
+
     </Stack.Navigator>
   );
 }
