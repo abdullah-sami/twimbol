@@ -563,7 +563,7 @@ class ApplyForCreatorViewSet(ModelViewSet):
 from rest_framework.viewsets import ModelViewSet
 from .models import *
 from .serializers import *
-from notifications.models import notifications
+from notifications.models import Notification
 
 
 
@@ -602,7 +602,7 @@ class ReelCloudinaryViewSet(ModelViewSet):
                 post_description=reel_description,
                 created_by=request.user
             )
-            notifications.objects.create(
+            Notification.objects.create(
                 user=request.user,
                 message=f"Reel uploaded!",
                 page="reel",  # Example page

@@ -26,7 +26,6 @@ const { height } = Dimensions.get('window');
 const ReelsPlayer = ({ route }) => {
   const { postId } = route.params || {};
 
-  // Use a single fetch hook with dependency on postId
   const {
     data: reelsData,
     loading,

@@ -791,6 +791,12 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     marginRight: 12,
+    // borderColor: '#FF6E42',
+    // borderStyle: 'solid',
+    // borderWidth: 2,
+    elevation: 3,
+
+
   },
   placeholderAvatar: {
     backgroundColor: '#FF6B47',

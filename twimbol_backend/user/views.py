@@ -356,7 +356,7 @@ def register_view(request):
 
 
 
-from notifications.models import notifications
+from notifications.models import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -369,7 +369,7 @@ class RegisterViewSet(viewsets.ViewSet):
             data = User.objects.get(username=serializer.validated_data['username'])
 
             # Create a notification entry
-            notifications.objects.create(
+            Notification.objects.create(
                 user=User.objects.get(username=data.username),
                 message=f"Welcome {user}! Your account has been successfully created.",
                 page="profile",  
