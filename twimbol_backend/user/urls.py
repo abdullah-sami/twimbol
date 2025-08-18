@@ -13,13 +13,14 @@ router.register('update', views.UpdateProfileViewSet, basename='update-profile')
 router.register('deactivate', views.DeactivateProfileViewSet, basename='deactivate')
 router.register('creator-application', ApplyForCreatorViewSet, basename='apply-for-creator')
 
-router.register('profile', views.ProfileViewSet, basename='posts')
+# router.register('profile', views.ProfileViewSet, basename='posts')
 
 
 urlpatterns = [
     path('', views.user_manager, name='user_manager'),
     path('profile/<str:profile_user_name>', views.profile, name='profile'),
-    path('profile/<str:profile_user_name>/follow', views.follow, name='follow'),
+    path('profile/follow/', views.FollowViewSet.as_view({'post': 'create'}), name='follow'),
+
 
 
     path('login/', CustomTokenObtainPairView.as_view(), name='login'),

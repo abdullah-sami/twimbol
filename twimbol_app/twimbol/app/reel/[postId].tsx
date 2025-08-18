@@ -14,7 +14,7 @@ import ReanimatedAnimated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import useFetch from '@/services/useFetch';
-import { deleteLikes, fetchFirstReel, fetchReelResults, postLikes, TWIMBOL_API_CONFIG } from '@/services/api';
+import { deleteLikes, fetchFirstReel, fetchReelResults, followUser, postLikes, TWIMBOL_API_CONFIG } from '@/services/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } from '@/components/safety/parentalcontrolsmanager';
 import { getRandomColor } from '@/components/color';
@@ -27,12 +27,11 @@ const ReelsPlayer = ({ route }) => {
   const { postId } = route.params || {};
 
   const {
-    data: reelsData,
+    data: fetchedReelsData,
     loading,
     error,
-    refetch
+    refetch: refetchData
   } = useFetch(() => {
-    // First fetch the target reel
     if (!postId) return fetchReelResults();
 
     return Promise.all([
@@ -55,12 +54,21 @@ const ReelsPlayer = ({ route }) => {
     });
   }, [postId]);
 
+  // State to maintain reels data
+  const [reelsData, setReelsData] = useState([]);
   const [activeVideoIndex, setActiveVideoIndex] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const videoRefs = useRef({});
   const flatListRef = useRef(null);
 
   const [userId, setuserId] = useState('')
+
+  // Update local state when fetch data changes
+  useEffect(() => {
+    if (fetchedReelsData) {
+      setReelsData(fetchedReelsData);
+    }
+  }, [fetchedReelsData]);
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -75,8 +83,8 @@ const ReelsPlayer = ({ route }) => {
   // Handle refresh
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    refetch().finally(() => setRefreshing(false));
-  }, [refetch]);
+    refetchData().finally(() => setRefreshing(false));
+  }, [refetchData]);
 
   // Handle viewable items changed
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
@@ -87,6 +95,13 @@ const ReelsPlayer = ({ route }) => {
       }
     }
   }).current;
+ 
+  // Update the reelsData state for follow action - MOVED OUTSIDE useEffect
+  const updateReelFollowStatus = useCallback(()=>{
+    refetchData();
+    setReelsData(fetchedReelsData);
+
+  }, [refetchData, setReelsData, fetchedReelsData]);
 
   // Play/pause videos when active index changes
   useEffect(() => {
@@ -113,7 +128,7 @@ const ReelsPlayer = ({ route }) => {
     }
   }, [activeVideoIndex, reelsData]);
 
-  if (loading && !reelsData) {
+  if (loading && !reelsData.length) {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Loading reels...</Text>
@@ -125,7 +140,7 @@ const ReelsPlayer = ({ route }) => {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Failed to load reels</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+        <TouchableOpacity style={styles.retryButton} onPress={refetchData}>
           <Text style={styles.retryText}>{error.message}</Text>
         </TouchableOpacity>
       </View>
@@ -140,7 +155,7 @@ const ReelsPlayer = ({ route }) => {
             <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top", "left", "right", "bottom"]}>
               <FlatList
                 ref={flatListRef}
-                data={reelsData || []}
+                data={reelsData}
                 extraData={reelsData}
                 keyExtractor={(item) => item.post}
                 renderItem={({ item }) => (
@@ -151,6 +166,7 @@ const ReelsPlayer = ({ route }) => {
                       videoRefs.current[item.post] = ref;
                     }}
                     userId={userId}
+                    updateFollowStatus={updateReelFollowStatus}
                   />
                 )}
                 pagingEnabled
@@ -178,7 +194,7 @@ const ReelsPlayer = ({ route }) => {
   );
 };
 
-const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
+const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus }) => {
   const videoRef = useRef(null);
   const doubleTapRef = useRef();
   const scale = useSharedValue(1);
@@ -190,10 +206,11 @@ const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
   const [videoDuration, setVideoDuration] = useState(0);
   const [currentPosition, setCurrentPosition] = useState(0);
 
+  const [followsUser, setFollowsUser] = useState(video.user_profile.followed_by_user);
+
   const [showComments, setShowComments] = useState(false);
   const [commentsCount, setCommentsCount] = useState(video?.comments || 0);
 
-  
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -305,20 +322,21 @@ const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
   }));
 
   const onDoubleTap = useCallback(async () => {
-    if (userId){
-    if (!liked) {
-      setLiked(true);
-      setLikes((prevLikes) => prevLikes + 1);
+    if (userId) {
+      if (!liked) {
+        setLiked(true);
+        setLikes((prevLikes) => prevLikes + 1);
 
-      try {
-        const res = await postLikes(video.post);
-      } catch (error) {
-        console.error('Error posting likes:', error);
-        setLiked(false);
+        try {
+          const res = await postLikes(video.post);
+        } catch (error) {
+          console.error('Error posting likes:', error);
+          setLiked(false);
+        }
+      } else {
+        return;
       }
-    } else {
-      return;
-    }}
+    }
 
     scale.value = withSpring(1.5, { damping: 10 });
     setTimeout(() => {
@@ -367,27 +385,6 @@ const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
     setTimeout(() => setShowPlayIcon(false), 800);
   }, [isPlaying, showComments]);
 
-  const formatTimeToMMSS = useCallback((milliseconds) => {
-    if (!milliseconds || milliseconds < 0) return '0:00';
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
-  }, []);
-
-  const onPlaybackStatusUpdate = useCallback((status) => {
-    if (status.isLoaded) {
-      if (status.durationMillis) {
-        setVideoDuration(status.durationMillis);
-      }
-      if (status.positionMillis !== undefined) {
-        setCurrentPosition(status.positionMillis);
-      }
-    }
-  }, []);
-
-  const displayDuration = `${formatTimeToMMSS(currentPosition)} / ${formatTimeToMMSS(videoDuration)}`;
-
   const showToastMessage = useCallback((message) => {
     setToastMessage(message);
     setShowToast(true);
@@ -406,6 +403,55 @@ const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
       }),
     ]).start(() => setShowToast(false));
   }, [toastOpacity]);
+
+  const handleFollowPress = useCallback(async (user_id) => {
+    if (!user_id) return;
+
+    const previousFollowState = followsUser;
+    setFollowsUser(prev => !prev);
+
+    try {
+      const response = await followUser(user_id);
+      console.log('Follow response:', user_id, response);
+
+      if (response.ok) {
+        // Update all reels from this user
+        updateFollowStatus?.(user_id, !previousFollowState);
+        const message = previousFollowState ? 'Unfollowed user' : 'Following user';
+        showToastMessage(message);
+      } else {
+        setFollowsUser(previousFollowState);
+        console.error('Error following user:', response.statusText);
+        showToastMessage('Failed to update follow status');
+      }
+    } catch (error) {
+      setFollowsUser(previousFollowState);
+      console.error('Error following user:', error);
+      showToastMessage('Network error. Please try again.');
+    }
+  }, [followsUser, showToastMessage, updateFollowStatus]);
+
+  const formatTimeToMMSS = useCallback((milliseconds) => {
+    if (!milliseconds || milliseconds < 0) return '0:00';
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+  }, []);
+
+  const onPlaybackStatusUpdate = useCallback((status) => {
+    if (status.isLoaded) {
+      if (status.durationMillis) {
+        setVideoDuration(status.durationMillis);
+      }
+      if (status.positionMillis !== undefined) {
+        setCurrentPosition(status.positionMillis);
+      }
+    }
+  }, []);
+  
+
+  const displayDuration = `${formatTimeToMMSS(currentPosition)} / ${formatTimeToMMSS(videoDuration)}`;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -530,8 +576,8 @@ const VideoItem = ({ video, isActive, setVideoRef, userId }) => {
               />
               <Text style={styles.username}>{engagementData.username}</Text>
             </View>
-            <TouchableOpacity style={styles.followButton}>
-              <Ionicons name="person-add-outline" size={20} color="white" />
+            <TouchableOpacity style={[styles.followButton, userId ? {} : { display: 'none' }]} onPress={() => handleFollowPress(video?.created_by)}>
+              <Ionicons name={followsUser ? "checkmark" : "person-add-outline"} size={20} color="white" />
             </TouchableOpacity>
           </View>
           <Text style={styles.description}>{engagementData.description}</Text>

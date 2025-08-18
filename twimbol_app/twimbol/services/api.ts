@@ -368,6 +368,21 @@ export const fetchUserProfile = async () => {
 
 
 
+export const followUser = async (user_id: number) => {
+  const endpoint = `${TWIMBOL_API_CONFIG.BASE_URL}/user/profile/follow/`;
+  const headers = await getHeaders();
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ user_id: user_id }),
+  });
+
+  return response;
+};
+
+
+
 
 
 

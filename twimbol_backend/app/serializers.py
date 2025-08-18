@@ -46,7 +46,8 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_user_profile(self, obj):
         if hasattr(obj.created_by, 'profile'):
-            return UserProfileSerializer(obj.created_by.profile).data
+            context = {'request': self.context.get('request')} if self.context else {}
+            return UserProfileSerializer(obj.created_by.profile, context=context).data
         return None
    
     def get_username(self, obj):

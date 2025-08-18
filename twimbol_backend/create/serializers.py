@@ -42,7 +42,10 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
         ]
     
     def get_user_profile(self, obj):
-        return UserProfileSerializer(obj.post.created_by.profile).data
+        if hasattr(obj.created_by, 'profile'):
+            context = {'request': self.context.get('request')} if self.context else {}
+            return UserProfileSerializer(obj.created_by.profile, context=context).data
+        return None
     
     def get_like_count(self, obj):
         return Post_Stat_like.objects.filter(post=obj.post).count()

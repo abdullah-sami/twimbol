@@ -140,7 +140,6 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Allow users to view only their own profile
         user = self.request.user
         return UserProfile.objects.filter(user=user)
 
@@ -164,10 +163,6 @@ def follow(request, profile_user_name):
         return redirect('profile', profile_user_name=profile_user_name)
 
 
-
-
-
-
     try:
         follower = Follower.objects.get(follower=user, following=profile_user)
         follower.delete()
@@ -180,6 +175,32 @@ def follow(request, profile_user_name):
     return redirect('profile', profile_user_name=profile_user_name)
 
 
+
+
+
+class FollowViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request):
+        user = request.user
+        user_id = request.data.get("user_id")
+        try:
+            profile_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user == profile_user:
+            return Response({"detail": "You cannot follow yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            follower = Follower.objects.get(follower=user, following=profile_user)
+            follower.delete()
+            action = "unfollowed"
+        except Follower.DoesNotExist:
+            Follower.objects.create(follower=user, following=profile_user)
+            action = "followed"
+
+        return Response({"detail": f"Successfully {action} {profile_user.username}."}, status=status.HTTP_200_OK)
 
 
 

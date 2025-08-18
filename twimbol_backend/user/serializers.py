@@ -8,10 +8,11 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 class UserProfileSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
+    followed_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'user']
+        fields = ['id', 'user', 'followed_by_user']
 
     def get_user(self, obj):
         profile_pic_url = obj.profile_pic.url if obj.profile_pic else None
@@ -32,6 +33,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'user_banned': obj.user_banned,
             'user_group': [group.name for group in obj.user.groups.all()]
         }
+    def get_followed_by_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Follower.objects.filter(following=obj.user, follower=request.user).exists()
+        return False
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -54,14 +60,14 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
-        
+
         # Add custom user data to the response
         data['user'] = {
             'id': self.user.id,
             'username': self.user.username,
             'email': self.user.email,
         }
-        
+
         return data
 
 
@@ -75,7 +81,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'email', 'password', 'birthday']
 
-    
+
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Username already exists.")
@@ -88,7 +94,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         birthday = validated_data.pop('birthday', None)
-        
+
         # Create the user
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -97,8 +103,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
 
         UserProfile.objects.create(
-            user=user, 
-            id=user.id, 
+            user=user,
+            id=user.id,
             birthday=birthday or '2000-01-01'
         )
 
@@ -107,7 +113,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.groups.add(visitor_group)
 
         return user
-    
+
 
 
 
@@ -120,7 +126,7 @@ class ChangePasswordSerializer(serializers.Serializer):
         if len(value) < 8:
             raise serializers.ValidationError("Password must be at least 8 characters long.")
         return value
-    
+
 
 
 
@@ -137,7 +143,7 @@ class RequestPasswordResetSerializer(serializers.Serializer):
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("No account with this email.")
         return value
-    
+
 
 class ResetPasswordConfirmSerializer(serializers.Serializer):
     email = serializers.EmailField()
