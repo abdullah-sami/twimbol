@@ -5,6 +5,6 @@ youtube_credentials.json
 node_modules
 production
 .idea
-.expo/
+twimbol/.expo/
 
 twimbol/assets/
