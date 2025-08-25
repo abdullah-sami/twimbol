@@ -9,10 +9,11 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 class UserProfileSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
     followed_by_user = serializers.SerializerMethodField()
+    blocked_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'user', 'followed_by_user']
+        fields = ['id', 'user', 'followed_by_user', 'blocked_by_user']
 
     def get_user(self, obj):
         profile_pic_url = obj.profile_pic.url if obj.profile_pic else None
@@ -38,6 +39,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return Follower.objects.filter(following=obj.user, follower=request.user).exists()
         return False
+    def get_blocked_by_user(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return Block.objects.filter(blocked=obj.user, blocker=request.user).exists()
+        return False
+
+
+
+
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -1,9 +1,11 @@
 ui:
-    ☐ 1. reel comments  ***
-    ☐ 2. post like, comments, share, menu ***
-    ☐ 3. Complete settings menu ***
-    ☐ 4. Complete all action buttons ***
+    ✔ 1. reel comments  *** @done (8/19/2025, 1:27:24 PM)
+    ✔ 2. post like, comments, share, menu *** @done (8/19/2025, 1:27:27 PM)
+    ✔ 3. Complete settings menu *** @done (8/19/2025, 1:27:29 PM)
+    ☐ 4. Add context menu in posts ***
     ☐ 5. Connect events to backend ****
+    ☐ 6. Complete all action buttons *****
+    ☐ 7. Fix search page
 
 
 safety:
@@ -11,15 +13,15 @@ safety:
     ✔ 2. Add parental controls for content visibility. @done (8/9/2025, 11:25:36 PM)
     ☐ 3. Add security in interaction with other users for children.
     ☐ 4. Implement a reporting system for inappropriate content or behavior.
-    ☐ 5. Implement time limits and restrictins in user interface.
+    ✔ 5. Implement time limits and restrictins in user interface. @done (8/25/2025, 9:14:04 PM)
     ✔ 6. Add a feature to filter content based on user preferences (e.g., age-appropriate content). @done (8/9/2025, 11:26:52 PM)
     ☐ 7. Add watch history tracking for parental review.
     ☐ 8. Connect watch history with backend.
 
 settings:
     1. Add a settings to manage account preferences:
-        ☐ 1. Add options to change password and email.
-        ☐ 3. Add a feature to delete account.
+        ✔ 1. Add options to change password and email. @done (8/19/2025, 1:27:40 PM)
+        ✔ 3. Add a feature to delete account. @done (8/19/2025, 1:27:43 PM)
         ☐ 4. Implement a dark mode toggle.
         ✔ 5. Add email feature @done (8/11/2025, 11:24:51 PM)
 
@@ -27,7 +29,7 @@ settings:
     2. notification:
         ☐ 1. Add function to mark notifications as read. ***
         ☐ 2. Add function to delete notifications.
-        ☐ 3. Add notification settings to control what types of notifications to receive.
+        ✔ 3. Add notification settings to control what types of notifications to receive. @done (8/19/2025, 1:27:53 PM)
         ☐ 4. Add push notifications for important events (e.g., new messages, mentions).
 
     3. Blocked Users:
@@ -41,3 +43,10 @@ settings:
         ☐ 1. Add options to control who can see your profile and posts.
         ☐ 2. Add a feature to make profile private or public.
         ☐ 3. Implement a feature to control who can send friend requests.
+
+
+Features:
+    ☐ 1. Add other's profile view feature
+    ✔ 2. Add feature to follow/unfollow users @done (8/25/2025, 9:15:56 PM)
+    ☐ 3. Add feature to view followers and following lists
+    ☐ 4. Add feature to view user posts

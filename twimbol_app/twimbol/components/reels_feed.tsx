@@ -36,6 +36,8 @@ const THUMBNAIL_HEIGHT_2_REELS = THUMBNAIL_WIDTH_2_REELS * (16 / 9);
 
 
 
+// In reels_feed.tsx - Fix the ReelThumbnail component
+
 export const ReelThumbnail = ({
   item = null,
   onPress = null,
@@ -58,61 +60,50 @@ export const ReelThumbnail = ({
       ? `${TWIMBOL_API_CONFIG.BASE_URL}${reel_by.user.profile_pic}`
       : images.defaultProfilePic
 
+  // Fix: Use the correct postId based on available data
+  const handlePress = () => {
+    const postIdToUse = item?.post || post_id;
+    if (postIdToUse) {
+      navigation.navigate('reel' as never, { postId: postIdToUse });
+    } else if (onPress) {
+      onPress(postIdToUse);
+    }
+  };
 
   return (
-
-
     <TouchableOpacity
       style={(reel_per_column == 3) ? (styles.row_3_container) : (styles.row_2_container)}
-      onPress={() => navigation.navigate('reel', { postId: item.post })}
+      onPress={handlePress} // Use the fixed handler
       activeOpacity={1}
-
     >
-      {/* Thumbnail Image */}
+      {/* Rest of your component remains the same */}
       <View style={(reel_per_column == 3) ? (styles.row_3_thumbnailContainer) : (styles.row_2_thumbnailContainer)}>
         <ImageBackground
           source={item ? { uri: `${item.video_url.replace('.mp4', '.png')}` } : { uri: reel_thumbnail }}
           style={styles.thumbnail}
           resizeMode="cover"
         >
-
-
           {/* Star indicator */}
           <View style={styles.starIndicator}>
             <Image
-              source={require('../assets/icons/star.png')} tintColor={"#fff"}
-              style={{ width: 15, height: 15 }}></Image>
+              source={require('../assets/icons/star.png')} 
+              tintColor={"#fff"}
+              style={{ width: 15, height: 15 }}
+            />
           </View>
 
-          {/* Duration */}
-          {/* <View style={styles.durationContainer}>
-                <Text style={styles.durationText}>{item.duration}</Text>
-                </View> */}
-
-          {/* Caption - optional based on feed design */}
+          {/* Caption */}
           {(item || reel_title) && (
             <Text numberOfLines={1} style={styles.caption}>
               {item ? item.reel_title : reel_title}
             </Text>
           )}
 
-          {/* Views count - optional */}
-          {/* {showViews && (
-                    <View style={styles.viewsContainer}>
-                        <Image 
-                            source={require('../assets/icons/play.png')} 
-                            tintColor={"#fff"}
-                            style={{ width: 15, height: 15 }}></Image>
-                        <Text style={styles.viewsText}>{formatNumber(item?item.view_count:0)}</Text>
-                    </View>
-                )} */}
-
-          {/* Profile info - optional */}
+          {/* Profile info */}
           {(showProfileInfo || reel_by) && (
             <View style={styles.profileInfo}>
               <Image
-                source={{ uri: pp }
-                }
+                source={{ uri: pp }}
                 style={styles.profilePic}
               />
               <View style={styles.profileDet}>
@@ -123,18 +114,13 @@ export const ReelThumbnail = ({
                   {item ? (`@${item.user_profile.user.username}`) : (`@${username.username}`)}
                 </Text>
               </View>
-
             </View>
           )}
         </ImageBackground>
       </View>
-
     </TouchableOpacity>
-
-
   );
 };
-
 
 
 

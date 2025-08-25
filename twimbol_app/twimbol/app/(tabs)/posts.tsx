@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommentsModal from '@/components/comments/comments';
 import Toast from 'react-native-toast-message';
+import ContextMenu from '@/components/post/contextmenu';
 
 const PostsFeed = () => {
   const { data: posts, loading: postsLoading, error: postsError, refetch } = useFetch(
@@ -33,6 +34,13 @@ const PostsFeed = () => {
   const [showComments, setShowComments] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [commentsCount, setCommentsCount] = useState({});
+
+  // Context menu state
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  
+  // Hidden posts state
+  const [hiddenPosts, setHiddenPosts] = useState(new Set());
 
   useEffect(() => {
     const fetchUserId = async () => {
@@ -65,8 +73,13 @@ const PostsFeed = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await refetch();
-    setRefreshing(false);
+    try {
+      await refetch();
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const toggleLike = useCallback(async (postId) => {
@@ -163,6 +176,32 @@ const PostsFeed = () => {
     }));
   }, []);
 
+  // Context menu handlers
+  const handleMoreOptions = useCallback((postId) => {
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      setSelectedPost(post);
+      setShowContextMenu(true);
+    }
+  }, [posts]);
+
+  const handlePostHidden = useCallback((postId) => {
+    setHiddenPosts(prev => new Set([...prev, postId]));
+  }, []);
+
+  const handleUserBlocked = useCallback((userId) => {
+    refetch();
+
+  }, []);
+
+  const handleContextMenuClose = useCallback(() => {
+    setShowContextMenu(false);
+    setSelectedPost(null);
+  }, []);
+
+  // Filter out hidden posts
+  const visiblePosts = posts ? posts.filter(post => !hiddenPosts.has(post.id)) : [];
+
   const renderPost = ({ item }) => {
     const postBanner = { uri: item.post_banner || null }
     const likeState = postLikeStates[item.id] || { liked: false, count: 0 };
@@ -177,9 +216,9 @@ const PostsFeed = () => {
               <Text style={styles.timeAgo}><TimeAgo time_string={item.created_at} /></Text>
             </View>
           </View>
-          {/* <TouchableOpacity>
+          <TouchableOpacity onPress={() => handleMoreOptions(item.id)}>
             <Text style={styles.moreOptions}>•••</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.postText} numberOfLines={2}>{item.post_description}</Text>
@@ -235,6 +274,34 @@ const PostsFeed = () => {
     );
   }
 
+  // Handle error state
+  if (postsError) {
+    return (
+      <ParentalControlProvider>
+        <TimeLimitChecker>
+          <TimeRestrictionChecker>
+            <GestureHandlerRootView className="flex-1">
+              <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} edges={["top", "left", "right"]}>
+                <Header />
+                <View style={styles.container}>
+                  <View style={styles.header}>
+                    <Text style={styles.headerTitle}>Posts</Text>
+                  </View>
+                  <View style={styles.centerContainer}>
+                    <Text style={styles.errorText}>Failed to load posts</Text>
+                    <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+                      <Text style={styles.retryButtonText}>Try Again</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </SafeAreaView>
+            </GestureHandlerRootView>
+          </TimeRestrictionChecker>
+        </TimeLimitChecker>
+      </ParentalControlProvider>
+    );
+  }
+
   return (
     <ParentalControlProvider>
       <TimeLimitChecker>
@@ -248,11 +315,17 @@ const PostsFeed = () => {
                   <Text style={styles.headerTitle}>Posts</Text>
                 </View>
 
-                {posts && posts.length > 0 ? (
+                {/* Show loading indicator when initially loading posts */}
+                {postsLoading && !refreshing && (!visiblePosts || visiblePosts.length === 0) ? (
+                  <View style={styles.centerContainer}>
+                    <ActivityIndicator size="large" color="#FF6E42" />
+                    <Text style={styles.loadingText}>Loading posts...</Text>
+                  </View>
+                ) : visiblePosts && visiblePosts.length > 0 ? (
                   <FlatList
-                    data={posts}
+                    data={visiblePosts}
                     renderItem={renderPost}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => item.id.toString()}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.feedContainer}
                     refreshControl={
@@ -260,17 +333,36 @@ const PostsFeed = () => {
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
                         colors={['#FF6B47']}
+                        tintColor="#FF6B47"
                       />
                     }
-                  />) : <ActivityIndicator
-                  size="large" color="#FF6E42" className='my-20' />}
+                  />
+                ) : !postsLoading ? (
+                  <View style={styles.centerContainer}>
+                    <Text style={styles.emptyText}>No posts available</Text>
+                    <Text style={styles.emptySubText}>Pull down to refresh</Text>
+                  </View>
+                ) : null}
 
               </View>
-               {showToast && (
-                        <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
-                          <Text style={styles.toastText}>{toastMessage}</Text>
-                        </Animated.View>
-                      )}
+              
+              {showToast && (
+                <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+                  <Text style={styles.toastText}>{toastMessage}</Text>
+                </Animated.View>
+              )}
+
+              {/* Context Menu */}
+              <ContextMenu
+                visible={showContextMenu}
+                onClose={handleContextMenuClose}
+                post={selectedPost}
+                userId={userId}
+                onPostHidden={handlePostHidden}
+                onUserBlocked={handleUserBlocked}
+                showToastMessage={showToastMessage}
+                allPosts={posts} // Pass all posts for blocking functionality
+              />
 
               {/* Comments Modal */}
               {showComments && selectedPostId && (
@@ -323,6 +415,45 @@ const styles = StyleSheet.create({
   feedContainer: {
     padding: 8,
   },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FF4B4B',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#FF6B47',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   postCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -350,7 +481,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 10,
     elevation: 3,
-
   },
   userName: {
     fontWeight: 'bold',
@@ -365,6 +495,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     transform: [{ rotate: '90deg' }],
+    color: '#666',
   },
   postText: {
     fontSize: 14,

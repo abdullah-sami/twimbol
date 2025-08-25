@@ -26,6 +26,16 @@ urlpatterns = [
         'post': 'create',
         'delete': 'destroy'
     }), name='post_likes'),
+    path('api/post_hide/<int:post_id>/', views.PostStatHideViewSet.as_view({
+        'get': 'list',
+        'post': 'create',
+        'delete': 'destroy'
+    }), name='post_hide'),
+    path('api/post_report/<int:post_id>/', views.PostStatReportViewSet.as_view({
+        'get': 'list',
+        'post': 'create',
+        'delete': 'destroy'
+    }), name='post_report'),
 
 
     path('', views.home, name='home'),

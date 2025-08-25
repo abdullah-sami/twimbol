@@ -18,6 +18,10 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, IsAuthentic
 # import validation error
 from rest_framework.exceptions import ValidationError
 
+from create.models import *
+from create.serializers import *
+
+from user.models import Block
 
 
 class PostPagination(PageNumberPagination):
@@ -37,8 +41,9 @@ class PostPagination(PageNumberPagination):
         })
 
 
+
+
 class PostViewSet(ModelViewSet):
-    queryset = Post.objects.all().order_by('-created_at')
     serializer_class = PostSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = PostPagination
@@ -46,16 +51,79 @@ class PostViewSet(ModelViewSet):
     filter_backends = [SearchFilter, OrderingFilter]
     filterset_fields = ['post_type']
     search_fields = ['post_title', 'post_description']
-    ordering_fields = ['post_type','created_at']
-
+    ordering_fields = ['post_type', 'created_at']
 
     def get_queryset(self):
-        return super().get_queryset().filter(post_type='post')
+        user = self.request.user
+        queryset = Post.objects.filter(post_type='post').order_by('-created_at')
 
+        if user.is_authenticated:
+            # Exclude hidden posts
+            hidden_posts = Post_Stat_hide.objects.filter(created_by=user).values_list("post_id", flat=True)
+            queryset = queryset.exclude(id__in=hidden_posts)
+
+            # Exclude reported posts
+            reported_posts = Post_Stat_report.objects.filter(created_by=user).values_list("post_id", flat=True)
+            queryset = queryset.exclude(id__in=reported_posts)
+
+            # Exclude posts from blocked users
+            blocked_users = Block.objects.filter(blocker=user).values_list("blocked_id", flat=True)
+            queryset = queryset.exclude(created_by_id__in=blocked_users)
+
+        return queryset
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
-        serializer.save(post_type="post")
+        serializer.save(created_by=self.request.user, post_type="post")
+
+
+
+
+
+
+
+
+class ReelsPagination(PageNumberPagination):
+    page_size = 30
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'page_size': self.page_size,
+            'page': self.page.number,
+            'total_pages': self.page.paginator.num_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
+
+
+
+class ReelsDataViewSet(ModelViewSet):
+    serializer_class = ReelCloudinarySerializer
+    permission_classes = [AllowAny]
+    pagination_class = ReelsPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = ReelCloudinary.objects.all().order_by('-created_at')
+
+        if user.is_authenticated:
+            # exclude hidden posts
+            hidden_posts = Post_Stat_hide.objects.filter(created_by=user).values_list("post_id", flat=True)
+            queryset = queryset.exclude(post_id__in=hidden_posts)
+
+            # exclude reported posts
+            reported_posts = Post_Stat_report.objects.filter(created_by=user).values_list("post_id", flat=True)
+            queryset = queryset.exclude(post_id__in=reported_posts)
+
+            # exclude posts from blocked users
+            blocked_users = Block.objects.filter(blocker=user).values_list("blocked_id", flat=True)
+            queryset = queryset.exclude(created_by_id__in=blocked_users)
+
+        return queryset
 
 
 
@@ -94,9 +162,14 @@ class SearchViewSet(ModelViewSet):
         else:
             queryset = Post.objects.none()
 
+        serializer = self.serializer_class(
+            queryset,
+            many=True,
+            context={'request': request}   # ✅ inject request into context
+        )
         return Response({
             'query': query,
-            'results': self.serializer_class(queryset, many=True).data,
+            'results': serializer.data,
         })
 
 
@@ -168,6 +241,151 @@ class PostStatLikeViewSet(ModelViewSet):
 
 
 
+class PostStatHideViewSet(ModelViewSet):
+    queryset = Post_Stat_hide.objects.all().order_by('-created_at')
+    serializer_class = PostStatHideSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'post_id'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        post_id = self.kwargs.get('post_id')
+        if post_id:
+            try:
+                return queryset.filter(post_id=post_id)
+            except:
+                return queryset.filter(post=post_id)
+        return queryset.none()
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs.get('post_id')
+
+        # Check if like already exists - try both field names
+        try:
+            existing_hide = Post_Stat_hide.objects.filter(post_id=post_id, created_by=self.request.user)
+            if existing_hide.exists():
+                raise ValidationError({"detail": "You already hid this post."})
+            # Save with post_id field
+            serializer.save(created_by=self.request.user, post_id=post_id)
+        except Exception as e:
+            print(f"DEBUG: Trying with 'post' field instead. Error was: {e}")
+            # If that fails, try with 'post' field
+            existing_hide = Post_Stat_hide.objects.filter(post=post_id, created_by=self.request.user)
+            if existing_hide.exists():
+                raise ValidationError({"detail": "You already hid this post."})
+            serializer.save(created_by=self.request.user, post=post_id)
+
+    def destroy(self, request, *args, **kwargs):
+        # Get the specific hide for this user and post
+        post_id = self.kwargs.get('post_id')
+        
+        try:
+            instance = Post_Stat_hide.objects.get(
+                post_id=post_id,
+                created_by=request.user
+            )
+        except Post_Stat_hide.DoesNotExist:
+            return Response(
+                {"detail": "Hide not found or you don't have permission to delete it."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Post_Stat_hide.MultipleObjectsReturned:
+            # If somehow there are multiple hides, delete all of them for this user
+            Post_Stat_hide.objects.filter(
+                post_id=post_id, 
+                created_by=request.user
+            ).delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+class PostStatReportViewSet(ModelViewSet):
+    serializer_class = PostStatReportSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'post_id'
+
+    def get_queryset(self):
+        post_id = self.kwargs.get('post_id')
+        if post_id:
+            return Post_Stat_report.objects.filter(post_id=post_id)
+        return Post_Stat_report.objects.none()
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs.get('post_id')
+
+        # Prevent duplicate reports
+        if Post_Stat_report.objects.filter(post_id=post_id, created_by=self.request.user).exists():
+            raise ValidationError({"detail": "You already reported this post."})
+
+        serializer.save(
+            created_by=self.request.user,
+            post_id=post_id
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        post_id = self.kwargs.get('post_id')
+
+        reports = Post_Stat_report.objects.filter(
+            post_id=post_id,
+            created_by=request.user
+        )
+
+        if not reports.exists():
+            return Response(
+                {"detail": "Report not found or you don't have permission to delete it."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        reports.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class CommentPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
@@ -233,60 +451,6 @@ class PostCommentViewSet(ModelViewSet):
 
 
 
-
-from create.models import *
-from create.serializers import *
-
-class ReelsPagination(PageNumberPagination):
-    page_size = 30
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-    def get_paginated_response(self, data):
-        return Response({
-            'count': self.page.paginator.count,
-            'page_size': self.page_size,
-            'page': self.page.number,
-            'total_pages': self.page.paginator.num_pages,
-            'next': self.get_next_link(),
-            'previous': self.get_previous_link(),
-            'results': data
-        })
-
-
-
-
-class ReelsDataViewSet(ModelViewSet):
-    queryset = ReelCloudinary.objects.all().order_by('-created_at')
-    serializer_class = ReelCloudinarySerializer
-    permission_classes = [AllowAny]
-    pagination_class = ReelsPagination
-
-
-# class ReelsPagination(PageNumberPagination):
-#     page_size = 30
-#     page_size_query_param = 'page_size'
-#     max_page_size = 100
-
-#     def get_paginated_response(self, data):
-#         return Response({
-#             'count': self.page.paginator.count,
-#             'page_size': self.page_size,
-#             'page': self.page.number,
-#             'total_pages': self.page.paginator.num_pages,
-#             'next': self.get_next_link(),
-#             'previous': self.get_previous_link(),
-#             'results': data
-#         })
-
-
-
-
-# class ReelsDataViewSet(ModelViewSet):
-#     queryset = Youtube_Reels_Data.objects.all().order_by('-created_at')
-#     serializer_class = YoutubeReelsDataSerializer
-#     permission_classes = [AllowAny]
-#     pagination_class = ReelsPagination
 
 
 

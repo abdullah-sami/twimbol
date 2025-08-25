@@ -3,7 +3,7 @@ from user.models import CreatorApplication
 from user.serializers import UserProfileSerializer, UserSerializer
 from .models import *
 
-from app.models import Post_Stat_like, Post_Comment
+from app.models import Post_Stat_like, Post_Comment, Post_Stat_hide, Post_Stat_report
 
 
 
@@ -18,11 +18,14 @@ class CreatorApplicationSerializer(serializers.ModelSerializer):
 
 
 
+
 class ReelCloudinarySerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
     like_count = serializers.SerializerMethodField()
     comments = serializers.SerializerMethodField()
     liked_by_user = serializers.SerializerMethodField()
+    hidden_by_user = serializers.SerializerMethodField()
+    reported_by_user = serializers.SerializerMethodField()
 
     class Meta:
         model = ReelCloudinary
@@ -39,6 +42,8 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
             'created_by',
             'user_profile',
             'liked_by_user',
+            'hidden_by_user',
+            'reported_by_user',
         ]
     
     def get_user_profile(self, obj):
@@ -60,7 +65,22 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
             return Post_Stat_like.objects.filter(post=obj.post, created_by=user).exists()
         return False
 
-    
+    def get_hidden_by_user(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Post_Stat_hide.objects.filter(post=obj.post, created_by=user).exists()
+        return False
+
+    def get_reported_by_user(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Post_Stat_report.objects.filter(post=obj.post, created_by=user).exists()
+        return False
+
+
+
+
+
 
 
 

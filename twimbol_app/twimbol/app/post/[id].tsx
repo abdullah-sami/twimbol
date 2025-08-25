@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import TimeAgo from '@/components/time';
 import useFetch from '@/services/useFetch';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ContextMenu from '@/components/post/contextmenu';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -89,7 +90,7 @@ const InteractionButton = ({ icon, text, onPress, isActive = false, disabled = f
   </TouchableOpacity>
 );
 
-const PostHeader = ({ user_profile, userName, username, user_id, userId, followsUser, onFollowPress, created_at }) => {
+const PostHeader = ({ user_profile, userName, username, user_id, userId, followsUser, onFollowPress, created_at, onMoreOptions }) => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -118,10 +119,10 @@ const PostHeader = ({ user_profile, userName, username, user_id, userId, follows
                 style={styles.followButton}
                 onPress={() => onFollowPress(user_id)}
               >
-                <Ionicons 
-                  name={followsUser ? "checkmark" : "person-add-outline"} 
-                  size={20} 
-                  color="white" 
+                <Ionicons
+                  name={followsUser ? "checkmark" : "person-add-outline"}
+                  size={20}
+                  color="white"
                 />
               </TouchableOpacity>
             )}
@@ -129,6 +130,9 @@ const PostHeader = ({ user_profile, userName, username, user_id, userId, follows
           <Text style={styles.timeAgo}>{formatDate(created_at)}</Text>
         </View>
       </View>
+      <TouchableOpacity onPress={onMoreOptions}>
+        <Text style={styles.moreOptions}>•••</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -304,6 +308,9 @@ const PostDetails = ({ route }) => {
   // Full screen image viewer state
   const [showFullScreenImage, setShowFullScreenImage] = useState(false);
   const [fullScreenImageUri, setFullScreenImageUri] = useState('');
+
+  // Context menu state
+  const [showContextMenu, setShowContextMenu] = useState(false);
 
   const textInputRef = useRef(null);
 
@@ -547,6 +554,47 @@ const PostDetails = ({ route }) => {
     }
   }, [followsUser]);
 
+  // Context menu handlers
+  const handleMoreOptions = useCallback(() => {
+    setShowContextMenu(true);
+  }, []);
+
+  const handleContextMenuClose = useCallback(() => {
+    setShowContextMenu(false);
+  }, []);
+
+  const showToastMessage = useCallback((message) => {
+    Toast.show({
+      type: 'info',
+      text1: 'Info',
+      text2: message,
+      position: 'top',
+    });
+  }, []);
+
+  const handlePostHidden = useCallback(() => {
+    // Navigate back to the previous screen since the post is hidden
+    Toast.show({
+      type: 'success',
+      text1: 'Post Hidden',
+      text2: 'The post has been hidden from your feed.',
+      position: 'top',
+    });
+    navigation.goBack();
+  }, [navigation]);
+
+  const handleUserBlocked = useCallback(() => {
+    // Navigate back since the user is blocked
+    Toast.show({
+      type: 'success',
+      text1: 'User Blocked',
+      text2: 'You will no longer see posts from this user.',
+      position: 'top',
+    });
+    navigation.goBack();
+  }, [navigation]);
+  
+
   const handleShare = async (postId) => {
     try {
       const result = await Share.share({
@@ -654,6 +702,7 @@ const PostDetails = ({ route }) => {
                   followsUser={followsUser}
                   onFollowPress={handleFollowPress}
                   created_at={created_at}
+                  onMoreOptions={handleMoreOptions}
                 />
 
                 {post_title && (
@@ -794,6 +843,18 @@ const PostDetails = ({ route }) => {
               imageUri={fullScreenImageUri}
               onClose={closeFullScreenImage}
             />
+
+            {/* Context Menu */}
+            <ContextMenu
+              visible={showContextMenu}
+              onClose={handleContextMenuClose}
+              post={post}
+              userId={userId}
+              onPostHidden={handlePostHidden}
+              onUserBlocked={handleUserBlocked}
+              showToastMessage={showToastMessage}
+              allPosts={[]} // Single post, so empty array
+            />
           </View>
           <Toast />
         </KeyboardAvoidingView>
@@ -878,9 +939,10 @@ const styles = StyleSheet.create({
   },
   postHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    justifyContent: 'space-between',
+    width: '100%',
   },
   userInfo: {
     flexDirection: 'row',
@@ -917,6 +979,12 @@ const styles = StyleSheet.create({
   timeAgo: {
     fontSize: 12,
     color: '#888',
+  },
+  moreOptions: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    transform: [{ rotate: '90deg' }],
+    color: '#666',
   },
   postTitle: {
     fontSize: 18,

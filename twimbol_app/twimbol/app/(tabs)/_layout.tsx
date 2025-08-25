@@ -146,14 +146,14 @@ export default function TabsLayout() {
           tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={icons.creator} />,
         }}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         component={EventScreen}
         name="event"
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon={icons.event} />,
         }}
-      />
+      /> */}
     </Tab.Navigator>
   );
 }

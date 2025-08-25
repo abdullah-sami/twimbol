@@ -75,37 +75,47 @@ export const PostThumbnail = ({post_id, post_title, post_desc, post_by, username
 
 
 
+export const PostFeed = ({
+  posts, 
+  onPostPress, 
+  layout = "grid", 
+  range = Number.MAX_VALUE, 
+  reel_per_column = 3
+}: any) => {
 
-export const PostFeed = ({posts, onReelPress, layout = "grid", range=Number.MAX_VALUE, reel_per_column=3}:any) =>{
+  // Fix: Properly slice the posts array
+  const displayPosts = posts ? posts.slice(0, range) : [];
 
-    if(posts && range){
-      posts.slice(0, range);
+  const handlePostPress = (postId: string) => {
+    if (onPostPress) {
+      onPostPress(postId);
     }
-    const handlePostPress = ()=>{}
-    return (
-        <>
+  };
+
+  return (
+    <View>
+      {displayPosts && displayPosts.length > 0 ? (
+        displayPosts.map((post: any, index: number) => (
+          <PostThumbnail
+            key={post.post_id || post.id || index} // Fix: Add proper key
+            post_id={post.post_id || post.id}
+            post_title={post.post_title || post.title}
+            post_desc={post.post_description || post.description}
+            post_by={post.user_profile || post.post_by}
+            username={post.user_profile?.user || post.username}
+            post_thumbnail={post.post_banner || post.thumbnail}
+            created_at={post.created_at}
+            onPress={handlePostPress} // Fix: Pass the handler function
+          />
+        ))
+      ) : (
+        <Text>No posts to display</Text>
+      )}
+    </View>
+  );
+};
 
 
-
-    
-        <View>
-          {posts && posts.length > 0 ? (
-            (posts.slice(0,range)).map((post: any) => (
-              <PostThumbnail
-                post_by={post.user_profile.user}
-              />
-            ))
-          ) : (
-            <Text>No reels to display</Text>
-          )}
-        </View>
-
-
-
-        </>
-    )
-    
-}
 
 // Helper function to format numbers
 const formatNumber = (num:any) => {

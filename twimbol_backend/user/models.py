@@ -53,6 +53,17 @@ class Follower(models.Model):
 
 
 
+class Block(models.Model):
+    blocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocker')
+    blocked = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blocked')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.blocker.username + ' blocked ' + self.blocked.username
+
+
+
+
 
 
 

@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.fields.related import OneToOneField, ForeignKey
 from django.contrib.auth.models import User
+
 # Create your models here.
 
  
@@ -45,6 +46,50 @@ class Post_Stat_like(models.Model):
         unique_together = ('post', 'created_by')
     def __str__(self):
         return str(self.created_by) + " to " + str(self.post)
+
+
+
+
+
+class Post_Stat_hide(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_hide')
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='hide_created_by', blank=True, null=True)
+    
+    class Meta:
+        unique_together = ('post', 'created_by')
+    def __str__(self):
+        return str(self.created_by) + " hid " + str(self.post)
+
+
+
+class Post_Stat_report_Reasons(models.TextChoices):
+    SPAM = 'spam', 'Spam'
+    ABUSE = 'abuse', 'Abuse'
+    FALSE = 'false', 'False News'
+    HATE = 'hate', 'Hate Speech'
+    NSFW = 'nsfw', 'Not Safe For Work'
+    OTHER = 'other', 'Other'
+
+    class Meta:
+        verbose_name = "Post Stat Report Reason"
+        verbose_name_plural = "Post Stat Report Reasons"
+
+
+
+class Post_Stat_report(models.Model):
+
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_report')
+    reason = models.CharField(choices=Post_Stat_report_Reasons.choices, default=Post_Stat_report_Reasons.OTHER)
+    description = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='report_created_by', blank=True, null=True)
+
+    class Meta:
+        unique_together = ('post', 'created_by')
+
+    def __str__(self):
+        return str(self.created_by) + " reported " + str(self.post)
 
 
 

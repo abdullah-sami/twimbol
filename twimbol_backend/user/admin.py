@@ -5,3 +5,4 @@ from .models import *
 admin.site.register(UserProfile)
 admin.site.register(CreatorApplication)
 admin.site.register(Follower)
+admin.site.register(Block)

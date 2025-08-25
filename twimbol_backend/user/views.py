@@ -205,6 +205,36 @@ class FollowViewSet(viewsets.ViewSet):
 
 
 
+
+
+class BlockViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request):
+        user = request.user
+        user_id = request.data.get("user_id")
+        try:
+            profile_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user == profile_user:
+            return Response({"detail": "You cannot block yourself."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            block = Block.objects.get(blocker=user, blocked=profile_user)
+            block.delete()
+            action = "unblocked"
+        except Block.DoesNotExist:
+            Block.objects.create(blocker=user, blocked=profile_user)
+            action = "blocked"
+
+        return Response({"detail": f"Successfully {action} {profile_user.username}."}, status=status.HTTP_200_OK)
+
+
+
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer

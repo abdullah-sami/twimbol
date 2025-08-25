@@ -20,6 +20,7 @@ urlpatterns = [
     path('', views.user_manager, name='user_manager'),
     path('profile/<str:profile_user_name>', views.profile, name='profile'),
     path('profile/follow/', views.FollowViewSet.as_view({'post': 'create'}), name='follow'),
+    path('profile/block/', views.BlockViewSet.as_view({'post': 'create'}), name='block'),
 
 
 
