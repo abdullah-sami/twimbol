@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -61,13 +60,13 @@ const ApplyForCreator = () => {
     checkUserId();
   }, []);
 
-  // Execute status check when userId is available
+  // Execute status check when userId is available - FIXED: Added executeStatus to dependency array
   useEffect(() => {
     if (userId) {
       console.log('Executing status check for userId:', userId); // Debug log
       executeStatus();
     }
-  }, [userId]);
+  }, [userId, executeStatus]); // Added executeStatus to dependencies
 
   // Debug log for application status
   useEffect(() => {
@@ -75,6 +74,18 @@ const ApplyForCreator = () => {
     console.log('Status loading:', statusLoading); // Debug log
     console.log('Status error:', statusError); // Debug log
   }, [applicationStatus, statusLoading, statusError]);
+
+  // ADDED: Auto-fetch status when component mounts and userId is ready
+  useEffect(() => {
+    const initializePage = async () => {
+      if (userId) {
+        console.log('Auto-fetching application status on page load');
+        await executeStatus();
+      }
+    };
+
+    initializePage();
+  }, [userId]); // Only depend on userId to avoid infinite loops
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -97,8 +108,15 @@ const ApplyForCreator = () => {
       if (userId) {
         const result = await execute({});
         
-        // Refresh the status after submission
+        // FIXED: Ensure status is refreshed after submission
+        console.log('Application submitted, refreshing status...');
         await executeStatus();
+        
+        // Add a small delay to ensure the backend has processed the submission
+        setTimeout(async () => {
+          await executeStatus();
+          console.log('Status refreshed after delay');
+        }, 1000);
 
         if (result && result.detail === 'Creator application submitted successfully.') {
           Alert.alert(

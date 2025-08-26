@@ -471,7 +471,6 @@ class ApplyForCreatorViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # Default: show only the logged-in user's applications
         return CreatorApplication.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):

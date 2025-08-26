@@ -31,6 +31,7 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('events/', include('event.urls')),
     path('messages/', include('message.urls')),
+    path('routine/', include('routine.urls')),
 
 
     path('youtube/', views.youtube, name='youtube'),
