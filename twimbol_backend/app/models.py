@@ -80,7 +80,7 @@ class Post_Stat_report_Reasons(models.TextChoices):
 class Post_Stat_report(models.Model):
 
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_report')
-    reason = models.CharField(choices=Post_Stat_report_Reasons.choices, default=Post_Stat_report_Reasons.OTHER)
+    reason = models.CharField(max_length=1024, choices=Post_Stat_report_Reasons.choices, default=Post_Stat_report_Reasons.OTHER)
     description = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='report_created_by', blank=True, null=True)
