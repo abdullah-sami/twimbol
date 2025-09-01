@@ -6,5 +6,5 @@ node_modules
 production
 .idea
 twimbol/.expo/
-
+../twimbol_backend/.env
 twimbol/assets/
