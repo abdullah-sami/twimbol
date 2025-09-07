@@ -12,6 +12,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +22,145 @@ import { deleteComment, fetchComments, postComment, TWIMBOL_API_CONFIG } from '@
 import TimeAgo from '../time';
 import { BaseButton, RawButton, RectButton } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const ACCENT_COLOR = '#FF6E42';
+const STORAGE_KEYS = {
+  PARENT_PASSWORD: 'parent_password',
+  SAFETY_PROMPT_SHOWN: 'SAFETY_PROMPT_SHOWN',
+};
+
+// Parental Verification Modal Component (similar to Profile component)
+const ParentalVerificationModal = ({ 
+  visible, 
+  onClose, 
+  onVerificationSuccess,
+  showNoPasswordInstructions = false 
+}) => {
+  const [parentPassword, setParentPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigation = useNavigation();
+
+  const handleParentalVerification = async () => {
+    if (!parentPassword.trim()) {
+      Alert.alert('Error', 'Please enter the parent password');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const storedPassword = await AsyncStorage.getItem(STORAGE_KEYS.PARENT_PASSWORD);
+      
+      if (parentPassword === storedPassword) {
+        onVerificationSuccess();
+        setParentPassword('');
+        Alert.alert('Success', 'Comments access unlocked');
+      } else {
+        Alert.alert('Error', 'Incorrect parent password');
+        setParentPassword('');
+      }
+    } catch (error) {
+      console.error('Error verifying parent password:', error);
+      Alert.alert('Error', 'Failed to verify password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoToSettings = () => {
+    onClose();
+    // Navigate to settings or parental controls screen
+    navigation.navigate('settings'); // Adjust the route name as needed
+  };
+
+  const handleCancel = () => {
+    setParentPassword('');
+    onClose();
+  };
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!visible) {
+      setParentPassword('');
+      setIsLoading(false);
+    }
+  }, [visible]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          {showNoPasswordInstructions ? (
+            // No Password Set - Show Instructions
+            <>
+              <Text style={styles.modalTitle}>🔒 Parent Approval Required</Text>
+              <Text style={styles.modalText}>
+                You need parent approval to access comments.
+              </Text>
+              <Text style={styles.modalInstructions}>
+                Please ask your parent or guardian to:
+                {'\n'}• Go to Settings
+                {'\n'}• Open Parental Controls
+                {'\n'}• Set up a parent password
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={styles.modalButton} 
+                  onPress={handleCancel}
+                >
+                  <Text style={styles.modalButtonText}>Go Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.modalButtonPrimary]} 
+                  onPress={handleGoToSettings}
+                >
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>
+                    Go to Settings
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            // Password Set - Show Verification
+            <>
+              <Text style={styles.modalTitle}>Parental Verification Required</Text>
+              <Text style={styles.modalText}>
+                Please enter the parent password to access comments:
+              </Text>
+              <TextInput
+                style={styles.modalInput}
+                placeholder="Enter parent password"
+                value={parentPassword}
+                onChangeText={setParentPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoFocus={true}
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity 
+                  style={styles.modalButton} 
+                  onPress={handleCancel}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.modalButtonPrimary]} 
+                  onPress={handleParentalVerification}
+                  disabled={isLoading}
+                >
+                  <Text style={[styles.modalButtonText, styles.modalButtonTextPrimary]}>
+                    {isLoading ? 'Verifying...' : 'Verify'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 const CommentsModal = ({
   visible,
@@ -38,10 +178,60 @@ const CommentsModal = ({
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [totalComments, setTotalComments] = useState(0);
+  
+  // Parental verification states
+  const [showParentalModal, setShowParentalModal] = useState(false);
+  const [showNoPasswordModal, setShowNoPasswordModal] = useState(false);
+  const [isParentalVerified, setIsParentalVerified] = useState(false);
+  const [checkingParental, setCheckingParental] = useState(false);
+  
   const flatListRef = useRef(null);
   const textInputRef = useRef(null);
   const navigation = useNavigation();
 
+  // Check parental verification when modal opens
+  useEffect(() => {
+    const checkParentalVerification = async () => {
+      if (!visible) return;
+
+      setCheckingParental(true);
+      
+      try {
+        const storedPassword = await AsyncStorage.getItem(STORAGE_KEYS.PARENT_PASSWORD);
+        
+        if (!storedPassword) {
+          // No parental password set, show instruction modal
+          setShowNoPasswordModal(true);
+        } else {
+          // Password is set, show verification modal
+          setShowParentalModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking parental password:', error);
+        Alert.alert('Error', 'Failed to check parental controls');
+      } finally {
+        setCheckingParental(false);
+      }
+    };
+
+    if (visible && !isParentalVerified) {
+      checkParentalVerification();
+    }
+  }, [visible, isParentalVerified]);
+
+  // Handle successful parental verification
+  const handleVerificationSuccess = () => {
+    setIsParentalVerified(true);
+    setShowParentalModal(false);
+    setShowNoPasswordModal(false);
+  };
+
+  // Handle modal close
+  const handleModalClose = () => {
+    setShowParentalModal(false);
+    setShowNoPasswordModal(false);
+    onClose(); // Close the main comments modal
+  };
 
   // Navigate to user profile
   const handleUserPress = useCallback((userId) => {
@@ -69,7 +259,7 @@ const CommentsModal = ({
       return profilePic;
     }
 
-    // If it starts with /media, prepend base URL (you may need to adjust this based on your API config)
+    // If it starts with /media, prepend base URL
     if (profilePic.startsWith('/media/')) {
       return `${TWIMBOL_API_CONFIG.BASE_URL}${profilePic}`;
     }
@@ -125,7 +315,6 @@ const CommentsModal = ({
 
     try {
       setPosting(true);
-
 
       const newCommentData = await postComment(postId, newComment.trim());
 
@@ -190,26 +379,26 @@ const CommentsModal = ({
       setPosting(false);
       setRefreshing(false);
       setTotalComments(0);
+      setIsParentalVerified(false);
+      setCheckingParental(false);
     }
   }, [visible]);
 
-  // Fetch comments when modal opens
+  // Fetch comments when modal opens and parental verification is complete
   useEffect(() => {
-    if (visible && postId) {
+    if (visible && postId && isParentalVerified) {
       fetchCommentsData(1);
     }
-  }, [visible, postId, fetchCommentsData]);
+  }, [visible, postId, isParentalVerified, fetchCommentsData]);
 
-  // Focus text input when modal opens
+  // Focus text input when ready
   useEffect(() => {
-    if (visible) {
+    if (visible && isParentalVerified) {
       setTimeout(() => {
         textInputRef.current?.focus();
       }, 500);
     }
-  }, [visible]);
-
-
+  }, [visible, isParentalVerified]);
 
   // DELETE comment handler
   const handleDeleteComment = useCallback(async (commentId, post) => {
@@ -255,28 +444,13 @@ const CommentsModal = ({
     );
   }, [onCommentsCountChange, totalComments]);
 
-
-
-
-
-
-
   // Render individual comment item
-  // Replace the renderComment function with this updated version:
-
   const renderComment = useCallback(({ item }) => {
     const comment_user = item.created_by?.user;
     const fullName = getUserFullName(comment_user);
     const username = comment_user?.username;
     const profilePicUrl = getProfilePicUrl(comment_user?.profile_pic);
     const commentUserId = comment_user?.id;
-    const comment_id = item.id;
-    const post = item.post;
-
-    // Debug logs - remove these after fixing
-    console.log('Current userId:', userId);
-    console.log('Comment userId:', commentUserId);
-    console.log('Are they equal?', commentUserId?.toString() === userId?.toString());
 
     // More robust comparison
     const canDelete = userId && commentUserId &&
@@ -312,7 +486,6 @@ const CommentsModal = ({
           </View>
           <Text style={styles.commentText}>{item.comment}</Text>
 
-          {/* Updated delete button logic */}
           {canDelete && (
             <TouchableOpacity
               onPress={() => handleDeleteComment(item.id, item.post)}
@@ -331,7 +504,7 @@ const CommentsModal = ({
     if (!loading || page === 1) return null;
     return (
       <View style={styles.loadingFooter}>
-        <ActivityIndicator size="small" color="#666" />
+        <ActivityIndicator size="small" color={ACCENT_COLOR} />
       </View>
     );
   }, [loading, page]);
@@ -340,7 +513,7 @@ const CommentsModal = ({
   const renderEmpty = useCallback(() => {
     if (loading) return (
       <View style={styles.loadingState}>
-        <ActivityIndicator size="large" color="#666" />
+        <ActivityIndicator size="large" color={ACCENT_COLOR} />
         <Text style={styles.loadingText}>Loading comments...</Text>
       </View>
     );
@@ -354,14 +527,59 @@ const CommentsModal = ({
     );
   }, [loading]);
 
-  // Don't render anything if not visible (extra safety)
+  // Don't render anything if not visible
   if (!visible) {
     return null;
   }
 
+  // If parental verification is not complete, show checking state
+  if (!isParentalVerified) {
+    return (
+      <>
+        {/* Main modal overlay showing checking state */}
+        <Modal
+          visible={visible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={onClose}
+          statusBarTranslucent={false}
+        >
+          <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <Ionicons name="close" size={24} color="#000" />
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Comments</Text>
+              <View style={styles.headerRight} />
+            </View>
+            
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>Checking parental permissions...</Text>
+            </View>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Parental verification modals */}
+        <ParentalVerificationModal
+          visible={showParentalModal}
+          onClose={handleModalClose}
+          onVerificationSuccess={handleVerificationSuccess}
+          showNoPasswordInstructions={false}
+        />
+
+        <ParentalVerificationModal
+          visible={showNoPasswordModal}
+          onClose={handleModalClose}
+          onVerificationSuccess={handleVerificationSuccess}
+          showNoPasswordInstructions={true}
+        />
+      </>
+    );
+  }
+
   return (
     <Modal
-      visible={visible}
+      visible={visible && isParentalVerified}
       animationType="slide"
       presentationStyle="pageSheet"
       onRequestClose={onClose}
@@ -443,9 +661,9 @@ const CommentsModal = ({
               disabled={!newComment.trim() || posting}
             >
               {posting ? (
-                <ActivityIndicator size="small" color="#007AFF" />
+                <ActivityIndicator size="small" color={ACCENT_COLOR} />
               ) : (
-                <Ionicons name="send" size={20} color="#007AFF" />
+                <Ionicons name="send" size={20} color={ACCENT_COLOR} />
               )}
             </TouchableOpacity>
           </View>
@@ -456,6 +674,7 @@ const CommentsModal = ({
 };
 
 const styles = StyleSheet.create({
+  // Main modal styles
   container: {
     flex: 1,
     backgroundColor: '#fff',
@@ -486,6 +705,17 @@ const styles = StyleSheet.create({
   commentsCount: {
     fontSize: 14,
     color: '#666',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
   },
   commentsList: {
     paddingHorizontal: 16,
@@ -585,11 +815,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 60,
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 12,
-  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -611,12 +836,83 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     paddingVertical: 6,
-    // paddingHorizontal: 2,
     marginTop: 4,
   },
   deleteButtonText: {
     color: '#ff4d4d',
     fontSize: 14,
+    fontWeight: '600',
+  },
+
+  // Parental verification modal styles (similar to Profile component)
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 24,
+    width: '85%',
+    maxWidth: 320,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+    color: '#333',
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  modalInstructions: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+    textAlign: 'left',
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    lineHeight: 20,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 20,
+    backgroundColor: '#FAFAFA',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#FF6E42',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  modalButtonTextPrimary: {
+    color: 'white',
     fontWeight: '600',
   },
 });

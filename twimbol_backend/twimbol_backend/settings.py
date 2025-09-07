@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'message',
     'notifications',
     'corsheaders',
+    'parentalcontrols',
     'cloudinary',
     'cloudinary_storage',
     'routine',
@@ -195,7 +196,7 @@ cloudinary.config(
 )
 
 
-
+ 
 
 
 

@@ -35,6 +35,6 @@ urlpatterns = [
     # path('deactivate/', views.UpdateProfileViewSet.as_view(), name='deactivate-account'),
     path('delete/', views.DeleteAccountView.as_view(), name='delete-account'),
 
-
+ 
     path('api/', include(router.urls)),
 ]

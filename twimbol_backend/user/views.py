@@ -636,7 +636,6 @@ class ChangePasswordView(generics.UpdateAPIView):
 
 
 import random
-from django.core.mail import send_mail
 from django.utils.timezone import now, timedelta
 
 
@@ -664,7 +663,7 @@ class RequestPasswordResetView(generics.GenericAPIView):
 
         return Response({"detail": "Password reset code sent to email."}, status=status.HTTP_200_OK)
 
-
+ 
 
 
 

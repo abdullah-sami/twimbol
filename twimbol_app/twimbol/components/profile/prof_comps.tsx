@@ -78,24 +78,20 @@ useEffect(() => {
 
 
   };
+const handleLogout = async () => {
+  try {
+    // Remove all AsyncStorage data for this app
+    await AsyncStorage.clear();
 
-  const handleLogout = async () => {
-    try {
-      const userGroup = await AsyncStorage.getItem('user_group');
+    const remainingUserId = await AsyncStorage.getItem('user_id');
+    console.log('User ID after logout:', remainingUserId); // Should be null
 
-
-      await AsyncStorage.multiRemove(['access', 'refresh', 'user_id', 'user', 'user_group']);
-
-      const remainingUserId = await AsyncStorage.getItem('user_id');
-      console.log('User ID after logout:', remainingUserId); // Should be null
-
-      navigation.navigate('authentication', { authpage: 'login' });
-
-    } catch (error) {
-      console.error('Error during logout:', error);
-      navigation.navigate('authentication', { authpage: 'login' });
-    }
-  };
+    navigation.navigate('authentication' as never, { authpage: 'login' });
+  } catch (error) {
+    console.error('Error during logout:', error);
+    navigation.navigate('authentication' as never, { authpage: 'login' });
+  }
+};
 
   const handleRefresh = async () => {
     setRefreshing(true); // Show the refresh spinner

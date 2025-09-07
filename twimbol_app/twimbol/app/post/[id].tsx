@@ -15,6 +15,171 @@ import ContextMenu from '@/components/post/contextmenu';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
+const ACCENT_COLOR = '#FF6E42';
+const STORAGE_KEYS = {
+  PARENT_PASSWORD: 'parent_password',
+  SAFETY_PROMPT_SHOWF: 'SAFETY_PROMPT_SHOWF',
+};
+
+// Safety Prompt Component
+const SafetyPrompt = ({ visible, onClose, onParentalOverride }) => {
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [password, setPassword] = useState('');
+  const [verifying, setVerifying] = useState(false);
+
+  const handleParentalAccess = async () => {
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter the parental password');
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      const storedPassword = await AsyncStorage.getItem(STORAGE_KEYS.PARENT_PASSWORD);
+      if (password === storedPassword) {
+        onParentalOverride();
+        setPassword('');
+        setShowPasswordInput(false);
+      } else {
+        Alert.alert('Error', 'Incorrect parental password');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to verify password');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const resetForm = () => {
+    setShowPasswordInput(false);
+    setPassword('');
+    setVerifying(false);
+  };
+
+  useEffect(() => {
+    if (!visible) {
+      resetForm();
+    }
+  }, [visible]);
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={() => {}} // Prevent closing without password
+    >
+      <View style={styles.safetyModalOverlay}>
+        <View style={styles.safetyModalContainer}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Header */}
+            <View style={styles.safetyHeader}>
+              <View style={styles.safetyIconContainer}>
+                <Ionicons name="shield-checkmark" size={32} color={ACCENT_COLOR} />
+              </View>
+              <Text style={styles.safetyTitle}>Parental Supervision Required</Text>
+            </View>
+
+            {/* Safety Guidelines */}
+            <View style={styles.safetyContent}>
+              <Text style={styles.safetySubtitle}>Before allowing comments, please remember:</Text>
+              
+              <View style={styles.safetyPoint}>
+                <Ionicons name="lock-closed" size={16} color={ACCENT_COLOR} />
+                <Text style={styles.safetyPointText}>
+                  <Text style={styles.bold}>Never share personal information</Text> like your real name, address, phone number, or school
+                </Text>
+              </View>
+
+              <View style={styles.safetyPoint}>
+                <Ionicons name="flag" size={16} color={ACCENT_COLOR} />
+                <Text style={styles.safetyPointText}>
+                  <Text style={styles.bold}>Report inappropriate comments</Text> that make you uncomfortable or seem suspicious
+                </Text>
+              </View>
+
+              <View style={styles.safetyPoint}>
+                <Ionicons name="people" size={16} color={ACCENT_COLOR} />
+                <Text style={styles.safetyPointText}>
+                  <Text style={styles.bold}>Talk to a parent or guardian</Text> if someone asks to meet you or sends strange messages
+                </Text>
+              </View>
+
+              <View style={styles.safetyPoint}>
+                <Ionicons name="heart" size={16} color={ACCENT_COLOR} />
+                <Text style={styles.safetyPointText}>
+                  <Text style={styles.bold}>Be kind and respectful</Text> to others in your comments
+                </Text>
+              </View>
+
+              <View style={styles.safetyPoint}>
+                <Ionicons name="alert-circle" size={16} color={ACCENT_COLOR} />
+                <Text style={styles.safetyPointText}>
+                  <Text style={styles.bold}>Think before you post</Text> - comments can be seen by many people
+                </Text>
+              </View>
+            </View>
+
+            {/* Parental Access Section - Always show, make it more prominent */}
+            <View style={styles.requiredParentalSection}>
+              <Text style={styles.requiredParentalTitle}>
+                Parental Password Required to Continue
+              </Text>
+              
+              {!showPasswordInput ? (
+                <TouchableOpacity 
+                  style={styles.showPasswordButton}
+                  onPress={() => setShowPasswordInput(true)}
+                >
+                  <Ionicons name="key" size={20} color="white" />
+                  <Text style={styles.showPasswordButtonText}>Enter Password</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.parentalInputContainer}>
+                  <Text style={styles.parentalInputLabel}>Enter Parental Password:</Text>
+                  <TextInput
+                    style={styles.parentalInput}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoFocus={true}
+                    editable={!verifying}
+                  />
+                  <View style={styles.parentalInputButtons}>
+                    <TouchableOpacity 
+                      style={styles.parentalCancelButton}
+                      onPress={() => setShowPasswordInput(false)}
+                      disabled={verifying}
+                    >
+                      <Text style={styles.parentalCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[
+                        styles.parentalSubmitButton,
+                        (!password.trim() || verifying) && styles.disabledButton
+                      ]}
+                      onPress={handleParentalAccess}
+                      disabled={verifying || !password.trim()}
+                    >
+                      {verifying ? (
+                        <ActivityIndicator size="small" color="white" />
+                      ) : (
+                        <Text style={styles.parentalSubmitText}>Verify & Continue</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 // Reusable Components
 const LoadingState = ({ message = "Loading..." }) => (
   <View style={styles.loadingContainer}>
@@ -312,6 +477,11 @@ const PostDetails = ({ route }) => {
   // Context menu state
   const [showContextMenu, setShowContextMenu] = useState(false);
 
+  // Safety prompt states
+  const [showSafetyPrompt, setShowSafetyPrompt] = useState(false);
+  const [safetyPromptPassed, setSafetyPromptPassed] = useState(false);
+  const [parentalOverride, setParentalOverride] = useState(false);
+
   const textInputRef = useRef(null);
 
   // Get user ID from AsyncStorage
@@ -331,10 +501,55 @@ const PostDetails = ({ route }) => {
       setPost(data);
       setLiked(data.liked_by_user);
       setLikeCount(data.like_count || 0);
-      // Fix: Update followsUser state from the fetched data
       setFollowsUser(data.user_profile?.followed_by_user || false);
     }
   }, [data]);
+
+  // Check if safety prompt should be shown when trying to comment
+  const checkSafetyPrompt = async () => {
+    if (safetyPromptPassed || parentalOverride) {
+      return true;
+    }
+
+    try {
+      const lastShown = await AsyncStorage.getItem(STORAGE_KEYS.SAFETY_PROMPT_SHOWF);
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      
+      // Show prompt if never shown or shown more than 24 hours ago
+      if (!lastShown || parseInt(lastShown) < oneDayAgo) {
+        setShowSafetyPrompt(true);
+        return false;
+      } else {
+        setSafetyPromptPassed(true);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error checking safety prompt:', error);
+      setShowSafetyPrompt(true);
+      return false;
+    }
+  };
+
+  // Handle safety prompt close
+  const handleSafetyPromptClose = () => {
+    setShowSafetyPrompt(false);
+    setSafetyPromptPassed(true);
+    // Focus on input after prompt is closed
+    setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 500);
+  };
+
+  // Handle parental override
+  const handleParentalOverride = () => {
+    setShowSafetyPrompt(false);
+    setParentalOverride(true);
+    setSafetyPromptPassed(true);
+    // Focus on input after override
+    setTimeout(() => {
+      textInputRef.current?.focus();
+    }, 500);
+  };
 
   // Fetch comments
   const fetchCommentsData = useCallback(async (pageNum = 1, isRefresh = false) => {
@@ -425,6 +640,24 @@ const PostDetails = ({ route }) => {
     }
   }, [liked, likeCount, userId, id, likingInProgress]);
 
+  // Handle comment focus - check safety prompt first
+  const handleCommentFocus = async () => {
+    if (!userId) {
+      Toast.show({
+        type: 'info',
+        text1: 'Login Required',
+        text2: 'Please log in to comment!',
+        position: 'top',
+      });
+      return;
+    }
+
+    const canProceed = await checkSafetyPrompt();
+    if (canProceed) {
+      textInputRef.current?.focus();
+    }
+  };
+
   // Handle comment submission
   const handleSubmitComment = useCallback(async () => {
     if (!commentText.trim() || isSubmitting || !id) return;
@@ -438,6 +671,10 @@ const PostDetails = ({ route }) => {
       });
       return;
     }
+
+    // Check safety prompt before submitting
+    const canProceed = await checkSafetyPrompt();
+    if (!canProceed) return;
 
     try {
       setIsSubmitting(true);
@@ -467,7 +704,7 @@ const PostDetails = ({ route }) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [commentText, isSubmitting, id, userId]);
+  }, [commentText, isSubmitting, id, userId, checkSafetyPrompt]);
 
   // Handle comment deletion
   const handleDeleteComment = useCallback(async (commentId, postId) => {
@@ -559,7 +796,6 @@ const PostDetails = ({ route }) => {
     setShowContextMenu(true);
   }, []);
   
-
   const handleContextMenuClose = useCallback(() => {
     setShowContextMenu(false);
   }, []);
@@ -574,7 +810,6 @@ const PostDetails = ({ route }) => {
   }, []);
 
   const handlePostHidden = useCallback(() => {
-    // Navigate back to the previous screen since the post is hidden
     Toast.show({
       type: 'success',
       text1: 'Post Hidden',
@@ -585,7 +820,6 @@ const PostDetails = ({ route }) => {
   }, [navigation]);
 
   const handleUserBlocked = useCallback(() => {
-    // Navigate back since the user is blocked
     Toast.show({
       type: 'success',
       text1: 'User Blocked',
@@ -595,7 +829,6 @@ const PostDetails = ({ route }) => {
     navigation.goBack();
   }, [navigation]);
   
-
   const handleShare = async (postId) => {
     try {
       const result = await Share.share({
@@ -758,7 +991,7 @@ const PostDetails = ({ route }) => {
                   <InteractionButton
                     icon={<MessageSquare size={22} color="#666" />}
                     text="Comment"
-                    onPress={() => textInputRef.current?.focus()}
+                    onPress={handleCommentFocus}
                   />
 
                   <InteractionButton
@@ -768,7 +1001,7 @@ const PostDetails = ({ route }) => {
                   />
                 </View>
 
-                <View style={styles.divider} />
+                {/* <View style={styles.divider} />
 
                 <View style={styles.commentsSection}>
                   <Text style={styles.commentsHeader}>
@@ -795,7 +1028,7 @@ const PostDetails = ({ route }) => {
                       )}
                     />
                   )}
-                </View>
+                </View> {/* Comments Section */}
               </View>
             </ScrollView>
 
@@ -804,32 +1037,35 @@ const PostDetails = ({ route }) => {
                 ref={textInputRef}
                 style={[
                   styles.commentInput,
-                  (!userId || isSubmitting) && styles.disabledInput
+                  (!userId || isSubmitting || (!safetyPromptPassed && !parentalOverride)) && styles.disabledInput
                 ]}
                 placeholder={
                   !userId
                     ? "Please log in to comment..."
-                    : isSubmitting
-                      ? "Posting comment..."
-                      : "Write a comment..."
+                    : (!safetyPromptPassed && !parentalOverride)
+                      ? "Tap to verify parental permission..."
+                      : isSubmitting
+                        ? "Posting comment..."
+                        : "Write a comment..."
                 }
-                placeholderTextColor={(!userId || isSubmitting) ? "#ccc" : "#999"}
+                placeholderTextColor={(!userId || isSubmitting || (!safetyPromptPassed && !parentalOverride)) ? "#ccc" : "#999"}
                 value={commentText}
                 onChangeText={setCommentText}
+                onFocus={handleCommentFocus}
                 multiline
                 maxLength={500}
                 returnKeyType="send"
                 onSubmitEditing={handleSubmitComment}
                 blurOnSubmit={false}
-                editable={!(!userId || isSubmitting)}
+                editable={userId && (safetyPromptPassed || parentalOverride) && !isSubmitting}
               />
               <TouchableOpacity
                 style={[
                   styles.commentSubmitButton,
-                  (isSubmitting || !commentText.trim() || !userId) && styles.disabledButton
+                  (isSubmitting || !commentText.trim() || !userId || (!safetyPromptPassed && !parentalOverride)) && styles.disabledButton
                 ]}
                 onPress={handleSubmitComment}
-                disabled={isSubmitting || !commentText.trim() || !userId}
+                disabled={isSubmitting || !commentText.trim() || !userId || (!safetyPromptPassed && !parentalOverride)}
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -843,6 +1079,13 @@ const PostDetails = ({ route }) => {
               visible={showFullScreenImage}
               imageUri={fullScreenImageUri}
               onClose={closeFullScreenImage}
+            />
+
+            {/* Safety Prompt */}
+            <SafetyPrompt
+              visible={showSafetyPrompt}
+              onClose={handleSafetyPromptClose}
+              onParentalOverride={handleParentalOverride}
             />
 
             {/* Context Menu */}
@@ -1214,6 +1457,152 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+  },
+
+  // Safety prompt styles
+  safetyModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  safetyModalContainer: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  safetyHeader: {
+    alignItems: 'center',
+    padding: 24,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  safetyIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  safetyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+  },
+  safetyContent: {
+    padding: 20,
+  },
+  safetySubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  safetyPoint: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    paddingRight: 8,
+  },
+  safetyPointText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 20,
+    marginLeft: 12,
+  },
+  bold: {
+    fontWeight: '600',
+    color: '#333',
+  },
+  requiredParentalSection: {
+    margin: 20,
+    marginTop: 12,
+    padding: 20,
+    backgroundColor: '#FFF8F0',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: ACCENT_COLOR,
+  },
+  requiredParentalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  showPasswordButton: {
+    backgroundColor: ACCENT_COLOR,
+    borderRadius: 8,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  showPasswordButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  parentalInputContainer: {
+    marginTop: 12,
+  },
+  parentalInputLabel: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  parentalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: 'white',
+    marginBottom: 12,
+  },
+  parentalInputButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  parentalCancelButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 6,
+    marginRight: 8,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+  },
+  parentalCancelText: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  parentalSubmitButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 6,
+    marginLeft: 8,
+    backgroundColor: ACCENT_COLOR,
+    alignItems: 'center',
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  parentalSubmitText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 
