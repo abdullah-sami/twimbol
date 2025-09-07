@@ -20,6 +20,7 @@ import { ParentalControlProvider, TimeLimitChecker, TimeRestrictionChecker } fro
 import { getRandomColor } from '@/components/color';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CommentsModal from '@/components/comments/comments';
+import ContextMenu from '@/components/post/contextmenu';
 
 const { height } = Dimensions.get('window');
 
@@ -95,13 +96,35 @@ const ReelsPlayer = ({ route }) => {
       }
     }
   }).current;
- 
+
   // Update the reelsData state for follow action - MOVED OUTSIDE useEffect
-  const updateReelFollowStatus = useCallback(()=>{
+  const updateReelFollowStatus = useCallback(() => {
     refetchData();
     setReelsData(fetchedReelsData);
 
   }, [refetchData, setReelsData, fetchedReelsData]);
+
+  // Handle post hidden from context menu
+  const handlePostHidden = useCallback((postId) => {
+    setReelsData(prevData => prevData.filter(reel => reel.post !== postId));
+    Toast.show({
+      type: 'success',
+      text1: 'Post Hidden',
+      text2: 'The post has been hidden from your feed.',
+      position: 'top',
+    });
+  }, []);
+
+  // Handle user blocked from context menu
+  const handleUserBlocked = useCallback((userId) => {
+    setReelsData(prevData => prevData.filter(reel => reel.created_by !== userId));
+    Toast.show({
+      type: 'success',
+      text1: 'User Blocked',
+      text2: 'You will no longer see posts from this user.',
+      position: 'top',
+    });
+  }, []);
 
   // Play/pause videos when active index changes
   useEffect(() => {
@@ -167,6 +190,9 @@ const ReelsPlayer = ({ route }) => {
                     }}
                     userId={userId}
                     updateFollowStatus={updateReelFollowStatus}
+                    onPostHidden={handlePostHidden}
+                    onUserBlocked={handleUserBlocked}
+                    allReels={reelsData}
                   />
                 )}
                 pagingEnabled
@@ -194,7 +220,7 @@ const ReelsPlayer = ({ route }) => {
   );
 };
 
-const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus }) => {
+const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus, onPostHidden, onUserBlocked, allReels }) => {
   const videoRef = useRef(null);
   const doubleTapRef = useRef();
   const scale = useSharedValue(1);
@@ -215,6 +241,9 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
   const [showToast, setShowToast] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
+  // Context menu state
+  const [showContextMenu, setShowContextMenu] = useState(false);
+
   // Mock data for UI display
   const engagementData = {
     comments: commentsCount,
@@ -223,6 +252,24 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
     username: `${video.user_profile.user.first_name} ${video.user_profile.user.last_name || ''}` || 'User',
     description: video.reel_description || 'Ooey - So Sick of Love',
     pp: video.user_profile.user.profile_pic ? `${TWIMBOL_API_CONFIG.BASE_URL}${video.user_profile.user.profile_pic}` : 'https://randomuser.me/api/portraits/men/32.jpg'
+  };
+
+  // FIXED: Create proper post object structure for ContextMenu
+  const contextMenuPost = {
+    id: video.post, // Use video.post as the ID
+    post: video.post, // Keep original field for compatibility
+    user_profile: {
+      user: {
+        id: video.user_profile.user.id,
+        first_name: video.user_profile.user.first_name,
+        last_name: video.user_profile.user.last_name,
+        profile_pic: video.user_profile.user.profile_pic
+      },
+      followed_by_user: video.user_profile.followed_by_user
+    },
+    created_by: video.created_by, // Add this field which is used in blocking
+    reel_description: video.reel_description,
+    created_at: video.created_at
   };
 
   // Handle share functionality
@@ -287,6 +334,60 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
 
   const [profileBorderColor] = useState(getRandomColor());
 
+  // Context menu handlers
+  const handleMoreOptions = useCallback(() => {
+    // Pause video when opening context menu
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pauseAsync().catch(console.error);
+      setIsPlaying(false);
+    }
+    setShowContextMenu(true);
+  }, [isPlaying]);
+
+  const handleContextMenuClose = useCallback(() => {
+    setShowContextMenu(false);
+
+    // Resume video when closing context menu if it was active
+    if (isActive && videoRef.current) {
+      setTimeout(() => {
+        videoRef.current.playAsync().catch(console.error);
+        setIsPlaying(true);
+      }, 300);
+    }
+  }, [isActive]);
+
+  const showToastMessage = useCallback((message) => {
+    setToastMessage(message);
+    setShowToast(true);
+
+    Animated.sequence([
+      Animated.timing(toastOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.delay(2000),
+      Animated.timing(toastOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setShowToast(false));
+  }, [toastOpacity]);
+
+  // FIXED: Handle post hidden - use video.post instead of video.id
+  const handlePostHidden = useCallback(() => {
+    console.log('Post hidden:', video.post);
+    onPostHidden(video.post);
+  }, [video.post, onPostHidden]);
+
+  // FIXED: Handle user blocked - use proper user ID
+  const handleUserBlocked = useCallback(() => {
+    const userIdToBlock = video.user_profile?.user?.id || video.created_by;
+    console.log('User blocked:', userIdToBlock);
+    onUserBlocked(userIdToBlock);
+  }, [video.user_profile?.user?.id, video.created_by, onUserBlocked]);
+
   // Set up video ref
   useEffect(() => {
     if (videoRef.current) {
@@ -311,10 +412,10 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
 
   // Handle active state changes
   useEffect(() => {
-    if (!showComments) {
+    if (!showComments && !showContextMenu) {
       setIsPlaying(isActive);
     }
-  }, [isActive, showComments]);
+  }, [isActive, showComments, showContextMenu]);
 
   // Handle double tap animation - FIXED: Use ReanimatedAnimated for animated style
   const animatedStyle = useAnimatedStyle(() => ({
@@ -371,7 +472,7 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
   const toggleSaved = useCallback(() => setSaved(prev => !prev), []);
 
   const togglePlayPause = useCallback(() => {
-    if (showComments) return;
+    if (showComments || showContextMenu) return;
 
     if (isPlaying) {
       videoRef.current?.pauseAsync();
@@ -383,26 +484,7 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
 
     setShowPlayIcon(true);
     setTimeout(() => setShowPlayIcon(false), 800);
-  }, [isPlaying, showComments]);
-
-  const showToastMessage = useCallback((message) => {
-    setToastMessage(message);
-    setShowToast(true);
-
-    Animated.sequence([
-      Animated.timing(toastOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.delay(2000),
-      Animated.timing(toastOpacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => setShowToast(false));
-  }, [toastOpacity]);
+  }, [isPlaying, showComments, showContextMenu]);
 
   const handleFollowPress = useCallback(async (user_id) => {
     if (!user_id) return;
@@ -449,7 +531,6 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
       }
     }
   }, []);
-  
 
   const displayDuration = `${formatTimeToMMSS(currentPosition)} / ${formatTimeToMMSS(videoDuration)}`;
 
@@ -459,13 +540,13 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
         <TapGestureHandler
           waitFor={doubleTapRef}
           onActivated={togglePlayPause}
-          enabled={!showComments}
+          enabled={!showComments && !showContextMenu}
         >
           <TapGestureHandler
             ref={doubleTapRef}
             numberOfTaps={2}
             onActivated={onDoubleTap}
-            enabled={!showComments}
+            enabled={!showComments && !showContextMenu}
           >
             <View>
               <Video
@@ -473,7 +554,7 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
                 source={{ uri: video.video_url }}
                 style={styles.video}
                 resizeMode="cover"
-                shouldPlay={isActive && isPlaying && !showComments}
+                shouldPlay={isActive && isPlaying && !showComments && !showContextMenu}
                 isLooping
                 useNativeControls={false}
                 onPlaybackStatusUpdate={onPlaybackStatusUpdate}
@@ -510,6 +591,25 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
             ]}
           />
         </View>
+
+        {/* More Options Button */}
+        <TouchableOpacity
+          style={styles.moreOptionsButton}
+          onPress={handleMoreOptions}
+        >
+          <Text style={styles.moreOptionsText}>•••</Text>
+        {/* FIXED: Context Menu with proper post structure and allPosts */}
+        <ContextMenu
+          visible={showContextMenu}
+          onClose={handleContextMenuClose}
+          post={contextMenuPost}
+          userId={userId}
+          onPostHidden={handlePostHidden}
+          onUserBlocked={handleUserBlocked}
+          showToastMessage={showToastMessage}
+          allPosts={allReels} // Pass all reels for user blocking functionality
+        />
+        </TouchableOpacity>
 
         <View style={styles.rightOverlay}>
           <TouchableOpacity
@@ -576,7 +676,10 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
               />
               <Text style={styles.username}>{engagementData.username}</Text>
             </View>
-            <TouchableOpacity style={[styles.followButton, userId ? {} : { display: 'none' }]} onPress={() => handleFollowPress(video?.created_by)}>
+            <TouchableOpacity
+              style={[styles.followButton, userId ? {} : { display: 'none' }]}
+              onPress={() => handleFollowPress(video?.created_by)}
+            >
               <Ionicons name={followsUser ? "checkmark" : "person-add-outline"} size={20} color="white" />
             </TouchableOpacity>
           </View>
@@ -597,6 +700,7 @@ const VideoItem = ({ video, isActive, setVideoRef, userId, updateFollowStatus })
             </View>
           )}
         </View>
+
 
         {showToast && (
           <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
@@ -675,6 +779,21 @@ const styles = StyleSheet.create({
   progressBar: {
     height: '100%',
     backgroundColor: '#FF4B4B',
+  },
+  moreOptionsButton: {
+    position: 'absolute',
+    top: 60,
+    right: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 10,
+  },
+  moreOptionsText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    transform: [{ rotate: '90deg' }],
   },
   rightOverlay: {
     position: 'absolute',

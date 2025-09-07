@@ -19,7 +19,7 @@ const STORAGE_KEYS = {
     WATCH_HISTORY: 'watch_history',
     BLOCKED_USERS: 'blocked_users',
     DAILY_USAGE: 'daily_usage',
-};
+}; 
 
 // Context for parental controls
 const ParentalControlContext = createContext();
