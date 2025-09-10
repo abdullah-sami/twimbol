@@ -18,7 +18,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const ACCENT_COLOR = '#FF6E42';
 const STORAGE_KEYS = {
   PARENT_PASSWORD: 'parent_password',
-  SAFETY_PROMPT_SHOWF: 'SAFETY_PROMPT_SHOWF',
+  SAFETY_PROMPT_SHOWN: 'SAFETY_PROMPT_SHOWN',
 };
 
 // Safety Prompt Component
@@ -37,6 +37,8 @@ const SafetyPrompt = ({ visible, onClose, onParentalOverride }) => {
     try {
       const storedPassword = await AsyncStorage.getItem(STORAGE_KEYS.PARENT_PASSWORD);
       if (password === storedPassword) {
+        // Store timestamp when password was verified
+        await AsyncStorage.setItem(STORAGE_KEYS.SAFETY_PROMPT_SHOWN, Date.now().toString());
         onParentalOverride();
         setPassword('');
         setShowPasswordInput(false);
@@ -67,7 +69,7 @@ const SafetyPrompt = ({ visible, onClose, onParentalOverride }) => {
       visible={visible}
       animationType="fade"
       transparent
-      onRequestClose={() => {}} // Prevent closing without password
+      onRequestClose={onClose} // Prevent closing without password
     >
       <View style={styles.safetyModalOverlay}>
         <View style={styles.safetyModalContainer}>
@@ -83,7 +85,7 @@ const SafetyPrompt = ({ visible, onClose, onParentalOverride }) => {
             {/* Safety Guidelines */}
             <View style={styles.safetyContent}>
               <Text style={styles.safetySubtitle}>Before allowing comments, please remember:</Text>
-              
+
               <View style={styles.safetyPoint}>
                 <Ionicons name="lock-closed" size={16} color={ACCENT_COLOR} />
                 <Text style={styles.safetyPointText}>
@@ -125,9 +127,9 @@ const SafetyPrompt = ({ visible, onClose, onParentalOverride }) => {
               <Text style={styles.requiredParentalTitle}>
                 Parental Password Required to Continue
               </Text>
-              
+
               {!showPasswordInput ? (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.showPasswordButton}
                   onPress={() => setShowPasswordInput(true)}
                 >
@@ -148,14 +150,14 @@ const SafetyPrompt = ({ visible, onClose, onParentalOverride }) => {
                     editable={!verifying}
                   />
                   <View style={styles.parentalInputButtons}>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={styles.parentalCancelButton}
                       onPress={() => setShowPasswordInput(false)}
                       disabled={verifying}
                     >
                       <Text style={styles.parentalCancelText}>Cancel</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[
                         styles.parentalSubmitButton,
                         (!password.trim() || verifying) && styles.disabledButton
@@ -477,10 +479,9 @@ const PostDetails = ({ route }) => {
   // Context menu state
   const [showContextMenu, setShowContextMenu] = useState(false);
 
-  // Safety prompt states
+  // Safety prompt states - Fixed boolean type
   const [showSafetyPrompt, setShowSafetyPrompt] = useState(false);
-  const [safetyPromptPassed, setSafetyPromptPassed] = useState(false);
-  const [parentalOverride, setParentalOverride] = useState(false);
+  const [parentalVerified, setParentalVerified] = useState(false);
 
   const textInputRef = useRef(null);
 
@@ -495,6 +496,28 @@ const PostDetails = ({ route }) => {
     fetchUserId();
   }, []);
 
+  // Check parental verification on mount
+  useEffect(() => {
+    const checkParentalVerification = async () => {
+      try {
+        const lastShown = await AsyncStorage.getItem(STORAGE_KEYS.SAFETY_PROMPT_SHOWN);
+        const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+        // Consider verified if shown within last 24 hours
+        if (lastShown && parseInt(lastShown) > oneDayAgo) {
+          setParentalVerified(true);
+        } else {
+          setParentalVerified(false);
+        }
+      } catch (error) {
+        console.error('Error checking parental verification:', error);
+        setParentalVerified(false);
+      }
+    };
+
+    checkParentalVerification();
+  }, []);
+
   // Update post data and follow status when data changes
   useEffect(() => {
     if (data) {
@@ -505,47 +528,11 @@ const PostDetails = ({ route }) => {
     }
   }, [data]);
 
-  // Check if safety prompt should be shown when trying to comment
-  const checkSafetyPrompt = async () => {
-    if (safetyPromptPassed || parentalOverride) {
-      return true;
-    }
-
-    try {
-      const lastShown = await AsyncStorage.getItem(STORAGE_KEYS.SAFETY_PROMPT_SHOWF);
-      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-      
-      // Show prompt if never shown or shown more than 24 hours ago
-      if (!lastShown || parseInt(lastShown) < oneDayAgo) {
-        setShowSafetyPrompt(true);
-        return false;
-      } else {
-        setSafetyPromptPassed(true);
-        return true;
-      }
-    } catch (error) {
-      console.error('Error checking safety prompt:', error);
-      setShowSafetyPrompt(true);
-      return false;
-    }
-  };
-
-  // Handle safety prompt close
-  const handleSafetyPromptClose = () => {
-    setShowSafetyPrompt(false);
-    setSafetyPromptPassed(true);
-    // Focus on input after prompt is closed
-    setTimeout(() => {
-      textInputRef.current?.focus();
-    }, 500);
-  };
-
-  // Handle parental override
+  // Handle safety prompt close with verification
   const handleParentalOverride = () => {
     setShowSafetyPrompt(false);
-    setParentalOverride(true);
-    setSafetyPromptPassed(true);
-    // Focus on input after override
+    setParentalVerified(true);
+    // Focus on input after verification
     setTimeout(() => {
       textInputRef.current?.focus();
     }, 500);
@@ -640,8 +627,8 @@ const PostDetails = ({ route }) => {
     }
   }, [liked, likeCount, userId, id, likingInProgress]);
 
-  // Handle comment focus - check safety prompt first
-  const handleCommentFocus = async () => {
+  // Handle comment focus - Fixed to prevent bypass
+  const handleCommentFocus = () => {
     if (!userId) {
       Toast.show({
         type: 'info',
@@ -652,10 +639,13 @@ const PostDetails = ({ route }) => {
       return;
     }
 
-    const canProceed = await checkSafetyPrompt();
-    if (canProceed) {
-      textInputRef.current?.focus();
+    if (!parentalVerified) {
+      setShowSafetyPrompt(true);
+      return;
     }
+
+    // Only focus if parental verification is complete
+    textInputRef.current?.focus();
   };
 
   // Handle comment submission
@@ -672,9 +662,11 @@ const PostDetails = ({ route }) => {
       return;
     }
 
-    // Check safety prompt before submitting
-    const canProceed = await checkSafetyPrompt();
-    if (!canProceed) return;
+    // Check parental verification before submitting
+    if (!parentalVerified) {
+      setShowSafetyPrompt(true);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -704,7 +696,7 @@ const PostDetails = ({ route }) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [commentText, isSubmitting, id, userId, checkSafetyPrompt]);
+  }, [commentText, isSubmitting, id, userId, parentalVerified]);
 
   // Handle comment deletion
   const handleDeleteComment = useCallback(async (commentId, postId) => {
@@ -766,7 +758,7 @@ const PostDetails = ({ route }) => {
     setShowFullScreenImage(false);
     setFullScreenImageUri('');
   }, []);
-
+  
   const handleFollowPress = useCallback(async (user_id) => {
     if (!user_id) return;
 
@@ -795,6 +787,7 @@ const PostDetails = ({ route }) => {
   const handleMoreOptions = useCallback(() => {
     setShowContextMenu(true);
   }, []);
+  
   
   const handleContextMenuClose = useCallback(() => {
     setShowContextMenu(false);
@@ -828,7 +821,7 @@ const PostDetails = ({ route }) => {
     });
     navigation.goBack();
   }, [navigation]);
-  
+
   const handleShare = async (postId) => {
     try {
       const result = await Share.share({
@@ -900,6 +893,10 @@ const PostDetails = ({ route }) => {
   const userName = user_profile?.user?.first_name + ' ' + user_profile?.user?.last_name;
   const username = post?.username?.username || '';
   const user_id = post?.user_id || user_profile?.user?.id;
+
+  // Calculate if user can interact with comments
+  const canInteractWithComments = Boolean(userId && parentalVerified);
+
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -1001,7 +998,7 @@ const PostDetails = ({ route }) => {
                   />
                 </View>
 
-                {/* <View style={styles.divider} />
+                <View style={styles.divider} />
 
                 <View style={styles.commentsSection}>
                   <Text style={styles.commentsHeader}>
@@ -1028,7 +1025,7 @@ const PostDetails = ({ route }) => {
                       )}
                     />
                   )}
-                </View> {/* Comments Section */}
+                </View>
               </View>
             </ScrollView>
 
@@ -1037,18 +1034,18 @@ const PostDetails = ({ route }) => {
                 ref={textInputRef}
                 style={[
                   styles.commentInput,
-                  (!userId || isSubmitting || (!safetyPromptPassed && !parentalOverride)) && styles.disabledInput
+                  !canInteractWithComments && styles.disabledInput
                 ]}
                 placeholder={
                   !userId
                     ? "Please log in to comment..."
-                    : (!safetyPromptPassed && !parentalOverride)
+                    : !parentalVerified
                       ? "Tap to verify parental permission..."
                       : isSubmitting
                         ? "Posting comment..."
                         : "Write a comment..."
                 }
-                placeholderTextColor={(!userId || isSubmitting || (!safetyPromptPassed && !parentalOverride)) ? "#ccc" : "#999"}
+                placeholderTextColor={!canInteractWithComments ? "#ccc" : "#999"}
                 value={commentText}
                 onChangeText={setCommentText}
                 onFocus={handleCommentFocus}
@@ -1057,15 +1054,15 @@ const PostDetails = ({ route }) => {
                 returnKeyType="send"
                 onSubmitEditing={handleSubmitComment}
                 blurOnSubmit={false}
-                editable={userId && (safetyPromptPassed || parentalOverride) && !isSubmitting}
+                editable={canInteractWithComments && !isSubmitting}
               />
               <TouchableOpacity
                 style={[
                   styles.commentSubmitButton,
-                  (isSubmitting || !commentText.trim() || !userId || (!safetyPromptPassed && !parentalOverride)) && styles.disabledButton
+                  (isSubmitting || !commentText.trim() || !canInteractWithComments) && styles.disabledButton
                 ]}
                 onPress={handleSubmitComment}
-                disabled={isSubmitting || !commentText.trim() || !userId || (!safetyPromptPassed && !parentalOverride)}
+                disabled={isSubmitting || !commentText.trim() || !canInteractWithComments}
               >
                 {isSubmitting ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -1084,7 +1081,7 @@ const PostDetails = ({ route }) => {
             {/* Safety Prompt */}
             <SafetyPrompt
               visible={showSafetyPrompt}
-              onClose={handleSafetyPromptClose}
+              onClose={() => setShowSafetyPrompt(false)}
               onParentalOverride={handleParentalOverride}
             />
 
