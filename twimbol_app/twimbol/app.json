@@ -28,7 +28,7 @@
       }
     },
     "android": {
-      "package": "com.app.rafid.twimbol",
+      "package": "com.web.rafid.twimbol",
       "icon": "./assets/icons/logo_icon.png",
       "intentFilters": [
         {

@@ -18,7 +18,6 @@ import WatchScreen from '@/app/(tabs)/watch';
 
 
 
-
 const Tab = createBottomTabNavigator();
 
 // Dummy icons object (replace with your real icons object)
