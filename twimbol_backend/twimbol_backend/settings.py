@@ -29,7 +29,8 @@ SECRET_KEY = 'django-insecure-zacmm9e2l*c=smobi=%x2#8ql%-_7#kn9gjct%)4f8$qg*a^@a
 DEBUG = True
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['0.0.0.0', 'localhost', '127.0.0.1']
+
 
 
 # Application definition
@@ -54,7 +55,6 @@ INSTALLED_APPS = [
     'parentalcontrols',
     'cloudinary',
     'cloudinary_storage',
-    'routine',
 ] 
 
 MIDDLEWARE = [

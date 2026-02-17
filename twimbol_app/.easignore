@@ -3,8 +3,12 @@
 ../bin/
 ../Pipfile*
 ../requirements.txt
-
+node_modules
 ../.git
 production
 -
 
+twimbol/node_modules
+twimbol/@web.rafid__twimbol.jks
+
+twimbol/@web.rafid__twimbol_OLD_1.jks

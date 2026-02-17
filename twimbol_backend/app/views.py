@@ -494,6 +494,7 @@ def home(request):
 
     posts = Post.objects.all().order_by('-id')
     reels = Youtube_Reels_Data.objects.all().order_by('-created_at')
+    
     context = {
         "posts": posts,
         "reels": reels,

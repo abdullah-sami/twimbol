@@ -75,16 +75,13 @@ django-filter = "*"
 django-extensions = "*"
 djangorestframework = "*"
 djangorestframework-simplejwt = "*"
-<<<<<<< HEAD
 django-cors-headers = "*"
 cloudinary = "*"
 python-dotenv = "*"
 django-cloudinary-storage = "*"
-=======
 google-auth-oauthlib = "*"
->>>>>>> 5b0fbc5ffc30db7e6f593372f85ccb7d121db10e
 
 [dev-packages]
 
 [requires]
-python_version = "3.13"
+python_version = "3.10"

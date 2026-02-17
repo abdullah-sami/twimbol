@@ -20,7 +20,7 @@ from rest_framework_simplejwt.views import (
 
 router = routers.DefaultRouter()
 
-
+ 
 
 
 urlpatterns = [
@@ -31,7 +31,6 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('events/', include('event.urls')),
     path('messages/', include('message.urls')),
-    path('routine/', include('routine.urls')),
     path('api/parent/', include('parentalcontrols.urls')),
 
 
