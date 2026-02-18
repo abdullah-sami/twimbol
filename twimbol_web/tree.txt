@@ -1,20 +1,63 @@
 .
 ├── readme.md
+├── tree.txt
 └── twimbol_web
     ├── eslint.config.js
     ├── index.html
-    
     ├── package.json
     ├── package-lock.json
     ├── public
     │   └── vite.svg
     ├── README.md
     ├── src
+    │   ├── api
+    │   │   ├── auth.js
+    │   │   ├── axios.js
+    │   │   ├── events.js
+    │   │   ├── notifications.js
+    │   │   ├── posts.js
+    │   │   ├── reels.js
+    │   │   └── user.js
     │   ├── App.css
     │   ├── App.jsx
     │   ├── assets
     │   │   └── react.svg
+    │   ├── components
+    │   │   ├── auth
+    │   │   │   └── ProtectedRoute.jsx
+    │   │   ├── layout
+    │   │   │   ├── Navbar.jsx
+    │   │   │   └── Sidebar.jsx
+    │   │   ├── pages
+    │   │   │   ├── ApplyCreator.jsx
+    │   │   │   ├── CreatorDashboard.jsx
+    │   │   │   ├── EditProfile.jsx
+    │   │   │   ├── Events.jsx
+    │   │   │   ├── ForgotPassword.jsx
+    │   │   │   ├── Home.jsx
+    │   │   │   ├── Landing.jsx
+    │   │   │   ├── Login.jsx
+    │   │   │   ├── Posts.jsx
+    │   │   │   ├── ReadPost.jsx
+    │   │   │   ├── ReelWatch.jsx
+    │   │   │   ├── Settings.jsx
+    │   │   │   ├── Signup.jsx
+    │   │   │   └── UserProfile.jsx
+    │   │   ├── post
+    │   │   │   ├── PostActions.jsx
+    │   │   │   └── PostCard.jsx
+    │   │   ├── reel
+    │   │   │   ├── ReelCard.jsx
+    │   │   │   └── ReelComments.jsx
+    │   │   └── ui
+    │   │       ├── Avatar.jsx
+    │   │       ├── Button.jsx
+    │   │       └── Modal.jsx
     │   ├── index.css
-    │   └── main.jsx
+    │   ├── main.jsx
+    │   └── store
+    │       ├── authStore.js
+    │       └── usePagination.js
     └── vite.config.js
 
+744 directories, 7836 files

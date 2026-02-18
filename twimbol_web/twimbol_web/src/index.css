@@ -1,1 +1,16 @@
 @import "tailwindcss";
+
+/* Custom theme variables using CSS variables */
+@theme {
+  --color-brand: #FF6E42;
+  --color-brand-light: #FCF3D4;
+  --color-surface: #F0F0F0;
+  --color-txt: #121212;
+  --color-txt-secondary: #7D7D7D;
+  --color-muted: #6b6560;
+}
+
+/* Global styles */
+body {
+  @apply antialiased;
+}
