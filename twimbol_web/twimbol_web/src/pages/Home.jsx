@@ -223,7 +223,7 @@ export default function Home() {
                       reel={reel}
                       onClick={() => {
                         // Navigate to reel detail page
-                        window.location.href = `/reels/${reel.post}`;
+                        window.location.href = `/reel/${reel.post}`;
                       }}
                     />
                   </div>

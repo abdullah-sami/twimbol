@@ -10,7 +10,7 @@ import Login from './pages/Login'
 
 // // Protected Pages
 import Home from './pages/Home'
-// import ReelWatch from './pages/ReelWatch'
+import ReelWatch from './pages/ReelWatch'
 // import Posts from './pages/Posts'
 // import ReadPost from './pages/ReadPost'
 // import UserProfile from './pages/UserProfile'
@@ -32,8 +32,9 @@ export default function App() {
 
         {/* Protected */}
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        {/* <Route path="/reel/:id" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
-        <Route path="/posts" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
+        <Route path="/reel" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
+        <Route path="/reel/:id" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
+        {/* <Route path="/post" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
         <Route path="/post/:id" element={<ProtectedRoute><ReadPost /></ProtectedRoute>} />
         <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

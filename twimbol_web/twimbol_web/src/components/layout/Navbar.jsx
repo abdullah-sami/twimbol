@@ -6,9 +6,9 @@ import { onNotifications, startNotificationPolling } from "../../api/notificatio
 
 const NAV_LINKS = [
     { label: "Home", href: "/home" },
-    { label: "Posts", href: "/posts" },
-    { label: "Reels", href: "/reels" },
-    { label: "Events", href: "/events" },
+    { label: "Posts", href: "/post" },
+    { label: "Reels", href: "/reel" },
+    { label: "Events", href: "/event" },
 ];
 
 /**
@@ -106,7 +106,7 @@ export default function NavBar({ activePage = "Reels" }) {
                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
 
                         <div className="flex items-center gap-1">
-                            <img src="/public/logo.png" alt="Twimbol Logo" className="w-24" />
+                            <img src="/logo.png" alt="Twimbol Logo" className="w-24" />
                         </div>
 
                     </div>
