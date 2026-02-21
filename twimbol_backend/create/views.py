@@ -612,7 +612,7 @@ class ReelCloudinaryViewSet(ModelViewSet):
                 'title': title,
                 'video_url': upload_result['secure_url'],
                 'reel_description': reel_description,
-                'thumbnail_url': upload_result.get('thumbnail_url', 'https://picsum.photos/90/160'),
+                'thumbnail_url': upload_result['secure_url'].replace('.mp4', '.png'),
                 'created_by': request.user.id,
                 'post': post.id
             })
