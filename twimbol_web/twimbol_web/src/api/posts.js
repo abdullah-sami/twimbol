@@ -32,8 +32,8 @@ export const getComments = (postId) =>
 export const addComment = (postId, comment) =>
   api.post(`/api/posts/${postId}/comments/`, { comment });
 
-export const deleteComment = (commentId) =>
-  api.delete("/api/posts/comments/delete/", {
+export const deleteComment = (postId, commentId) =>
+  api.delete(`/api/posts/${postId}/comments/`, {
     data: { comment_id: commentId },
   });
 

@@ -39,7 +39,7 @@ export default function Menu({ profile, onClose }) {
   };
 
   const menuItems = [
-    { icon: "👤", label: "My Profile", href: "/profile" },
+    // { icon: "👤", label: "My Profile", href: "/profile" },
     { icon: "✏️", label: "Edit Profile", href: "/profile/edit" },
     { icon: "🔔", label: "Notification Settings", href: "/settings/notifications" },
     { icon: "🔒", label: "Change Password", href: "/settings/password" },

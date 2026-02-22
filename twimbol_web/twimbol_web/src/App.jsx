@@ -17,6 +17,7 @@ import Posts from './pages/Posts'
 // import Settings from './pages/Settings'
 // import ApplyCreator from './pages/ApplyCreator'
 // import CreatorDashboard from './pages/CreatorDashboard'
+import EditProfile from './pages/EditProfile'
 
 
 
@@ -35,6 +36,8 @@ export default function App() {
         <Route path="/reel" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
         <Route path="/reel/:id" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
         <Route path="/post" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
+        <Route path="/post/:id" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
+        <Route path="/profile/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         {/* <Route path="/post/:id" element={<ProtectedRoute><ReadPost /></ProtectedRoute>} />
         <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

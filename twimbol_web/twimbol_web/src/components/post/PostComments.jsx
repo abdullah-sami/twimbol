@@ -52,7 +52,7 @@ export default function CommentsModal({ postId, isOpen, onClose, commentCount })
 
   const handleDelete = async (commentId) => {
     try {
-      await deleteComment(commentId);
+      await deleteComment(postId, commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch (err) {
       console.error(err);
