@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../api/auth";
+import { useAuthStore } from "../store/authStore";
 
 const ConcentricCircles = ({ className, color = "#FF6E42" }) => (
   <svg
@@ -30,6 +31,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { setAuth } = useAuthStore();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -40,6 +42,9 @@ const Login = () => {
       if (data.access) localStorage.setItem('access_token', data.access);
       if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
       if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+
+      await setAuth(data.access, data.refresh);
+
       navigate('/home');
     } catch (err) {
       setError(err.response?.data?.detail || 'Login failed');
