@@ -26,7 +26,7 @@ const ConcentricCircles = ({ className, color = "#FF6E42" }) => (
 );
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -38,7 +38,7 @@ const Login = () => {
     setError(null);
     setLoading(true);
     try {
-      const { data } = await login(email, password);
+      const { data } = await login(username, password);
       if (data.access) localStorage.setItem('access_token', data.access);
       if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
       if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
@@ -59,7 +59,7 @@ const Login = () => {
 
       {/* Navbar */}
       <nav className="px-8 py-4">
-        <img src="/public/logo.png" alt="Twimbol Logo" className="w-36" />
+        <img src="/logo.png" alt="Twimbol Logo" className="w-36" />
       </nav>
 
       {/* Decorative circles — top right (partial) */}
@@ -92,9 +92,9 @@ const Login = () => {
             </h1>
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
-              {/* Email field */}
+              {/* Username field */}
               <div className="flex items-center gap-3 border border-gray-300 rounded-md px-4 py-3 bg-white focus-within:border-[#FF6E42] transition-colors">
-                {/* Mail icon */}
+                {/* User icon */}
                 <svg
                   width="20"
                   height="20"
@@ -110,9 +110,9 @@ const Login = () => {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="flex-1 outline-none text-[#121212] placeholder-[#7D7D7D] bg-transparent text-sm"
                   required
                 />

@@ -45,7 +45,7 @@ export default function Notification({ notifications = [], onClose, onUpdate }) 
 
   const handleMarkRead = async (read, id, page, page_item_id) => {
     if (!read) {await markNotificationRead(id);}
-    navigate(`/${page}/${page_item_id}`);
+    navigate(`/${page}/${page_item_id? page_item_id : ""}`);
     onUpdate?.();
   };
 

@@ -5,7 +5,7 @@ import CheckLogin from './components/auth/CheckLogin'
 // Public Pages
 import Landing from './pages/Landing'
 import Login from './pages/Login'
-// import Signup from './pages/Signup'
+import Signup from './pages/Signup'
 // import ForgotPassword from './pages/ForgotPassword'
 
 // // Protected Pages
@@ -29,8 +29,8 @@ export default function App() {
         {/* Public */}
         <Route path="/" element={<CheckLogin><Landing /></CheckLogin>} />
         <Route path="/login" element={<CheckLogin><Login /></CheckLogin>} />
-        {/* <Route path="/signup" element={<CheckLogin><Signup /></CheckLogin>} />
-        <Route path="/forgot-password" element={<CheckLogin><ForgotPassword /></CheckLogin>} /> */}
+        <Route path="/signup" element={<CheckLogin><Signup /></CheckLogin>} />
+        {/* <Route path="/forgot-password" element={<CheckLogin><ForgotPassword /></CheckLogin>} /> */}
 
         {/* Protected */}
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />

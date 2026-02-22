@@ -13,7 +13,7 @@ const Landing = () => {
       <nav className="flex items-center justify-between px-8 py-4">
         <div className="flex flex-col">
           <div className="flex items-center gap-1">
-            <img src="/public/logo.png" alt="Twimbol Logo" className="w-36" />
+            <img src="/logo.png" alt="Twimbol Logo" className="w-36" />
           </div>
         </div>
         <button className="border-2 border-orange-400 text-orange-400 font-semibold px-4 py-1 rounded-full hover:bg-orange-50 transition-colors cursor-pointer text-sm " onClick={gotoLogin}>
