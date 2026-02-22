@@ -166,6 +166,12 @@ export default function EditProfile() {
     <div style={styles.page}>
       {/* ── Left Sidebar ── */}
       <aside style={styles.sidebar}>
+        {/* Back to Home */}
+        <div style={styles.backRow}>
+          <button style={styles.backLink} onClick={() => navigate("/")}>
+            ‹ Back to Home
+          </button>
+        </div>
         {/* Avatar */}
         <div style={styles.avatarSection}>
           <div
@@ -394,12 +400,7 @@ export default function EditProfile() {
           </button>
         </div>
 
-        {/* Back to Home */}
-        <div style={styles.backRow}>
-          <button style={styles.backLink} onClick={() => navigate("/")}>
-            ‹ Back to HOME
-          </button>
-        </div>
+        
       </main>
     </div>
   );
@@ -627,7 +628,8 @@ const styles = {
   // Back
   backRow: {
     display: "flex",
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
+    marginBottom: 20,
   },
   backLink: {
     background: "none",

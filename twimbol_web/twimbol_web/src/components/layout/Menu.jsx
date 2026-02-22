@@ -41,16 +41,16 @@ export default function Menu({ profile, onClose }) {
   const menuItems = [
     // { icon: "👤", label: "My Profile", href: "/profile" },
     { icon: "✏️", label: "Edit Profile", href: "/profile/edit" },
-    { icon: "🔔", label: "Notification Settings", href: "/settings/notifications" },
-    { icon: "🔒", label: "Change Password", href: "/settings/password" },
+    // { icon: "🔔", label: "Notification Settings", href: "/settings/notifications" },
+    // { icon: "🔒", label: "Change Password", href: "/settings/password" },
     ...(userGroup === "visitor"
       ? [{ icon: "🎬", label: "Apply for Creator", href: "/creator/apply" }]
       : []),
     ...(userGroup === "creator" || userGroup === "admin"
       ? [{ icon: "📊", label: "Creator Dashboard", href: "/creator/dashboard" }]
       : []),
-    { icon: "👨‍👩‍👧", label: "Parental Controls", href: "/settings/parental" },
-    { icon: "⚙️", label: "Account Settings", href: "/settings/account" },
+    // { icon: "👨‍👩‍👧", label: "Parental Controls", href: "/settings/parental" },
+    { icon: "⚙️", label: "Settings", href: "/settings" },
   ];
 
   return (
