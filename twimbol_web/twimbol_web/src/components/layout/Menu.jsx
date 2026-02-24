@@ -44,7 +44,7 @@ export default function Menu({ profile, onClose }) {
     // { icon: "🔔", label: "Notification Settings", href: "/settings/notifications" },
     // { icon: "🔒", label: "Change Password", href: "/settings/password" },
     ...(userGroup === "visitor"
-      ? [{ icon: "🎬", label: "Apply for Creator", href: "/creator/apply" }]
+      ? [{ icon: "🎬", label: "Apply for Creator", href: "/creator/dashboard" }]
       : []),
     ...(userGroup === "creator" || userGroup === "admin"
       ? [{ icon: "📊", label: "Creator Dashboard", href: "/creator/dashboard" }]

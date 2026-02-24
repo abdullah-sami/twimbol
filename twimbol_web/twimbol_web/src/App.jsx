@@ -16,7 +16,7 @@ import Posts from './pages/Posts'
 // import UserProfile from './pages/UserProfile'
 import Settings from './pages/Settings'
 // import ApplyCreator from './pages/ApplyCreator'
-// import CreatorDashboard from './pages/CreatorDashboard'
+import CreatorDashboard from './pages/CreatorDashboard'
 import EditProfile from './pages/EditProfile'
 import Events from './pages/Events'
 
@@ -43,8 +43,8 @@ export default function App() {
         <Route path="/event" element={<ProtectedRoute><Events /></ProtectedRoute>} />
         {/* <Route path="/post/:id" element={<ProtectedRoute><ReadPost /></ProtectedRoute>} />
         <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-        <Route path="/creator/apply" element={<ProtectedRoute><ApplyCreator /></ProtectedRoute>} />
-        <Route path="/creator/dashboard" element={<ProtectedRoute><CreatorDashboard /></ProtectedRoute>} /> */}
+        <Route path="/creator/apply" element={<ProtectedRoute><ApplyCreator /></ProtectedRoute>} />*/}
+        <Route path="/creator/dashboard" element={<ProtectedRoute><CreatorDashboard /></ProtectedRoute>} /> 
       </Routes>
     </BrowserRouter>
   )
