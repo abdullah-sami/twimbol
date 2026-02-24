@@ -1,8 +1,8 @@
 # Twimbol Backend — REST API Documentation
 
-> **Base URL:** `https://rafidabdullahsamiweb.pythonanywhere.com`  
-> **Authentication:** JWT (Bearer Token)  
-> **API Prefix:** `/user/api/`, `/create/`, `/api/`, `/api/notifications/`, `/api/parent/`
+> **Base URL:** `https://rafidabdullahsamiweb.pythonanywhere.com`
+> **Authentication:** JWT (Bearer Token)
+> **API Prefix:** `/user/api/`, `/create/api/`, `/api/`, `/api/notifications/`, `/api/parent/`
 
 ---
 
@@ -13,15 +13,18 @@
 3. [Password Management](#3-password-management)
 4. [Posts](#4-posts)
 5. [Reels](#5-reels)
-6. [Post Interactions](#6-post-interactions)
-7. [Comments](#7-comments)
-8. [Creator Application](#8-creator-application)
-9. [Notifications](#9-notifications)
-10. [Parental Controls](#10-parental-controls)
-11. [Search](#11-search)
-12. [Follow & Block](#12-follow--block)
-13. [Data Models](#13-data-models)
-14. [Error Reference](#14-error-reference)
+6. [Videos](#6-videos)
+7. [Post Interactions](#7-post-interactions)
+8. [Comments](#8-comments)
+9. [Creator Content Management](#9-creator-content-management)
+10. [Creator Analytics](#10-creator-analytics)
+11. [Creator Application](#11-creator-application)
+12. [Notifications](#12-notifications)
+13. [Parental Controls](#13-parental-controls)
+14. [Search](#14-search)
+15. [Follow & Block](#15-follow--block)
+16. [Data Models](#16-data-models)
+17. [Error Reference](#17-error-reference)
 
 ---
 
@@ -95,7 +98,7 @@ Refresh an expired access token.
 
 ### `POST /user/logout/`
 
-Log out the current user (session-based; clears server session).
+Log out the current user.
 
 **Auth required:** Yes
 
@@ -188,7 +191,7 @@ Get the authenticated user's own profile.
 
 Update the authenticated user's profile.
 
-**Auth required:** Yes  
+**Auth required:** Yes
 **Content-Type:** `multipart/form-data`
 
 **Request Fields (all optional):**
@@ -357,7 +360,7 @@ Reset password using the 6-digit code received via email.
 
 List all text/image posts (paginated). Excludes posts hidden, reported, or from blocked users.
 
-**Auth required:** Optional (authenticated users get personalized filtering)
+**Auth required:** Optional
 
 **Query Parameters:**
 
@@ -375,7 +378,7 @@ List all text/image posts (paginated). Excludes posts hidden, reported, or from 
   "page_size": 10,
   "page": 1,
   "total_pages": 5,
-  "next": "http://localhost:8000/api/posts/?page=2",
+  "next": "https://.../api/posts/?page=2",
   "previous": null,
   "results": [
     {
@@ -387,7 +390,7 @@ List all text/image posts (paginated). Excludes posts hidden, reported, or from 
       "like_count": 24,
       "post_banner": "/media/img/posts/banner.jpg",
       "created_by": 1,
-      "user_profile": { ... },
+      "user_profile": { "..." : "..." },
       "username": { "username": "john_doe" },
       "comments": [{ "comment": "Great post!" }],
       "liked_by_user": false,
@@ -405,7 +408,6 @@ List all text/image posts (paginated). Excludes posts hidden, reported, or from 
 Create a new text/image post.
 
 **Auth required:** Yes
-
 **Content-Type:** `multipart/form-data`
 
 **Request Fields:**
@@ -432,6 +434,8 @@ Get a single post by ID.
 
 ## 5. Reels
 
+> **Upload flow change:** Reels are now uploaded directly to Cloudinary from the **frontend**. The backend only receives and stores the resulting Cloudinary URLs. Do not send video files to the backend.
+
 ---
 
 ### `GET /api/reels/`
@@ -454,7 +458,7 @@ List all reels (paginated). Excludes hidden, reported, or blocked-user reels.
   "page_size": 30,
   "page": 1,
   "total_pages": 4,
-  "next": "http://localhost:8000/api/reels/?page=2",
+  "next": "https://.../api/reels/?page=2",
   "previous": null,
   "results": [
     {
@@ -468,7 +472,7 @@ List all reels (paginated). Excludes hidden, reported, or blocked-user reels.
       "like_count": 85,
       "comments": 12,
       "created_by": 1,
-      "user_profile": { ... },
+      "user_profile": { "..." : "..." },
       "liked_by_user": false,
       "hidden_by_user": false,
       "reported_by_user": false
@@ -479,20 +483,30 @@ List all reels (paginated). Excludes hidden, reported, or blocked-user reels.
 
 ---
 
-### `POST /create/reel/`
+### `POST /create/api/reel/`
 
-Upload a new reel to Cloudinary.
+Save a new reel record after the frontend has uploaded the video to Cloudinary.
 
-**Auth required:** Yes (Creator or Admin role required)  
-**Content-Type:** `multipart/form-data`
+**Auth required:** Yes (Creator or Admin role required)
+**Content-Type:** `application/json`
 
-**Request Fields:**
+**Request Body:**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `video` | file | Yes | Video file (MP4 recommended) |
-| `title` | string | Yes | Reel title |
-| `description` | string | No | Reel description |
+| `video_url` | string | **Yes** | Cloudinary secure URL of the uploaded video |
+| `thumbnail_url` | string | No | Cloudinary URL of the thumbnail image |
+| `title` | string | No | Reel title |
+| `reel_description` | string | No | Reel description |
+
+```json
+{
+  "title": "My Cool Reel",
+  "video_url": "https://res.cloudinary.com/.../reel.mp4",
+  "thumbnail_url": "https://res.cloudinary.com/.../thumbnail.jpg",
+  "reel_description": "Check this out!"
+}
+```
 
 **Response `201 Created`:**
 ```json
@@ -501,23 +515,146 @@ Upload a new reel to Cloudinary.
   "video_url": "https://res.cloudinary.com/.../reel.mp4",
   "reel_description": "Check this out!",
   "thumbnail_url": "https://res.cloudinary.com/.../thumbnail.jpg",
+  "view_count": 0,
+  "like_count": 0,
   "created_by": 1,
-  "post": 88
+  "post": 88,
+  "created_at": "2025-01-15T10:30:00Z"
 }
 ```
 
 **Response `400 Bad Request`:**
 ```json
 {
-  "error": "No video file provided"
+  "detail": "video_url is required. Upload the video to Cloudinary from the frontend first."
 }
 ```
 
-> **Note:** Videos are chunked-uploaded to Cloudinary in 6MB chunks. A `Notification` is created for the uploader upon success.
+**Response `403 Forbidden`:**
+```json
+{
+  "detail": "Only creators and admins can upload reels."
+}
+```
+
+> **Note:** A `Post` record (type `reel`) and a notification are created automatically on success.
 
 ---
 
-## 6. Post Interactions
+### `GET /create/api/reel/{id}/`
+
+Retrieve a single reel record.
+
+**Auth required:** Yes
+
+---
+
+### `PUT /create/api/reel/{id}/` · `PATCH /create/api/reel/{id}/`
+
+Update a reel. Only the original creator or an admin may update.
+
+**Auth required:** Yes
+
+---
+
+### `DELETE /create/api/reel/{id}/`
+
+Delete a reel and its parent post. Only the original creator or an admin may delete.
+
+**Auth required:** Yes
+
+**Response `204 No Content`**
+
+---
+
+## 6. Videos
+
+> **Upload flow change:** Videos are now uploaded directly to Cloudinary from the **frontend**. The backend only receives and stores the resulting Cloudinary URLs. Do not send video files to the backend.
+
+---
+
+### `POST /create/api/video/`
+
+Save a new video record after the frontend has uploaded the video to Cloudinary.
+
+**Auth required:** Yes (Creator or Admin role required)
+**Content-Type:** `application/json`
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `video_url` | string | **Yes** | Cloudinary secure URL of the uploaded video |
+| `thumbnail_url` | string | No | Cloudinary URL of the thumbnail image |
+| `title` | string | No | Video title |
+| `video_description` | string | No | Video description |
+
+```json
+{
+  "title": "My Long-Form Video",
+  "video_url": "https://res.cloudinary.com/.../video.mp4",
+  "thumbnail_url": "https://res.cloudinary.com/.../thumbnail.jpg",
+  "video_description": "Full walkthrough of my project."
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "post": 91,
+  "video_url": "https://res.cloudinary.com/.../video.mp4",
+  "title": "My Long-Form Video",
+  "video_description": "Full walkthrough of my project.",
+  "thumbnail_url": "https://res.cloudinary.com/.../thumbnail.jpg",
+  "created_by": 1,
+  "created_at": "2025-01-15T11:00:00Z",
+  "user_profile": { "..." : "..." }
+}
+```
+
+**Response `400 Bad Request`:**
+```json
+{
+  "detail": "video_url is required. Upload the video to Cloudinary from the frontend first."
+}
+```
+
+**Response `403 Forbidden`:**
+```json
+{
+  "detail": "Only creators and admins can upload videos."
+}
+```
+
+---
+
+### `GET /create/api/video/` · `GET /create/api/video/{id}/`
+
+List all videos or retrieve a single video record.
+
+**Auth required:** Yes
+
+---
+
+### `PUT /create/api/video/{id}/` · `PATCH /create/api/video/{id}/`
+
+Update a video. Only the original creator or an admin may update.
+
+**Auth required:** Yes
+
+---
+
+### `DELETE /create/api/video/{id}/`
+
+Delete a video and its parent post. Only the original creator or an admin may delete.
+
+**Auth required:** Yes
+
+**Response `204 No Content`**
+
+---
+
+## 7. Post Interactions
 
 ---
 
@@ -566,13 +703,6 @@ Hide a post from your feed.
 
 **Response `201 Created`**
 
-**Response `400 Bad Request`:**
-```json
-{
-  "detail": "You already hid this post."
-}
-```
-
 ---
 
 ### `DELETE /api/post_hide/{post_id}/`
@@ -603,13 +733,6 @@ Report a post.
 
 **Response `201 Created`**
 
-**Response `400 Bad Request`:**
-```json
-{
-  "detail": "You already reported this post."
-}
-```
-
 ---
 
 ### `DELETE /api/post_report/{post_id}/`
@@ -622,7 +745,7 @@ Remove your report on a post.
 
 ---
 
-## 7. Comments
+## 8. Comments
 
 ---
 
@@ -697,16 +820,220 @@ Delete your comment on a post.
 
 **Response `204 No Content`**
 
-**Response `404 Not Found`:**
+---
+
+## 9. Creator Content Management
+
+These endpoints replace the previous template-rendered dashboard. All routes are REST API only under `/create/api/`.
+
+---
+
+### `POST /create/api/post/`
+
+Create a new text/image post as a creator.
+
+**Auth required:** Yes (Creator or Admin role required)
+**Content-Type:** `application/json`
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `post_type` | string | Yes | `post`, `reel`, `video`, `youtube_video` |
+| `post_title` | string | Yes | Post title |
+| `post_description` | string | No | Post description |
+| `post_banner` | string | No | URL of banner image (externally hosted) |
+
+**Response `201 Created`:** Returns the created post object.
+
+---
+
+### `GET /create/api/post/`
+
+List the authenticated creator's own posts.
+
+**Auth required:** Yes
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | integer | Page number |
+| `page_size` | integer | Results per page (max 100, default 20) |
+
+**Response `200 OK`:** Paginated list of the creator's posts.
+
+---
+
+### `GET /create/api/post/{id}/`
+
+Retrieve a specific post.
+
+**Auth required:** Yes
+
+---
+
+### `PUT /create/api/post/{id}/` · `PATCH /create/api/post/{id}/`
+
+Update a post. Only the original creator or admin may update.
+
+**Auth required:** Yes
+
+---
+
+### `DELETE /create/api/post/{id}/`
+
+Delete a post. Only the original creator or admin may delete.
+
+**Auth required:** Yes
+
+**Response `204 No Content`**
+
+---
+
+### `GET /create/api/manage-contents/`
+
+List all of the authenticated creator's posts with aggregate totals.
+
+**Auth required:** Yes (Creator or Admin role required)
+
+**Response `200 OK`:**
 ```json
 {
-  "detail": "Comment not found or you don't have permission to delete it."
+  "total_posts": 18,
+  "total_likes": 420,
+  "posts": [ { "..." : "..." } ]
 }
 ```
 
 ---
 
-## 8. Creator Application
+### `DELETE /create/api/manage-contents/{post_id}/`
+
+Delete a specific post from the creator's content library.
+
+**Auth required:** Yes
+
+**Response `204 No Content`:**
+```json
+{
+  "detail": "Post deleted successfully."
+}
+```
+
+---
+
+### `GET /create/api/creator/{user_id}/posts/`
+
+Return all posts published by a specific creator (public).
+
+**Auth required:** No
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `post_type` | string | Filter by `post`, `reel`, or `video` |
+| `page` | integer | Page number |
+| `page_size` | integer | Results per page (max 100, default 20) |
+
+**Response `200 OK`:** Paginated list of the creator's posts.
+
+---
+
+### `GET /create/api/creator/my-posts/`
+
+Return all posts published by the currently authenticated creator.
+
+**Auth required:** Yes
+
+**Query Parameters:** Same as above (`post_type`, `page`, `page_size`)
+
+**Response `200 OK`:** Paginated list of the authenticated creator's posts.
+
+---
+
+## 10. Creator Analytics
+
+Returns aggregated performance statistics for a creator. All four metrics are resolved in **4 database queries** regardless of post volume — no per-post loops.
+
+---
+
+### `GET /create/api/analytics/me/`
+
+Return stats for the currently authenticated creator.
+
+**Auth required:** Yes
+
+**Response `200 OK`:**
+```json
+{
+  "user_id": 12,
+  "username": "jane_doe",
+  "total_posts": 42,
+  "total_likes": 1380,
+  "total_views": 29500,
+  "total_followers": 834
+}
+```
+
+---
+
+### `GET /create/api/analytics/{user_id}/`
+
+Return stats for any creator by user ID (public).
+
+**Auth required:** No
+
+**Response `200 OK`:** Same shape as above.
+
+**Response `404 Not Found`:**
+```json
+{
+  "detail": "Not found."
+}
+```
+
+**Field descriptions:**
+
+| Field | Source | Description |
+|-------|--------|-------------|
+| `total_posts` | `Post` table | All posts of any type created by this user |
+| `total_likes` | `Post_Stat_like` table | Total likes across all the creator's posts |
+| `total_views` | `ReelCloudinary` + `VideoCloudinary` | Sum of `view_count` stored on reel and video records |
+| `total_followers` | `Follower` table | Number of users following this creator |
+
+---
+
+## 11. Creator Application
+
+---
+
+### `POST /create/api/apply-for-creator/`
+
+Submit a creator application.
+
+**Auth required:** Yes
+
+**Response `201 Created`:**
+```json
+{
+  "detail": "Application submitted successfully.",
+  "data": {
+    "id": 5,
+    "user": 1,
+    "application_status": "0",
+    "created_at": "2025-01-10T08:00:00Z"
+  }
+}
+```
+
+**Response `400 Bad Request`:**
+```json
+{
+  "detail": "You already have a pending application."
+}
+```
 
 ---
 
@@ -737,35 +1064,30 @@ Check the current user's creator application status.
 
 ---
 
-### `POST /user/api/creator-application/`
+### `GET /create/api/apply-for-creator/by-user/{user_id}/`
 
-Submit a creator application.
+Get all applications by a specific user. Only the user themselves or an admin may access this.
 
 **Auth required:** Yes
 
-**Response `201 Created`:**
-```json
-{
-  "detail": "Creator application submitted successfully."
-}
-```
+**Response `200 OK`:** List of application objects.
 
-**Response `400 Bad Request`:**
+**Response `403 Forbidden`:**
 ```json
 {
-  "detail": "You have already applied for creator."
+  "detail": "You do not have permission to view this user's applications."
 }
 ```
 
 ---
 
-## 9. Notifications
+## 12. Notifications
 
 ---
 
 ### `GET /api/notifications/`
 
-List all notifications for the authenticated user. Results are filtered by the user's notification preferences.
+List all notifications for the authenticated user.
 
 **Auth required:** Yes
 
@@ -774,11 +1096,11 @@ List all notifications for the authenticated user. Results are filtered by the u
 [
   {
     "id": 10,
-    "message": "Welcome john_doe! Your account has been successfully created.",
+    "message": "Your reel 'Dance Move' was published!",
     "created_at": "2025-01-15T10:00:00Z",
     "is_read": false,
-    "page": "profile",
-    "page_item_id": null,
+    "page": "reel",
+    "page_item_id": 88,
     "notification_type": "general"
   }
 ]
@@ -861,7 +1183,7 @@ Update notification preferences.
 
 ---
 
-## 10. Parental Controls
+## 13. Parental Controls
 
 ---
 
@@ -883,13 +1205,6 @@ Send a 6-digit OTP to a parent's email to initiate account linking.
 ```json
 {
   "message": "OTP sent to parent email."
-}
-```
-
-**Response `400 Bad Request`:**
-```json
-{
-  "non_field_errors": ["This parent email is already linked."]
 }
 ```
 
@@ -917,16 +1232,9 @@ Verify the OTP and complete parent account linking.
 }
 ```
 
-**Response `400 Bad Request`:**
-```json
-{
-  "non_field_errors": ["Invalid OTP."]
-}
-```
-
 ---
 
-## 11. Search
+## 14. Search
 
 ---
 
@@ -956,8 +1264,8 @@ Search for reels by title, description, or creator username. Results are ranked 
       "created_at": "2025-01-14T12:00:00Z",
       "priority": 1,
       "trending_score": 3200,
-      "reels_data": { ... },
-      "user_profile": { ... }
+      "reels_data": { "..." : "..." },
+      "user_profile": { "..." : "..." }
     }
   ]
 }
@@ -974,7 +1282,7 @@ Search for reels by title, description, or creator username. Results are ranked 
 
 ---
 
-## 12. Follow & Block
+## 15. Follow & Block
 
 ---
 
@@ -995,14 +1303,6 @@ Follow or unfollow a user (toggles the follow state).
 ```json
 {
   "detail": "Successfully followed jane_doe."
-}
-```
-
-or
-
-```json
-{
-  "detail": "Successfully unfollowed jane_doe."
 }
 ```
 
@@ -1030,7 +1330,7 @@ Block or unblock a user (toggles the block state).
 
 ---
 
-## 13. Data Models
+## 16. Data Models
 
 ### User Roles (Groups)
 
@@ -1045,8 +1345,8 @@ Block or unblock a user (toggles the block state).
 | Type | Description |
 |------|-------------|
 | `post` | Standard text/image post |
-| `reel` | Short video uploaded to Cloudinary |
-| `video` | Long-form video uploaded to Cloudinary |
+| `reel` | Short video — URL received from frontend Cloudinary upload |
+| `video` | Long-form video — URL received from frontend Cloudinary upload |
 | `youtube_video` | YouTube video (linked by ID) |
 | `youtube_reel` | YouTube short (linked by ID) |
 
@@ -1063,7 +1363,7 @@ Block or unblock a user (toggles the block state).
 
 ---
 
-## 14. Error Reference
+## 17. Error Reference
 
 | Status Code | Meaning |
 |-------------|---------|
@@ -1096,8 +1396,6 @@ Block or unblock a user (toggles the block state).
 
 ## Pages Reference
 
-The following frontend pages map to the API endpoints above:
-
 | Page | Primary Endpoints Used |
 |------|----------------------|
 | Landing | — |
@@ -1113,9 +1411,10 @@ The following frontend pages map to the API endpoints above:
 | Reels Watch Page | `GET /api/reels/`, `POST /api/post_likes/{id}/`, `POST /api/posts/{id}/comments/` |
 | Posts | `GET /api/posts/` |
 | Read Post | `GET /api/posts/{id}/`, `POST /api/post_likes/{id}/`, `GET/POST /api/posts/{id}/comments/` |
-| Events | Django template views (`/events/`) |
-| Apply for Creator | `POST /user/api/creator-application/` |
-| Creator Dashboard | `GET /create/dashboard/`, `POST /create/reel/`, `POST /create/video/` |
-
----
-
+| Creator Dashboard | `GET /create/api/manage-contents/`, `GET /create/api/analytics/me/` |
+| Upload Reel | `POST /create/api/reel/` (after Cloudinary upload from frontend) |
+| Upload Video | `POST /create/api/video/` (after Cloudinary upload from frontend) |
+| Create Post | `POST /create/api/post/` |
+| My Posts | `GET /create/api/creator/my-posts/` |
+| Creator Public Profile | `GET /create/api/creator/{user_id}/posts/`, `GET /create/api/analytics/{user_id}/` |
+| Apply for Creator | `POST /create/api/apply-for-creator/` |
