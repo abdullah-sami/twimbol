@@ -1417,4 +1417,8 @@ Block or unblock a user (toggles the block state).
 | Create Post | `POST /create/api/post/` |
 | My Posts | `GET /create/api/creator/my-posts/` |
 | Creator Public Profile | `GET /create/api/creator/{user_id}/posts/`, `GET /create/api/analytics/{user_id}/` |
+<<<<<<< HEAD
 | Apply for Creator | `POST /create/api/apply-for-creator/` |
+=======
+| Apply for Creator | `POST /create/api/apply-for-creator/` |
+>>>>>>> 2f53eaa (fix: moved reel/ video uplaod to frontend. restructured urls.py and views.py in create app)
