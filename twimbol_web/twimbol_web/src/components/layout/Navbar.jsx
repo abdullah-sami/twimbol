@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import Notification from "../layout/Notification.jsx";
 import Menu from "../layout/Menu.jsx";
 import { fetchProfile, fetchNotifications, getImageUrl } from "../../api/api.js";
 import { onNotifications, startNotificationPolling } from "../../api/notifications.js";
+// import useAuthStore from "../../store/authStore.js";
 
 const NAV_LINKS = [
     { label: "Home", href: "/home" },
@@ -26,6 +27,7 @@ export default function NavBar({ activePage = "Reels" }) {
     const [showMenu, setShowMenu] = useState(false);
     const notifRef = useRef(null);
     const menuRef = useRef(null);
+    // const {user, setUser} = useAuthStore();
 
     // Load profile
     useEffect(() => {
