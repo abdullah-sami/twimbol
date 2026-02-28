@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from user.models import CreatorApplication
 from user.decorators import admin_required
+from notifications.models import Notification
+
 
 from app.models import *
 from django.contrib.auth.models import User, Group
@@ -19,9 +21,9 @@ def admin_home(request):
         'page': 'home',
         'users': users,
     }
-    
+
     return render(request, 'admin.html', context)
-    
+
 
 
 
@@ -45,6 +47,12 @@ def creators(request):
             creator_application = CreatorApplication.objects.get(user=creator)
             creator_application.application_status = 1
             creator_application.save()
+
+            Notification.objects.create(
+                  user=request.user,
+                 message=f"Your creator Application has been approved!",
+                 page="creator/dashboard",
+             )
             return redirect('admin_creators')
         elif creator_application_action == '0':
             creator = User.objects.get(username=request.POST.get('applicant_username'))
@@ -52,13 +60,13 @@ def creators(request):
             creator_application = CreatorApplication.objects.get(user=creator)
             creator_application.delete()
             return redirect('admin_creators')
-    
+
     context = {
         'page': 'creators',
         'users': creators,
         'new_applications': new_applications,
     }
-    
+
     return render(request, 'admin.html', context)
 
 
@@ -70,12 +78,12 @@ def users(request):
     users = User.objects.filter(groups__name="visitor").order_by('username')
 
 
-    
+
     context = {
         'page': 'users',
         'users': users,
     }
-    
+
     return render(request, 'admin.html', context)
 
 
@@ -83,12 +91,12 @@ def admins(request):
     admins = User.objects.filter(groups__name="admin").order_by('username')
 
 
-    
+
     context = {
         'page': 'admins',
         'users': admins,
     }
-    
+
     return render(request, 'admin.html', context)
 
 
@@ -108,10 +116,10 @@ def banned(request):
         user.profile.user_banned = False
         user.profile.save()
         return redirect('admin_banned')
-    
+
     context = {
         'page': 'banned',
         'users': banned,
     }
-    
+
     return render(request, 'admin.html', context)

@@ -788,6 +788,9 @@ from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.db.models import Sum, Count, Q
+from django.db import transaction
+from rest_framework.decorators import action
+from django.db.models import F
 
 from app.models import Post, Post_Stat_like, Post_Comment
 from app.serializers import PostSerializer
@@ -918,6 +921,12 @@ class ReelCloudinaryViewSet(ModelViewSet):
         # Cascade: deleting the Post will delete the ReelCloudinary via OneToOne
         instance.post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny], url_path='record-view')
+    def record_view(self, request, pk=None):
+        reel = self.get_object()
+        ReelCloudinary.objects.filter(pk=pk).update(view_count=F('view_count') + 1)
+        return Response({'status': 'ok'})
 
 
 # ---------------------------------------------------------------------------
@@ -1008,6 +1017,10 @@ class VideoCloudinaryViewSet(ModelViewSet):
         instance.post.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny], url_path='record-view')
+    def record_view(self, request, pk=None):
+        VideoCloudinary.objects.filter(pk=pk).update(view_count=F('view_count') + 1)
+        return Response({'status': 'ok'})
 
 # ---------------------------------------------------------------------------
 # 3. Post CRUD (text/image posts)
