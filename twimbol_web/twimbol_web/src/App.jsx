@@ -35,6 +35,7 @@ export default function App() {
         {/* Protected */}
         <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/reel" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
+        {/* <Route path="/reel/:id" element={<ReelWatch />} /> */}
         <Route path="/reel/:id" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
         <Route path="/post" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
         <Route path="/post/:id" element={<ProtectedRoute><Posts /></ProtectedRoute>} />

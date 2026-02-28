@@ -602,7 +602,7 @@ export default function CreatorDashboard() {
                     <div className="flex items-center justify-between mb-3">
                         <h2 className="font-bold text-[var(--color-txt)]">All Content</h2>
                         <span className="text-xs text-[var(--color-txt-secondary)] bg-white border border-black/[0.07] px-3 py-1 rounded-full">
-                            {analytics.total_posts} posts · {fmt(analytics.total_likes)} likes
+                            {total_posts} posts · {fmt(total_likes)} likes
                         </span>
                     </div>
                     <div className="space-y-2">

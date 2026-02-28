@@ -3,6 +3,7 @@ import NavBar from "../components/layout/Navbar.jsx";
 import ReelCard from "../components/reel/ReelCard.jsx";
 import { fetchReels } from "../api/api.js";
 import Spinner from "../components/ui/Spinner.jsx";
+import HomeBanner from "../components/banner/homebanner.jsx";
 
 /**
  * Home.jsx – Twimbol Reels home page.
@@ -132,7 +133,8 @@ export default function Home() {
       <NavBar activePage="Home" />
 
       <main style={{ maxWidth: "1400px", margin: "0 auto", padding: "32px 24px" }}>
-        {/* Page title */}
+        <HomeBanner />
+        {/* Reel title */}
         <div style={{ marginBottom: "28px" }}>
           <h1
             style={{

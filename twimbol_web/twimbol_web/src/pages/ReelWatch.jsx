@@ -9,8 +9,10 @@ import {
   toggleBlock,
   getImageUrl,
 } from "../api/api.js";
+import { toggleFollow } from "../api/posts.js";
 import CommentsCard from "../components/reel/ReelComments.jsx";
 import DescriptionCard from "../components/reel/ReelDescription.jsx";
+import ReelError from "../components/reel/ReelError.jsx";
 
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -107,16 +109,32 @@ function ReelSlide({
   onOpenDescription,
   sidePanelOpen,
   activeSidePanel,
+  muted,
+  onMuteToggle,
 }) {
   const videoRef = useRef(null);
   const progressRef = useRef(null);
-  const [playing, setPlaying] = useState(true);
-  const [muted, setMuted] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [showPulse, setShowPulse] = useState(false);
+  const [pulseIcon, setPulseIcon] = useState("⏸");
+  const [buffering, setBuffering] = useState(false);
+  const [showHeart, setShowHeart] = useState(false);
+  const lastTapRef = useRef(0);
+  const [followed, setFollowed] = useState(reel.user_profile?.user?.followed_by_user || false);
+
+  const handleFollow = async () => {
+    const next = !followed;
+    setFollowed(next);
+    try {
+      await toggleFollow(reel.user_profile?.user?.id || reel.created_by);
+    } catch (err) {
+      setFollowed(!next);
+    }
+  };
 
   // play / pause when slide becomes active or inactive
   useEffect(() => {
@@ -126,21 +144,24 @@ function ReelSlide({
       setProgress(0);
       setCurrentTime(0);
       video.currentTime = 0;
-      video.play().catch(() => {});
       setPlaying(true);
+      video.play().catch(() => {});
     } else {
+      // Aggressively stop non-active videos so they don't interfere
       video.pause();
+      video.currentTime = 0;
+      setPlaying(false);
+      setProgress(0);
+      setCurrentTime(0);
     }
   }, [isActive]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-    if (isActive) {
-      if (playing) video.play().catch(() => {});
-      else video.pause();
-    }
-  }, [playing]);
+    if (!video || !isActive) return; // only control playback if active
+    if (playing) video.play().catch(() => {});
+    else video.pause();
+  }, [playing, isActive]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -152,20 +173,41 @@ function ReelSlide({
       }
     };
     const onLoaded = () => setDuration(video.duration);
+    const onWaiting = () => setBuffering(true);
+    const onPlaying = () => setBuffering(false);
+    const onCanPlay = () => setBuffering(false);
     video.addEventListener("timeupdate", onTime);
     video.addEventListener("loadedmetadata", onLoaded);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("canplay", onCanPlay);
     return () => {
       video.removeEventListener("timeupdate", onTime);
       video.removeEventListener("loadedmetadata", onLoaded);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("canplay", onCanPlay);
     };
   }, [dragging]);
 
-  const handleVideoClick = () => {
-    setPlaying((p) => !p);
-    if (playing) {
-      setShowPulse(true);
-      setTimeout(() => setShowPulse(false), 600);
+  const handleVideoClick = (e) => {
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapRef.current;
+    lastTapRef.current = now;
+
+    if (timeSinceLastTap < 300) {
+      // Double tap → like burst
+      if (!liked) onToggleLike();
+      setShowHeart(true);
+      setTimeout(() => setShowHeart(false), 900);
+      return;
     }
+
+    const newPlaying = !playing;
+    setPlaying(newPlaying);
+    setPulseIcon(newPlaying ? "▶" : "⏸");
+    setShowPulse(true);
+    setTimeout(() => setShowPulse(false), 600);
   };
 
   const seekTo = (e) => {
@@ -179,26 +221,41 @@ function ReelSlide({
   };
 
   const commentCount = reel.comments ?? 0;
-  const avatarSrc = getImageUrl(reel.user_profile?.profile_pic);
+  const avatarSrc = getImageUrl(reel.user_profile?.user?.profile_pic);
 
   return (
     <div className="reel-slide">
       {/* ── Video ─────────────────────────────────────────────────────────── */}
       <video
         ref={videoRef}
-        src={reel.video_url}
+        src={isActive ? reel.video_url : undefined}
         className="reel-video"
         muted={muted}
         loop
         playsInline
+        preload={isActive ? "auto" : "none"}
         poster={reel.thumbnail_url}
         onClick={handleVideoClick}
       />
 
-      {/* Pause pulse */}
+      {/* Buffering spinner */}
+      {buffering && isActive && (
+        <div className="reel-buffering">
+          <div className="reel-buffering-ring" />
+        </div>
+      )}
+
+      {/* Pause/play pulse */}
       {showPulse && (
         <div className="reel-pulse">
-          <div className="reel-pulse-icon">⏸</div>
+          <div className="reel-pulse-icon">{pulseIcon}</div>
+        </div>
+      )}
+
+      {/* Double-tap heart burst */}
+      {showHeart && (
+        <div className="reel-heart-burst">
+          <div className="reel-heart-icon">❤️</div>
         </div>
       )}
 
@@ -258,7 +315,7 @@ function ReelSlide({
         </button>
 
         {/* Mute */}
-        <button className="reel-action-btn" onClick={() => setMuted((m) => !m)}>
+        <button className="reel-action-btn" onClick={onMuteToggle}>
           <div className="reel-action-icon">
             {muted ? (
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -299,18 +356,20 @@ function ReelSlide({
             <img src={avatarSrc} alt="avatar" className="reel-avatar" />
           ) : (
             <div className="reel-avatar-ph">
-              {(reel.user_profile?.username || "?")[0].toUpperCase()}
+              {(reel.user_profile?.user?.username || "?")[0].toUpperCase()}
             </div>
           )}
           <div className="reel-creator-meta">
             <span className="reel-creator-name">
-              {reel.user_profile?.first_name || reel.user_profile?.username || "Creator"}
+              {reel.user_profile?.user?.first_name
+                ? `${reel.user_profile.user.first_name} ${reel.user_profile.user.last_name || ""}`.trim()
+                : reel.user_profile?.user?.username || "Creator"}
             </span>
             {reel.user_profile?.user_type && (
               <span className="reel-creator-type">{reel.user_profile.user_type}</span>
             )}
           </div>
-          <button className="reel-follow-btn">Follow +</button>
+          <button className="reel-follow-btn" onClick={handleFollow}>{followed ? "• Following" : "Follow +"}</button>
         </div>
 
         {/* Caption */}
@@ -345,9 +404,13 @@ export default function ReelWatch() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // Capture the ID only once on mount — prevents refetch loop when URL syncs
+  const initialIdRef = useRef(id);
+
   const [reels, setReels] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null); // "network" | "server" | null
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -358,6 +421,7 @@ export default function ReelWatch() {
   const [sidePanel, setSidePanel] = useState(null);
   const [likedMap, setLikedMap] = useState({});
   const [likeCountMap, setLikeCountMap] = useState({});
+  const [muted, setMuted] = useState(false); // persists across reels
 
   const stackRef = useRef(null);
   const touchStartY = useRef(null);
@@ -373,9 +437,10 @@ export default function ReelWatch() {
       setHasMore(!!data.next);
 
       if (pageNum === 1) {
-        if (id) {
-          const first = results.find((r) => String(r.post) === String(id));
-          const rest = results.filter((r) => String(r.post) !== String(id));
+        const startId = initialIdRef.current;
+        if (startId) {
+          const first = results.find((r) => String(r.post) === String(startId));
+          const rest = results.filter((r) => String(r.post) !== String(startId));
           setReels(first ? [first, ...rest] : results);
         } else {
           setReels(results);
@@ -388,10 +453,12 @@ export default function ReelWatch() {
       }
     } catch (err) {
       console.error("Failed to fetch reels:", err);
+      const isNetworkError = !navigator.onLine || err?.code === "ERR_NETWORK" || err?.message?.includes("Network") || err?.message?.includes("fetch");
+      setFetchError(isNetworkError ? "network" : "server");
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, []); // CRITICAL: empty deps — must never recreate on URL change
 
   useEffect(() => { loadReels(1); }, [loadReels]);
 
@@ -415,6 +482,30 @@ export default function ReelWatch() {
       return next;
     });
   }, [reels]);
+
+  // ── CRITICAL: Nuke ALL video elements not currently active on index change ─
+  // This is the nuclear option that guarantees no ghost/stale video plays audio
+  useEffect(() => {
+    const activePostId = reels[currentIndex]?.post;
+    // Small delay to let React re-render first, then kill any rogue videos
+    const t = setTimeout(() => {
+      document.querySelectorAll("video").forEach((vid) => {
+        // Only skip if this video is the active reel's video element
+        // We identify it by checking if it's inside the .reel-active-wrap
+        const isInsideActive = vid.closest(".reel-active-wrap");
+        if (!isInsideActive) {
+          vid.pause();
+          vid.currentTime = 0;
+          // Remove src entirely to free memory and stop all network activity
+          if (vid.src) {
+            vid.removeAttribute("src");
+            vid.load();
+          }
+        }
+      });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [currentIndex, reels]);
 
   // ── Load more near end ─────────────────────────────────────────────────────
   useEffect(() => {
@@ -465,6 +556,25 @@ export default function ReelWatch() {
     }
     touchStartY.current = null;
   };
+
+  // ── Block pull-to-refresh on mobile ───────────────────────────────────────
+  // We must use a non-passive touchmove listener on the player element so we
+  // can call preventDefault() and stop the browser's native PTR gesture.
+  const onTouchMove = useCallback((e) => {
+    // Only block vertical swipes (the ones that would trigger PTR)
+    if (touchStartY.current === null) return;
+    const dy = e.touches[0].clientY - touchStartY.current;
+    // If scrolling up (dy > 0) at the top → block PTR; also block downward to keep our handler in control
+    e.preventDefault();
+  }, []);
+
+  useEffect(() => {
+    const el = stackRef.current;
+    if (!el) return;
+    // { passive: false } is required to be able to call preventDefault()
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onTouchMove);
+  }, [onTouchMove]);
 
   // ── Wheel scroll (desktop) ─────────────────────────────────────────────────
   const wheelAccum = useRef(0);
@@ -533,15 +643,67 @@ export default function ReelWatch() {
   // ── Render ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="rw-loading">
-        <div className="rw-spinner" />
-        <p>Loading reels…</p>
-      </div>
+      <>
+        <style>{CSS}</style>
+        <div className="rw-skeleton-screen">
+          {/* Prev ghost skeleton */}
+          <div className="rw-skeleton-ghost rw-skeleton-ghost-prev">
+            <div className="rw-skeleton-thumb" />
+          </div>
+          {/* Main active card skeleton */}
+          <div className="rw-skeleton-card">
+            <div className="rw-skeleton-thumb" />
+            <div className="rw-skeleton-grad" />
+            {/* Top bar skeleton */}
+            <div className="rw-skeleton-topbar">
+              <div className="rw-skeleton-title-bar" />
+            </div>
+            {/* Bottom info skeleton */}
+            <div className="rw-skeleton-info">
+              <div className="rw-skeleton-avatar" />
+              <div className="rw-skeleton-lines">
+                <div className="rw-skeleton-line rw-skeleton-line--name" />
+                <div className="rw-skeleton-line rw-skeleton-line--sub" />
+              </div>
+              <div className="rw-skeleton-follow" />
+            </div>
+            {/* Progress bar skeleton */}
+            <div className="rw-skeleton-progress" />
+            {/* Right actions skeleton */}
+            <div className="rw-skeleton-actions">
+              {[0,1,2,3].map(i => <div key={i} className="rw-skeleton-action-btn" style={{animationDelay: `${i*0.1}s`}} />)}
+            </div>
+            {/* Center spinner */}
+            <div className="rw-skeleton-loader">
+              <div className="rw-skeleton-spinner" />
+            </div>
+          </div>
+          {/* Next ghost skeleton */}
+          <div className="rw-skeleton-ghost rw-skeleton-ghost-next">
+            <div className="rw-skeleton-thumb" />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <ReelError
+        type={fetchError}
+        onRetry={() => { setFetchError(null); setLoading(true); loadReels(1); }}
+        onBack={() => navigate(-1)}
+      />
     );
   }
 
   if (!currentReel) {
-    return <div className="rw-loading"><p>No reels found.</p></div>;
+    return (
+      <ReelError
+        type="empty"
+        onBack={() => navigate(-1)}
+      />
+    );
   }
 
   return (
@@ -563,28 +725,7 @@ export default function ReelWatch() {
           onTouchStart={onTouchStart}
           onTouchEnd={onTouchEnd}
         >
-          {/* Prev ghost (peek above) */}
-          {currentIndex > 0 && (
-            <div
-              className="reel-ghost reel-ghost-prev"
-              onClick={goPrev}
-            >
-              <video
-                src={reels[currentIndex - 1]?.video_url}
-                className="reel-ghost-video"
-                muted
-                playsInline
-                poster={reels[currentIndex - 1]?.thumbnail_url}
-              />
-              <div className="reel-ghost-overlay">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="reel-ghost-arrow">
-                  <path d="M18 15l-6-6-6 6" />
-                </svg>
-              </div>
-            </div>
-          )}
-
-          {/* Active reel */}
+          {/* Active reel — always absolutely centered */}
           <div className="reel-active-wrap">
             <ReelSlide
               key={currentReel.post}
@@ -599,6 +740,8 @@ export default function ReelWatch() {
               onOpenDescription={() => setSidePanel(sidePanel === "description" ? null : "description")}
               sidePanelOpen={!!sidePanel}
               activeSidePanel={sidePanel}
+              muted={muted}
+              onMuteToggle={() => setMuted((m) => !m)}
             />
 
             {/* Three-dot menu */}
@@ -613,19 +756,30 @@ export default function ReelWatch() {
             )}
           </div>
 
-          {/* Next ghost (peek below) */}
+          {/* Prev ghost — floats above the active reel */}
+          {currentIndex > 0 && (
+            <div className="reel-ghost reel-ghost-prev" onClick={goPrev}>
+              {reels[currentIndex - 1]?.thumbnail_url ? (
+                <img src={reels[currentIndex - 1].thumbnail_url} className="reel-ghost-video" alt="previous reel" />
+              ) : (
+                <div className="reel-ghost-video" style={{ background: "#1a1a2e" }} />
+              )}
+              <div className="reel-ghost-overlay">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="reel-ghost-arrow">
+                  <path d="M18 15l-6-6-6 6" />
+                </svg>
+              </div>
+            </div>
+          )}
+
+          {/* Next ghost — floats below the active reel */}
           {currentIndex < reels.length - 1 && (
-            <div
-              className="reel-ghost reel-ghost-next"
-              onClick={goNext}
-            >
-              <video
-                src={reels[currentIndex + 1]?.video_url}
-                className="reel-ghost-video"
-                muted
-                playsInline
-                poster={reels[currentIndex + 1]?.thumbnail_url}
-              />
+            <div className="reel-ghost reel-ghost-next" onClick={goNext}>
+              {reels[currentIndex + 1]?.thumbnail_url ? (
+                <img src={reels[currentIndex + 1].thumbnail_url} className="reel-ghost-video" alt="next reel" />
+              ) : (
+                <div className="reel-ghost-video" style={{ background: "#1a1a2e" }} />
+              )}
               <div className="reel-ghost-overlay">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="reel-ghost-arrow">
                   <path d="M6 9l6 6 6-6" />
@@ -682,6 +836,7 @@ const CSS = `
     color: #fff;
     overflow: hidden;
     position: relative;
+    overscroll-behavior: none;
   }
 
   /* ── Back button ── */
@@ -703,63 +858,67 @@ const CSS = `
   .rw-back-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.08); }
   .rw-back-btn svg { width: 18px; height: 18px; }
 
-  /* ── Player column ── */
+  /* ── Player column — position:relative container, active reel always centered ── */
   .rw-player-col {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    overflow: hidden;
     position: relative;
+    height: 100dvh;
+    overflow: hidden;
     transition: flex 0.3s ease;
-    gap: 12px;
-    padding: 20px 0;
+    touch-action: none; /* blocks browser pull-to-refresh & native scroll handling */
+    overscroll-behavior: none;
   }
   .rw-player-col.panel-open { flex: 0 0 min(52vw, 460px); }
 
-  /* ── Active reel wrapper — enforces 9:16 ── */
+  /* ── Active reel wrapper — absolutely dead-center regardless of ghosts ── */
   .reel-active-wrap {
-    position: relative;
-    /* height drives the size; width is derived from aspect-ratio */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     height: min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9));
     aspect-ratio: 9 / 16;
     border-radius: 18px;
     overflow: hidden;
-    flex-shrink: 0;
     box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.35s ease;
+    z-index: 2;
   }
-  /* Shrink active reel slightly when side panel is open */
   .rw-player-col.panel-open .reel-active-wrap {
     height: min(calc(100dvh - 80px), calc((min(52vw, 460px) - 100px) * 16 / 9));
   }
 
-  /* ── Ghost reels (peek) ── */
+  /* ── Ghost reels — absolutely anchored to active center ── */
   .reel-ghost {
-    position: relative;
-    width: calc(var(--reel-w, 240px) * 0.72);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) * 9 / 16 * 0.6);
     aspect-ratio: 9 / 16;
-    border-radius: 14px;
+    border-radius: 12px;
     overflow: hidden;
-    flex-shrink: 0;
     cursor: pointer;
-    opacity: 0.45;
-    transition: opacity 0.25s, transform 0.25s;
+    opacity: 0.5;
+    transition: opacity 0.25s, transform 0.2s;
     box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    z-index: 1;
   }
-  .reel-ghost:hover { opacity: 0.7; transform: scale(1.03); }
-  .reel-ghost-video { width: 100%; height: 100%; object-fit: cover; }
+  .reel-ghost-video { width: 100%; height: 100%; object-fit: cover; display: block; }
   .reel-ghost-overlay {
     position: absolute; inset: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.45);
     display: flex; align-items: center; justify-content: center;
   }
-  .reel-ghost-arrow { width: 28px; height: 28px; color: rgba(255,255,255,0.8); }
-  .reel-ghost-prev { order: -1; }
-  .reel-ghost-next { order: 1; }
+  .reel-ghost-arrow { width: 22px; height: 22px; color: rgba(255,255,255,0.9); }
+  /* Prev: sits just above the top edge of the active reel */
+  .reel-ghost-prev {
+    bottom: calc(50% + min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) / 2 + 10px);
+  }
+  .reel-ghost-prev:hover { transform: translateX(-50%) translateY(-5px); opacity: 0.75; }
+  /* Next: sits just below the bottom edge of the active reel */
+  .reel-ghost-next {
+    top: calc(50% + min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) / 2 + 10px);
+  }
+  .reel-ghost-next:hover { transform: translateX(-50%) translateY(5px); opacity: 0.75; }
 
   /* ── Reel slide (fills active-wrap) ── */
   .reel-slide {
@@ -790,6 +949,43 @@ const CSS = `
     background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%);
     pointer-events: none;
   }
+
+  /* ── Buffering spinner ── */
+  .reel-buffering {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 6;
+  }
+  .reel-buffering-ring {
+    width: 42px; height: 42px;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: #f7a84a;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+
+  /* ── Double-tap heart burst ── */
+  .reel-heart-burst {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 7;
+  }
+  .reel-heart-icon {
+    font-size: 80px;
+    animation: heartBurst 0.9s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+    filter: drop-shadow(0 0 20px rgba(255,77,109,0.8));
+  }
+  @keyframes heartBurst {
+    0%   { transform: scale(0); opacity: 1; }
+    35%  { transform: scale(1.3); opacity: 1; }
+    60%  { transform: scale(1.1); opacity: 1; }
+    80%  { transform: scale(1.2); opacity: 0.9; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+
+  /* ── Progress track hover ── */
+  .reel-progress-bar:hover .reel-progress-track { height: 5px; }
+  .reel-progress-bar:hover .reel-progress-thumb { width: 14px; height: 14px; }
 
   /* ── Pause pulse ── */
   .reel-pulse {
@@ -932,6 +1128,7 @@ const CSS = `
   .reel-progress-track {
     position: relative; width: 100%; height: 3px;
     background: rgba(255,255,255,0.22); border-radius: 2px;
+    transition: height 0.15s ease;
   }
   .reel-progress-fill {
     height: 100%; background: #f7a84a; border-radius: 2px;
@@ -941,7 +1138,7 @@ const CSS = `
     position: absolute; top: 50%; transform: translate(-50%, -50%);
     width: 11px; height: 11px; background: #fff; border-radius: 50%;
     box-shadow: 0 0 0 2px rgba(247,168,74,0.5);
-    transition: left 0.1s linear;
+    transition: left 0.1s linear, width 0.15s ease, height 0.15s ease;
   }
 
   /* ── Three-dot menu ── */
@@ -974,7 +1171,7 @@ const CSS = `
   /* ── Dot indicators ── */
   .rw-dots {
     position: absolute;
-    right: -28px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -1016,7 +1213,7 @@ const CSS = `
   }
   .rw-panel-close:hover { background: rgba(255,255,255,0.15); }
 
-  /* ── Loading ── */
+  /* ── Loading / Empty ── */
   .rw-loading {
     height: 100dvh;
     display: flex; flex-direction: column;
@@ -1024,13 +1221,136 @@ const CSS = `
     background: #0a0a0f; color: rgba(255,255,255,0.45);
     font-family: 'DM Sans', sans-serif;
   }
-  .rw-spinner {
-    width: 40px; height: 40px;
+
+  /* ── Skeleton loading screen ── */
+  .rw-skeleton-screen {
+    height: 100dvh;
+    background: #0a0a0f;
+    position: relative;
+    overflow: hidden;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Shared shimmer animation */
+  @keyframes skeletonShimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes skeletonPulse {
+    0%, 100% { opacity: 0.4; }
+    50%       { opacity: 0.8; }
+  }
+
+  /* ── Main skeleton card — absolutely centered like the real active reel ── */
+  .rw-skeleton-card {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) * 9 / 16);
+    aspect-ratio: 9/16;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #111118;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+    z-index: 2;
+  }
+  .rw-skeleton-thumb {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, #1a1a28 25%, #252538 50%, #1a1a28 75%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.8s ease-in-out infinite;
+  }
+  .rw-skeleton-grad {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 55%;
+    background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  /* Top bar placeholder */
+  .rw-skeleton-topbar {
+    position: absolute; top: 16px; left: 16px; right: 16px;
+    display: flex; align-items: center;
+  }
+  .rw-skeleton-title-bar {
+    width: 56px; height: 14px; border-radius: 7px;
+    background: rgba(255,255,255,0.1);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+  /* Bottom creator info */
+  .rw-skeleton-info {
+    position: absolute;
+    bottom: 46px; left: 14px; right: 60px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .rw-skeleton-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(255,255,255,0.1);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+  .rw-skeleton-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .rw-skeleton-line {
+    height: 10px; border-radius: 6px;
+    background: rgba(255,255,255,0.1);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+  .rw-skeleton-line--name { width: 55%; animation-delay: 0.1s; }
+  .rw-skeleton-line--sub  { width: 38%; animation-delay: 0.2s; height: 8px; }
+  .rw-skeleton-follow {
+    width: 56px; height: 26px; border-radius: 13px; flex-shrink: 0;
+    background: rgba(255,255,255,0.08);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+    animation-delay: 0.15s;
+  }
+  /* Progress bar */
+  .rw-skeleton-progress {
+    position: absolute; bottom: 16px; left: 14px; right: 14px;
+    height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.12);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+    animation-delay: 0.3s;
+  }
+  /* Right action buttons */
+  .rw-skeleton-actions {
+    position: absolute; right: 12px; bottom: 100px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .rw-skeleton-action-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    animation: skeletonPulse 1.5s ease-in-out infinite;
+  }
+  /* Center spinner */
+  .rw-skeleton-loader {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 3;
+  }
+  .rw-skeleton-spinner {
+    width: 44px; height: 44px;
     border: 3px solid rgba(255,255,255,0.08);
     border-top-color: #f7a84a;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spin 0.85s linear infinite;
   }
+
+  /* ── Ghost skeleton cards (peek above/below) ── */
+  .rw-skeleton-ghost {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) * 9 / 16 * 0.6);
+    aspect-ratio: 9/16;
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0.4;
+    z-index: 1;
+  }
+  .rw-skeleton-ghost-prev {
+    bottom: calc(50% + min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) / 2 + 10px);
+  }
+  .rw-skeleton-ghost-next {
+    top: calc(50% + min(calc(100dvh - 80px), calc((100dvw - 80px) * 16 / 9)) / 2 + 10px);
+  }
+
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ── Report modal ── */

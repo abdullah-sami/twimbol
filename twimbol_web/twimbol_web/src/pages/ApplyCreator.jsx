@@ -29,7 +29,7 @@ const instructions = [
 ];
 
 export const ApplyCreator = () => {
-  const { user } = useAuthStore();
+  const { user, fetchProfile, accessToken } = useAuthStore();
   const [application, setApplication] = useState(null);
   const [loading, setLoading]         = useState(true);
   const [submitting, setSubmitting]   = useState(false);
@@ -43,9 +43,14 @@ export const ApplyCreator = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await getCreatorApplication();
+        const res = await getCreatorApplication(user.user.id);
+            // console.log("Application response:", res.data[0].id);
+
         if (res.data?.length > 0) setApplication(res.data[0]);
-      } catch {
+        if (res.data[0].id) {
+            fetchProfile(accessToken);
+        }
+      } catch (e) {
         // no application yet — that's fine
       } finally {
         setLoading(false);
@@ -58,7 +63,7 @@ export const ApplyCreator = () => {
     setSuccess("");
     setSubmitting(true);
     try {
-      const res = await applyForCreator();
+      const res = await applyForCreator(user.user.id);
       setApplication(res.data?.data || { application_status: "0" });
       setSuccess("Application submitted! We'll review it shortly.");
     } catch (e) {
