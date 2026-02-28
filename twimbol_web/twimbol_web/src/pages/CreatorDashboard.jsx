@@ -569,7 +569,7 @@ export default function CreatorDashboard() {
                         <StatCard
                             label="Followers"
                             value={totalFollows}
-                            icon="👁"
+                            icon="👥"
                             loading={loading}
                         />
                     </div>

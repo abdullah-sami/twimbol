@@ -33,6 +33,11 @@ export const reportReel = async (postId, reason, description = "") => {
   return data;
 };
 
+export const recordReelView = async (postId) =>
+  await api.post(`/create/api/reel/${postId}/record-view/`).catch(() => {});
+
+
+
 // ─── Comments ────────────────────────────────────────────────────────────────
 
 export const fetchComments = async (postId, page = 1, pageSize = 15) => {

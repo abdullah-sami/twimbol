@@ -10,3 +10,5 @@ useEffect(() => {
     setReels(prev => [...prev, ...data.results])
   })
 }, [page])
+
+// In api/reels.js

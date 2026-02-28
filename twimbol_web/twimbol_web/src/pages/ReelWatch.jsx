@@ -8,6 +8,7 @@ import {
   reportReel,
   toggleBlock,
   getImageUrl,
+  recordReelView
 } from "../api/api.js";
 import { toggleFollow } from "../api/posts.js";
 import CommentsCard from "../components/reel/ReelComments.jsx";
@@ -125,6 +126,7 @@ function ReelSlide({
   const [showHeart, setShowHeart] = useState(false);
   const lastTapRef = useRef(0);
   const [followed, setFollowed] = useState(reel.user_profile?.user?.followed_by_user || false);
+  const viewRecorded = useRef(false);
 
   const handleFollow = async () => {
     const next = !followed;
@@ -164,14 +166,25 @@ function ReelSlide({
   }, [playing, isActive]);
 
   useEffect(() => {
+    viewRecorded.current = false; // reset when reel changes
+  }, [reel.post]);
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     const onTime = () => {
       if (!dragging) {
         setCurrentTime(video.currentTime);
         setProgress((video.currentTime / video.duration) * 100 || 0);
+        if (!viewRecorded.current && currentTime >= 3) {
+          viewRecorded.current = true;
+          recordReelView(reel.post); // fire and forget
+          console.log("view recorded")
+        }
       }
     };
+
+
     const onLoaded = () => setDuration(video.duration);
     const onWaiting = () => setBuffering(true);
     const onPlaying = () => setBuffering(false);
@@ -188,7 +201,7 @@ function ReelSlide({
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("canplay", onCanPlay);
     };
-  }, [dragging]);
+  }, [dragging, currentTime]);
 
   const handleVideoClick = (e) => {
     const now = Date.now();
@@ -233,6 +246,7 @@ function ReelSlide({
         muted={muted}
         loop
         playsInline
+        // autoPlay
         preload={isActive ? "auto" : "none"}
         poster={reel.thumbnail_url}
         onClick={handleVideoClick}
