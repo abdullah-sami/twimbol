@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 import { toggleLike, hidePost, reportPost, toggleFollow, blockUser } from "../../api/posts";
 import CommentsModal from "./PostComments";
+import { getImageUrl } from "../../api/api";
+import { useNavigate } from "react-router-dom";
+import { Toast, showToast } from "../ui/Toast";
 
 const BASE_URL = "https://rafidabdullahsamiweb.pythonanywhere.com";
 
@@ -241,6 +244,8 @@ export default function PostCard({ post, onHidden }) {
     const [hidden, setHidden] = useState(false);
     const menuRef = useRef(null);
     const menuBtnRef = useRef(null);
+    const [toast, setToast] = useState(null);
+
 
     // Close menu on outside click
     useEffect(() => {
@@ -269,6 +274,20 @@ export default function PostCard({ post, onHidden }) {
         }
     };
 
+    const handleShare = (postId) => {
+        if (navigator.share) {
+            navigator.share({
+                title: post?.post_title || "Post",
+                url: `${window.location.origin}/post/${postId}`,
+            });
+        } else {
+            navigator.clipboard.writeText(`${window.location.origin}/post/${postId}`);
+            showToast("Link copied!", "success", setToast);
+            // console.log("Link copied to clipboard");
+
+        }
+    };
+
     const handleFollow = async (created_by) => {
         const next = !followed;
         setFollowed(next);
@@ -280,249 +299,255 @@ export default function PostCard({ post, onHidden }) {
             //   setLikeCount((c) => (next ? c - 1 : c + 1));
         }
 
-        
+
     }
 
-        const handleHide = async () => {
-            setMenuOpen(false);
-            try {
-                await hidePost(post.id);
-                setHidden(true);
-                onHidden?.(post.id);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-
-        const handleReport = async () => {
-            setMenuOpen(false);
-            try {
-                await reportPost(post.id);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-
-        const handleBlock = async () => {
-            setMenuOpen(false);
-            const userId = post.created_by;
-            if (!userId) return;
-            try {
-                await blockUser(userId);
-                setHidden(true);
-                onHidden?.(post.id);
-            } catch (err) {
-                console.error(err);
-            }
-        };
-
-        const handleImageClick = (images, index) => {
-            setLightbox({ images, index });
-        };
-
-        if (hidden) return null;
-
-        // Build images array from post data
-        const images = [];
-        if (post.post_banner) {
-            const url = post.post_banner.startsWith("http")
-                ? post.post_banner
-                : `${BASE_URL}${post.post_banner}`;
-            images.push(url);
+    const handleHide = async () => {
+        setMenuOpen(false);
+        try {
+            await hidePost(post.id);
+            setHidden(true);
+            onHidden?.(post.id);
+        } catch (err) {
+            console.error(err);
         }
-        if (post.images?.length) {
-            post.images.forEach((img) => {
-                const url = typeof img === "string"
-                    ? (img.startsWith("http") ? img : `${BASE_URL}${img}`)
-                    : img.url || img.image || "";
-                if (url) images.push(url);
-            });
+    };
+
+    const handleReport = async () => {
+        setMenuOpen(false);
+        try {
+            await reportPost(post.id);
+        } catch (err) {
+            console.error(err);
         }
+    };
 
-        const profilePic = post.user_profile?.profile_pic
-            ? `${BASE_URL}${post.user_profile.profile_pic}`
-            : null;
-        const username =
-            post.username?.username ||
-            post.user_profile?.username ||
-            post.user_profile?.user?.username ||
-            "User";
-        const commentCount = post.comments?.length || post.comment_count || 0;
-        const shareCount = post.share_count || 0;
-        const description = post.post_description || post.post_title || "";
-        const createdAt = post.created_at ? formatTime(post.created_at) : "";
+    const handleBlock = async () => {
+        setMenuOpen(false);
+        const userId = post.created_by;
+        if (!userId) return;
+        try {
+            await blockUser(userId);
+            setHidden(true);
+            onHidden?.(post.id);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
-        return (
-            <>
-                <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    {/* Header */}
-                    <div className="flex items-start justify-between px-5 pt-5 pb-3">
-                        <div className="flex items-center gap-3">
-                            {/* Avatar */}
-                            <div className="w-11 h-11 rounded-full bg-surface overflow-hidden flex-shrink-0 ring-2 ring-brand/10">
-                                {profilePic ? (
-                                    <img
-                                        src={profilePic}
-                                        alt={username}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-base font-bold text-brand bg-brand-light">
-                                        {username[0]?.toUpperCase()}
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-sm text-txt">{username}</span>
-                                    <span className="text-brand text-sm font-semibold cursor-pointer hover:underline" onClick={() => handleFollow(post.created_by)}>
-                                        {followed ? "• Following" : "• Follow"}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    {createdAt && (
-                                        <span className="text-xs text-txt-secondary">{createdAt}</span>
-                                    )}
-                                    <Globe size={12} className="text-txt-secondary" />
-                                </div>
-                            </div>
-                        </div>
+    const handleImageClick = (images, index) => {
+        setLightbox({ images, index });
+    };
 
-                        {/* Right actions */}
-                        <div className="flex items-center gap-1">
-                            <div className="relative">
-                                <button
-                                    ref={menuBtnRef}
-                                    onClick={() => setMenuOpen((o) => !o)}
-                                    className="p-2 rounded-full hover:bg-surface transition-colors text-txt-secondary"
-                                >
-                                    <MoreHorizontal size={18} />
-                                </button>
-                                <PostMenu
-                                    isOpen={menuOpen}
-                                    onHide={handleHide}
-                                    onReport={handleReport}
-                                    onBlock={handleBlock}
-                                    menuRef={menuRef}
+    if (hidden) return null;
+
+    // Build images array from post data
+    const images = [];
+    if (post.post_banner) {
+        const url = post.post_banner.startsWith("http")
+            ? post.post_banner
+            : `${BASE_URL}${post.post_banner}`;
+        images.push(url);
+    }
+    if (post.images?.length) {
+        post.images.forEach((img) => {
+            const url = typeof img === "string"
+                ? (img.startsWith("http") ? img : `${BASE_URL}${img}`)
+                : img.url || img.image || "";
+            if (url) images.push(url);
+        });
+    }
+
+    const profilePic = getImageUrl(post.user_profile.user?.profile_pic || null);
+
+    // console.log(post)
+
+    const username =
+        post.username?.username ||
+        post.user_profile?.username ||
+        post.user_profile?.user?.username ||
+        "User";
+    const commentCount = post.comments?.length || post.comment_count || 0;
+    const shareCount = post.share_count || 0;
+    const description = post.post_description || post.post_title || "";
+    const createdAt = post.created_at ? formatTime(post.created_at) : "";
+
+    return (
+        <>
+            {toast && (
+                <Toast toast={toast} />
+            )}
+            <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                {/* Header */}
+                <div className="flex items-start justify-between px-5 pt-5 pb-3">
+                    <div className="flex items-center gap-3">
+                        {/* Avatar */}
+                        <div className="w-11 h-11 rounded-full bg-surface overflow-hidden flex-shrink-0 ring-2 ring-brand/10">
+                            {profilePic ? (
+                                <img
+                                    src={profilePic}
+                                    alt={username}
+                                    className="w-full h-full object-cover"
                                 />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-base font-bold text-brand bg-brand-light">
+                                    {username[0]?.toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="font-semibold text-sm text-txt">{username}</span>
+                                <span className="text-brand text-sm font-semibold cursor-pointer hover:underline" onClick={() => handleFollow(post.created_by)}>
+                                    {followed ? "• Following" : "• Follow"}
+                                </span>
                             </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                                {createdAt && (
+                                    <span className="text-xs text-txt-secondary">{createdAt}</span>
+                                )}
+                                <Globe size={12} className="text-txt-secondary" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right actions */}
+                    <div className="flex items-center gap-1">
+                        <div className="relative">
                             <button
+                                ref={menuBtnRef}
+                                onClick={() => setMenuOpen((o) => !o)}
                                 className="p-2 rounded-full hover:bg-surface transition-colors text-txt-secondary"
-                                onClick={() => onHidden?.(post.id)}
                             >
-                                <X size={18} />
+                                <MoreHorizontal size={18} />
                             </button>
+                            <PostMenu
+                                isOpen={menuOpen}
+                                onHide={handleHide}
+                                onReport={handleReport}
+                                onBlock={handleBlock}
+                                menuRef={menuRef}
+                            />
                         </div>
-                    </div>
-
-                    {/* Description */}
-                    {description && (
-                        <div className="px-5 pb-3">
-                            <PostDescription text={description} />
-                        </div>
-                    )}
-
-                    {/* Images */}
-                    {images.length > 0 && (
-                        <div className="px-4 pb-3">
-                            <ImageGrid images={images} onImageClick={handleImageClick} />
-                        </div>
-                    )}
-
-                    {/* Stats row */}
-                    <div className="px-5 py-2 flex items-center justify-between text-xs text-txt-secondary border-t border-gray-50">
-                        <div className="flex items-center gap-1">
-                            <div className="flex -space-x-1">
-                                <span className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                                    <ThumbsUp size={10} className="text-white" />
-                                </span>
-                                <span className="w-5 h-5 rounded-full bg-brand flex items-center justify-center">
-                                    <Heart size={10} className="text-white fill-white" />
-                                </span>
-                            </div>
-                            <span className="ml-1">{formatCount(likeCount)}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            {commentCount > 0 && <span>{commentCount} comments</span>}
-                            {shareCount > 0 && <span>{formatCount(shareCount)} shares</span>}
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="px-3 py-1 flex items-center border-t border-gray-100">
-                        <ActionButton
-                            icon={Heart}
-                            label="Like"
-                            active={liked}
-                            onClick={handleLike}
-                            activeClass="text-brand fill-brand"
-                        />
-                        <ActionButton
-                            icon={MessageCircle}
-                            label="Comment"
-                            onClick={() => setCommentsOpen(true)}
-                        />
-                        <ActionButton icon={Share2} label="Share" />
-                    </div>
-                </article>
-
-                {/* Comments Modal */}
-                <CommentsModal
-                    postId={post.id}
-                    isOpen={commentsOpen}
-                    onClose={() => setCommentsOpen(false)}
-                    commentCount={commentCount}
-                />
-
-                {/* Lightbox */}
-                {lightbox && (
-                    <Lightbox
-                        images={lightbox.images}
-                        startIndex={lightbox.index}
-                        onClose={() => setLightbox(null)}
-                    />
-                )}
-            </>
-        );
-    }
-
-    function ActionButton({ icon: Icon, label, active, onClick, activeClass }) {
-        return (
-            <button
-                onClick={onClick}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors hover:bg-surface ${active ? activeClass || "text-brand" : "text-txt-secondary"
-                    }`}
-            >
-                <Icon
-                    size={18}
-                    className={active && activeClass?.includes("fill") ? "fill-current" : ""}
-                />
-                {label}
-            </button>
-        );
-    }
-
-    function PostDescription({ text }) {
-        const [expanded, setExpanded] = useState(false);
-        const MAX = 140;
-        const isLong = text.length > MAX;
-
-        return (
-            <p className="text-sm text-txt leading-relaxed">
-                {isLong && !expanded ? (
-                    <>
-                        {text.slice(0, MAX)}
-                        {"... "}
                         <button
-                            onClick={() => setExpanded(true)}
-                            className="font-semibold text-txt hover:text-brand transition-colors"
+                            className="p-2 rounded-full hover:bg-surface transition-colors text-txt-secondary"
+                            onClick={() => onHidden?.(post.id)}
                         >
-                            See more
+                            <X size={18} />
                         </button>
-                    </>
-                ) : (
-                    text
+                    </div>
+                </div>
+
+                {/* Description */}
+                {description && (
+                    <div className="px-5 pb-3">
+                        <PostDescription text={description} postId={post.id} />
+                    </div>
                 )}
-            </p>
-        );
-    }
+
+                {/* Images */}
+                {images.length > 0 && (
+                    <div className="px-4 pb-3">
+                        <ImageGrid images={images} onImageClick={handleImageClick} />
+                    </div>
+                )}
+
+                {/* Stats row */}
+                <div className="px-5 py-2 flex items-center justify-between text-xs text-txt-secondary border-t border-gray-50">
+                    <div className="flex items-center gap-1">
+                        <div className="flex -space-x-1">
+                            <span className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                <ThumbsUp size={10} className="text-white" />
+                            </span>
+                            <span className="w-5 h-5 rounded-full bg-brand flex items-center justify-center">
+                                <Heart size={10} className="text-white fill-white" />
+                            </span>
+                        </div>
+                        <span className="ml-1">{formatCount(likeCount)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        {commentCount > 0 && <span>{commentCount} comments</span>}
+                        {shareCount > 0 && <span>{formatCount(shareCount)} shares</span>}
+                        {/* Toast */}
+                    </div>
+                </div>
+
+                {/* Actions */}
+                <div className="px-3 py-1 flex items-center border-t border-gray-100">
+                    <ActionButton
+                        icon={Heart}
+                        label="Like"
+                        active={liked}
+                        onClick={handleLike}
+                        activeClass="text-brand fill-brand"
+                    />
+                    <ActionButton
+                        icon={MessageCircle}
+                        label="Comment"
+                        onClick={() => setCommentsOpen(true)}
+                    />
+                    <ActionButton onClick={() => handleShare(post.id)} icon={Share2} label="Share" />
+                </div>
+            </article>
+
+            {/* Comments Modal */}
+            <CommentsModal
+                postId={post.id}
+                isOpen={commentsOpen}
+                onClose={() => setCommentsOpen(false)}
+                commentCount={commentCount}
+            />
+
+            {/* Lightbox */}
+            {lightbox && (
+                <Lightbox
+                    images={lightbox.images}
+                    startIndex={lightbox.index}
+                    onClose={() => setLightbox(null)}
+                />
+            )}
+        </>
+    );
+}
+
+function ActionButton({ icon: Icon, label, active, onClick, activeClass }) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors hover:bg-surface ${active ? activeClass || "text-brand" : "text-txt-secondary"
+                }`}
+        >
+            <Icon
+                size={18}
+                className={active && activeClass?.includes("fill") ? "fill-current" : ""}
+            />
+            {label}
+        </button>
+    );
+}
+
+function PostDescription({ text, postId }) {
+    const [expanded, setExpanded] = useState(false);
+    const MAX = 140;
+    const isLong = text.length > MAX;
+    const navigation = useNavigate();
+
+    return (
+        <p className="text-sm text-txt leading-relaxed">
+            {isLong && !expanded ? (
+                <>
+                    {text.slice(0, MAX)}
+                    {"... "}
+                    <button
+                        onClick={() => navigation(`/post/${postId}`)}
+                        className="cursor-pointer font-semibold text-txt hover:text-brand transition-colors"
+                    >
+                        See more
+                    </button>
+                </>
+            ) : (
+                text
+            )}
+        </p>
+    );
+}

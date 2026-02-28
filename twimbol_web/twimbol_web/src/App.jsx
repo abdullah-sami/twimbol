@@ -12,7 +12,7 @@ import Signup from './pages/Signup'
 import Home from './pages/Home'
 import ReelWatch from './pages/ReelWatch'
 import Posts from './pages/Posts'
-// import ReadPost from './pages/ReadPost'
+import ReadPost from './pages/ReadPost'
 // import UserProfile from './pages/UserProfile'
 import Settings from './pages/Settings'
 // import ApplyCreator from './pages/ApplyCreator'
@@ -38,12 +38,12 @@ export default function App() {
         {/* <Route path="/reel/:id" element={<ReelWatch />} /> */}
         <Route path="/reel/:id" element={<ProtectedRoute><ReelWatch /></ProtectedRoute>} />
         <Route path="/post" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
-        <Route path="/post/:id" element={<ProtectedRoute><Posts /></ProtectedRoute>} />
+        {/* <Route path="/post/:id" element={<ProtectedRoute><Posts   /></ProtectedRoute>} /> */}
         <Route path="/profile/edit" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/event" element={<ProtectedRoute><Events /></ProtectedRoute>} />
-        {/* <Route path="/post/:id" element={<ProtectedRoute><ReadPost /></ProtectedRoute>} />
-        <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/post/:id" element={<ProtectedRoute><ReadPost /></ProtectedRoute>} />
+        {/* <Route path="/profile/:id" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
         <Route path="/creator/apply" element={<ProtectedRoute><ApplyCreator /></ProtectedRoute>} />*/}
         <Route path="/creator/dashboard" element={<ProtectedRoute><CreatorDashboard /></ProtectedRoute>} /> 
       </Routes>

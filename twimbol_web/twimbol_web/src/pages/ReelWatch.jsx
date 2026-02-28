@@ -311,7 +311,7 @@ function ReelSlide({
               <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
           </div>
-          <span>Share</span>
+          {/* <span>Share</span> */}
         </button>
 
         {/* Mute */}
@@ -329,7 +329,7 @@ function ReelSlide({
               </svg>
             )}
           </div>
-          <span>{muted ? "Unmute" : "Mute"}</span>
+          {/* <span>{muted ? "Unmute" : "Mute"}</span> */}
         </button>
 
         {/* Info */}
@@ -341,10 +341,10 @@ function ReelSlide({
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
-          <span>Info</span>
+          {/* <span>Info</span> */}
         </button>
       </div>
 
