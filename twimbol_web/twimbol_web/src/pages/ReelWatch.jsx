@@ -125,8 +125,10 @@ function ReelSlide({
   const [buffering, setBuffering] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
   const lastTapRef = useRef(0);
-  const [followed, setFollowed] = useState(reel.user_profile?.user?.followed_by_user || false);
+  const [followed, setFollowed] = useState(reel.user_profile?.followed_by_user || false);
   const viewRecorded = useRef(false);
+
+  
 
   const handleFollow = async () => {
     const next = !followed;
@@ -179,7 +181,7 @@ function ReelSlide({
         if (!viewRecorded.current && currentTime >= 3) {
           viewRecorded.current = true;
           recordReelView(reel.post); // fire and forget
-          console.log("view recorded")
+          // console.log("view recorded")
         }
       }
     };
@@ -466,7 +468,7 @@ export default function ReelWatch() {
         });
       }
     } catch (err) {
-      console.error("Failed to fetch reels:", err);
+      // console.error("Failed to fetch reels:", err);
       const isNetworkError = !navigator.onLine || err?.code === "ERR_NETWORK" || err?.message?.includes("Network") || err?.message?.includes("fetch");
       setFetchError(isNetworkError ? "network" : "server");
     } finally {
@@ -643,7 +645,9 @@ export default function ReelWatch() {
     try {
       await hideReel(postId);
       setReels((prev) => prev.filter((r) => r.post !== postId));
-    } catch (err) { console.error(err); }
+    } catch (err) { 
+      console.error(err); 
+    }
   };
 
   const handleBlock = async (userId) => {
