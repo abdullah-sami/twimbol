@@ -9,12 +9,16 @@ from create.serializers import *
 
 
 
-
 class PostSerializer(serializers.ModelSerializer):
-    like_count = serializers.SerializerMethodField()
     user_profile = serializers.SerializerMethodField()
     username = serializers.SerializerMethodField()
+    
+    # ✅ Read from queryset annotations — no extra DB hits per post
+    like_count = serializers.IntegerField(read_only=True)
+    
+    # comments stays as method field — returns full comment objects, not just a count
     comments = serializers.SerializerMethodField()
+    
     liked_by_user = serializers.SerializerMethodField()
     hidden_by_user = serializers.SerializerMethodField()
     reported_by_user = serializers.SerializerMethodField()
@@ -38,31 +42,25 @@ class PostSerializer(serializers.ModelSerializer):
             'reported_by_user',
         ]
 
-   
-    def get_like_count(self, obj):
-        return Post_Stat_like.objects.filter(post=obj).count()
-   
-    
-    def get_comments(self, obj):
-        comments = Post_Comment.objects.filter(post=obj).values('comment')
-        return comments
-
-
     def get_user_profile(self, obj):
         if hasattr(obj.created_by, 'profile'):
             context = {'request': self.context.get('request')} if self.context else {}
             return UserProfileSerializer(obj.created_by.profile, context=context).data
         return None
-   
+
     def get_username(self, obj):
         return UserSerializer(obj.created_by).data
+
+    def get_comments(self, obj):
+        # Returns full comment objects for display
+        return Post_Comment.objects.filter(post=obj).values('comment')
 
     def get_liked_by_user(self, obj):
         user = self.context['request'].user
         if user.is_authenticated:
             return Post_Stat_like.objects.filter(post_id=obj.id, created_by=user).exists()
         return False
-    
+
     def get_hidden_by_user(self, obj):
         user = self.context['request'].user
         if user.is_authenticated:
@@ -74,7 +72,6 @@ class PostSerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return Post_Stat_report.objects.filter(post_id=obj.id, created_by=user).exists()
         return False
-
 
 
 

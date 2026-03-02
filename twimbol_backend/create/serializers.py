@@ -19,9 +19,15 @@ class CreatorApplicationSerializer(serializers.ModelSerializer):
 
 
 
+
 class ReelCloudinarySerializer(serializers.ModelSerializer):
     user_profile = serializers.SerializerMethodField()
-    like_count = serializers.SerializerMethodField()
+
+    # ✅ Read directly from annotated queryset values — zero extra DB hits
+    like_count = serializers.IntegerField(read_only=True)
+    comment_count = serializers.IntegerField(read_only=True)
+
+    # Keep these as method fields — they need per-user context
     comments = serializers.SerializerMethodField()
     liked_by_user = serializers.SerializerMethodField()
     hidden_by_user = serializers.SerializerMethodField()
@@ -37,7 +43,8 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
             'reel_description',
             'thumbnail_url',
             'view_count',
-            'like_count',
+            'like_count',       # now from annotation
+            'comment_count',    # now from annotation
             'comments',
             'created_by',
             'user_profile',
@@ -45,19 +52,16 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
             'hidden_by_user',
             'reported_by_user',
         ]
-    
+
     def get_user_profile(self, obj):
         if hasattr(obj.created_by, 'profile'):
             context = {'request': self.context.get('request')} if self.context else {}
             return UserProfileSerializer(obj.created_by.profile, context=context).data
         return None
-    
-    def get_like_count(self, obj):
-        return Post_Stat_like.objects.filter(post=obj.post).count()
 
     def get_comments(self, obj):
-        comments = Post_Comment.objects.filter(post=obj.post).count()
-        return comments
+        # Reuse the annotated value — no extra query
+        return getattr(obj, 'comment_count', 0)
 
     def get_liked_by_user(self, obj):
         user = self.context['request'].user
@@ -76,9 +80,6 @@ class ReelCloudinarySerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return Post_Stat_report.objects.filter(post=obj.post, created_by=user).exists()
         return False
-
-
-
 
 
 

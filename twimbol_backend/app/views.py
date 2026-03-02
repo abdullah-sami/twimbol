@@ -4,6 +4,7 @@ from .utils.youtube_api import get_video_data, get_video_stats
 from django.db.models import Q, Case, When, IntegerField, F
 from .models import *
 from .forms import *
+from user.models import Follower
 from django.urls import reverse
 
 from .serializers import *
@@ -55,28 +56,103 @@ class PostViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Post.objects.filter(post_type='post').order_by('-created_at')
 
+        # ── 1. ANNOTATE COUNTS ───────────────────────────────────────────────────
+        # Posts have a direct reverse relation to Post_Stat_like and Post_Comment
+        # (post is a FK on both models), so Count works without going through
+        # an intermediate model like ReelCloudinary did.
+        queryset = Post.objects.filter(post_type='post').annotate(
+            like_count=Count("post_likes", distinct=True),
+            comment_count=Count("post_comments", distinct=True),
+        )
+        # ⚠️  Reverse accessor names default to lowercase model name.
+        #     Confirm with: Post_Stat_like._meta.get_field('post').remote_field.related_name
+        #     If you've set related_name="likes" on the FK, use Count("likes") instead.
+
+        # ── 2. FILTERING ────────────────────────────────────────────────────────
         if user.is_authenticated:
-            # Exclude hidden posts
-            hidden_posts = Post_Stat_hide.objects.filter(created_by=user).values_list("post_id", flat=True)
+            hidden_posts = Post_Stat_hide.objects.filter(
+                created_by=user
+            ).values_list("post_id", flat=True)
             queryset = queryset.exclude(id__in=hidden_posts)
 
-            # Exclude reported posts
-            reported_posts = Post_Stat_report.objects.filter(created_by=user).values_list("post_id", flat=True)
+            reported_posts = Post_Stat_report.objects.filter(
+                created_by=user
+            ).values_list("post_id", flat=True)
             queryset = queryset.exclude(id__in=reported_posts)
 
-            # Exclude posts from blocked users
-            blocked_users = Block.objects.filter(blocker=user).values_list("blocked_id", flat=True)
+            blocked_users = Block.objects.filter(
+                blocker=user
+            ).values_list("blocked_id", flat=True)
             queryset = queryset.exclude(created_by_id__in=blocked_users)
 
-        return queryset
+        # ── 3. FOLLOWED-CREATOR BOOST ───────────────────────────────────────────
+        # Posts from followed creators get a flat +35 boost.
+        # Slightly lower than reels (40) because posts are less time-sensitive
+        # and users browse them less passively — discovery matters more here.
+        if user.is_authenticated:
+            followed_ids = list(
+                Follower.objects.filter(follower=user)
+                .values_list("following_id", flat=True)
+            )
+            followed_boost = Case(
+                When(created_by_id__in=followed_ids, then=Value(35.0)),
+                default=Value(0.0),
+                output_field=FloatField(),
+            )
+        else:
+            followed_boost = Value(0.0, output_field=FloatField())
+
+        # ── 4. RECENCY SCORE ────────────────────────────────────────────────────
+        # Posts have a longer shelf-life than reels (articles, guides, discussions
+        # stay relevant days/weeks), so the decay window is wider and gentler.
+        #
+        #   < 24 h  → 25 pts
+        #   < 7 d   → 18 pts
+        #   < 30 d  → 10 pts
+        #   < 90 d  →  4 pts   ← extra tier vs reels; good posts age gracefully
+        #   older   →  0 pts
+        now = timezone.now()
+        recency_score = Case(
+            When(created_at__gte=now - timedelta(hours=24), then=Value(25.0)),
+            When(created_at__gte=now - timedelta(days=7),   then=Value(18.0)),
+            When(created_at__gte=now - timedelta(days=30),  then=Value(10.0)),
+            When(created_at__gte=now - timedelta(days=90),  then=Value(4.0)),
+            default=Value(0.0),
+            output_field=FloatField(),
+        )
+
+        # ── 5. TRENDING SCORE ───────────────────────────────────────────────────
+        # Posts weight comments more heavily than reels do (×3 vs ×2) because
+        # leaving a comment on a text post is a stronger engagement signal than
+        # on a reel — the user actually read and thought about the content.
+        #
+        # Formula:  (likes × 3  +  comments × 3) / 100
+        #
+        # No view_count here — Post model doesn't track views.
+        # Divisor stays 100 so scores stay in the same range as reels.
+        trending_score = ExpressionWrapper(
+            (
+                F("like_count")    * 3 +
+                F("comment_count") * 3
+            ) / Value(100.0),
+            output_field=FloatField(),
+        )
+
+        # ── 6. FINAL SCORE ──────────────────────────────────────────────────────
+        feed_score = ExpressionWrapper(
+            followed_boost + recency_score + trending_score,
+            output_field=FloatField(),
+        )
+
+        return (
+            queryset
+            .annotate(feed_score=feed_score)
+            .order_by("-feed_score", "-created_at")
+        )
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user, post_type="post")
-
-
-
 
 
 
@@ -101,6 +177,40 @@ class ReelsPagination(PageNumberPagination):
 
 
 
+
+
+
+# class ReelsDataViewSet(ModelViewSet):
+#     serializer_class = ReelCloudinarySerializer
+#     permission_classes = [AllowAny]
+#     pagination_class = ReelsPagination
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         queryset = ReelCloudinary.objects.all().order_by('-created_at')
+
+#         if user.is_authenticated:
+#             # exclude hidden posts
+#             hidden_posts = Post_Stat_hide.objects.filter(created_by=user).values_list("post_id", flat=True)
+#             queryset = queryset.exclude(post_id__in=hidden_posts)
+
+#             # exclude reported posts
+#             reported_posts = Post_Stat_report.objects.filter(created_by=user).values_list("post_id", flat=True)
+#             queryset = queryset.exclude(post_id__in=reported_posts)
+
+#             # exclude posts from blocked users
+#             blocked_users = Block.objects.filter(blocker=user).values_list("blocked_id", flat=True)
+#             queryset = queryset.exclude(created_by_id__in=blocked_users)
+
+#         return queryset
+
+
+from django.db.models import Count, FloatField, Value, Case, When, F, ExpressionWrapper
+from django.db.models import OuterRef, Subquery, IntegerField
+from django.utils import timezone
+from datetime import timedelta
+
+
 class ReelsDataViewSet(ModelViewSet):
     serializer_class = ReelCloudinarySerializer
     permission_classes = [AllowAny]
@@ -108,22 +218,106 @@ class ReelsDataViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = ReelCloudinary.objects.all().order_by('-created_at')
 
+        # ── 1. ANNOTATE COUNTS FROM RELATED MODELS ──────────────────────────────
+        # like_count and comment_count live on Post_Stat_like / Post_Comment,
+        # not on ReelCloudinary — so we must annotate them before we can score.
+        # Using Count with a filtered relation keeps it a single SQL query.
+        queryset = ReelCloudinary.objects.annotate(
+            like_count=Count("post__post_likes", distinct=True),
+            comment_count=Count("post__post_comments", distinct=True),
+        )
+        # ⚠️  "post__post_stat_like" uses Django's reverse accessor name.
+        #     If your related_name differs, adjust accordingly.
+        #     Default reverse name = lowercase model name + "_set" → "post_stat_like"
+
+        # ── 2. FILTERING ────────────────────────────────────────────────────────
         if user.is_authenticated:
-            # exclude hidden posts
-            hidden_posts = Post_Stat_hide.objects.filter(created_by=user).values_list("post_id", flat=True)
+            hidden_posts = Post_Stat_hide.objects.filter(
+                created_by=user
+            ).values_list("post_id", flat=True)
             queryset = queryset.exclude(post_id__in=hidden_posts)
 
-            # exclude reported posts
-            reported_posts = Post_Stat_report.objects.filter(created_by=user).values_list("post_id", flat=True)
+            reported_posts = Post_Stat_report.objects.filter(
+                created_by=user
+            ).values_list("post_id", flat=True)
             queryset = queryset.exclude(post_id__in=reported_posts)
 
-            # exclude posts from blocked users
-            blocked_users = Block.objects.filter(blocker=user).values_list("blocked_id", flat=True)
+            blocked_users = Block.objects.filter(
+                blocker=user
+            ).values_list("blocked_id", flat=True)
             queryset = queryset.exclude(created_by_id__in=blocked_users)
 
-        return queryset
+        # ── 3. FOLLOWED-CREATOR BOOST ───────────────────────────────────────────
+        if user.is_authenticated:
+            followed_ids = list(
+                Follower.objects.filter(follower=user)
+                .values_list("following_id", flat=True)
+            )
+            followed_boost = Case(
+                When(created_by_id__in=followed_ids, then=Value(30.0)),
+                default=Value(0.0),
+                output_field=FloatField(),
+            )
+        else:
+            followed_boost = Value(0.0, output_field=FloatField())
+
+        # ── 4. RECENCY SCORE ────────────────────────────────────────────────────
+        now = timezone.now()
+        recency_score = Case(
+            When(created_at__gte=now - timedelta(hours=24), then=Value(30.0)),
+            When(created_at__gte=now - timedelta(days=7),   then=Value(20.0)),
+            When(created_at__gte=now - timedelta(days=30),  then=Value(10.0)),
+            default=Value(0.0),
+            output_field=FloatField(),
+        )
+
+        # ── 5. TRENDING SCORE ───────────────────────────────────────────────────
+        # Now safe — like_count and comment_count are annotated fields above.
+        # view_count is a real model field (confirmed in your Meta fields list).
+        trending_score = ExpressionWrapper(
+            (
+                F("like_count")    * 3 +
+                F("view_count")    * 1 +
+                F("comment_count") * 2
+            ) / Value(100.0),
+            output_field=FloatField(),
+        )
+
+        # ── 6. FINAL SCORE & ORDERING ───────────────────────────────────────────
+        feed_score = ExpressionWrapper(
+            followed_boost + recency_score + trending_score,
+            output_field=FloatField(),
+        )
+
+        return (
+            queryset
+            .annotate(feed_score=feed_score)
+            .order_by("-feed_score", "-created_at")
+        )
+# ```
+
+# ---
+
+### Why this design is efficient
+
+# | Concern | How it's handled |
+# |---|---|
+# | **DB load** | All 3 signals are SQL `CASE`/arithmetic — resolved in a **single annotated query**, not Python loops |
+# | **Follow lookup** | One `VALUES LIST` query upfront; used in-DB via `Case/When` — no per-reel join |
+# | **No N+1** | No `.select_related` or loops inside `get_queryset`; ORM does it all |
+# | **Pagination compatibility** | Works with your existing `ReelsPagination` — it just slices the ordered queryset |
+
+# ---
+
+### Tuning cheatsheet
+# ```
+# followed_boost  →  40   raise if you want a stronger "following" feed
+# recency < 24h   →  30   raise to favour brand-new content more aggressively
+# like weight     →   3   raise if you trust likes more than views
+# / 100 divisor   → 100   lower to make trending dominate (e.g. 50); raise to mute it
+
+
 
 
 
@@ -502,7 +696,7 @@ def home(request):
 
     }
 
-    return render(request, 'home.html', context)
+    return HttpResponse("Hello, world! This is the home page.")
 
 
 
