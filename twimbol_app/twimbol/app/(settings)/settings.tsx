@@ -166,7 +166,7 @@ const Settings = ({ navigation }: any) => {
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => openURL('https://rafidabdullahsamiweb.pythonanywhere.com/privacy-policy/')}
+              onPress={() => openURL('https://twimbol.com/privacy-policy/')}
             >
               <Text style={styles.menuItemText}>Privacy Policy</Text>
               {/* <ChevronRight color="#fff" size={20} /> */}

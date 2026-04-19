@@ -2,7 +2,7 @@
   "expo": {
     "name": "Twimbol",
     "slug": "twimbol",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "newArchEnabled": true,
     "icon": "./assets/icons/logo_icon.png",
     "splash": {
@@ -28,7 +28,7 @@
       }
     },
     "android": {
-      "package": "com.web.rafid.twimbol",
+      "package": "com.app.rafid.innoverse",
       "icon": "./assets/icons/logo_icon.png",
       "intentFilters": [
         {
