@@ -27,6 +27,7 @@
       "env": {
         "EXPO_ENV": "production"
       },
+      "npmClientCommand": "npm install --legacy-peer-deps",
       "cache": {
         "key": "production-v1"
       },
