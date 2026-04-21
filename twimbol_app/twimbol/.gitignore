@@ -43,3 +43,7 @@ app-example
 
 
 credentials.json
+
+
+*.zip
+*.aab
