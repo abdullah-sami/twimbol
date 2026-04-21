@@ -53,6 +53,12 @@
       "expo-font",
       "expo-web-browser"
     ],
-    "userInterfaceStyle": "light"
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.app.rafid.innoverse",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
   }
 }
