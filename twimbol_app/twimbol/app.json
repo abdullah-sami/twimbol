@@ -52,7 +52,17 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "./withCameraXFix.js"
+      "expo-build-properties",
+      "./withAGPUpgrade.js",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ]
     ],
     "userInterfaceStyle": "light",
     "ios": {
