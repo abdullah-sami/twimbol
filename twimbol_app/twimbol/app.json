@@ -53,7 +53,7 @@
       "expo-font",
       "expo-web-browser",
       "expo-build-properties",
-      "./withAGPUpgrade.js",
+      "./withVisionCameraFix.js",
       [
         "expo-build-properties",
         {
