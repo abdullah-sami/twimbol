@@ -9,14 +9,13 @@ module.exports = function withCameraXFix(config) {
     configurations.all {
         resolutionStrategy.eachDependency { details ->
             if (details.requested.group == 'androidx.camera') {
-                details.useVersion '1.5.0-alpha03'
+                details.useVersion '1.6.0' 
             }
         }
     }`;
 
     // Only inject if it doesn't already exist to prevent duplicate blocks
     if (!buildGradle.includes("details.requested.group == 'androidx.camera'")) {
-      // Find the 'allprojects {' block and inject our fix immediately after it
       config.modResults.contents = buildGradle.replace(
         /allprojects\s*\{/,
         `allprojects {${resolutionStrategyFix}`
