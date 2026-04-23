@@ -1,20 +1,27 @@
-const { withProjectBuildGradle, withSettingsGradle } = require('@expo/config-plugins');
+const { withDangerousMod, withProjectBuildGradle } = require('@expo/config-plugins');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = function withVisionCameraFix(config) {
-  // 1. Upgrade AGP in settings.gradle (Where Expo SDK 53+ actually defines it)
-  config = withSettingsGradle(config, (config) => {
-    config.modResults.contents = config.modResults.contents.replace(/8\.8\.2/g, '8.9.1');
-    return config;
-  });
+  // 1. Intercept and upgrade AGP in the new Version Catalog (libs.versions.toml)
+  config = withDangerousMod(config, [
+    'android',
+    async (config) => {
+      const tomlPath = path.join(config.modRequest.platformProjectRoot, 'gradle', 'libs.versions.toml');
+      if (fs.existsSync(tomlPath)) {
+        let tomlContent = fs.readFileSync(tomlPath, 'utf8');
+        // Find the AGP variable and aggressively swap it to 8.9.1
+        tomlContent = tomlContent.replace(/agp\s*=\s*"[^"]+"/, 'agp = "8.9.1"');
+        fs.writeFileSync(tomlPath, tomlContent);
+      }
+      return config;
+    },
+  ]);
 
-  // 2. Upgrade AGP in build.gradle (As a fallback) and Pin CameraX to 1.6.0
+  // 2. Keep the CameraX 1.6.0 pin in build.gradle
   config = withProjectBuildGradle(config, (config) => {
     let contents = config.modResults.contents;
     
-    // Replace AGP if defined as a variable here
-    contents = contents.replace(/8\.8\.2/g, '8.9.1');
-
-    // Pin CameraX to the stable 1.6.0 release
     const cameraXPin = `
     configurations.all {
         resolutionStrategy.eachDependency { details ->
